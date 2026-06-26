@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 17px;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body {
+    background-color: theme('colors.canton.bg');
+    color: theme('colors.canton.dark');
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  /** 登入表單輸入框：線條乾淨、留白充足 */
+  .canton-input {
+    @apply w-full rounded-sm bg-white px-4 py-3 text-sm outline-none transition-colors;
+    border: 1px solid rgb(44 44 44 / 0.2);
+    color: theme('colors.canton.dark');
+  }
+
+  .canton-input::placeholder {
+    color: rgb(44 44 44 / 0.35);
+  }
+
+  .canton-input:focus {
+    border-color: rgb(166 36 36 / 0.6);
+    box-shadow: 0 0 0 1px rgb(166 36 36 / 0.2);
+  }
+
+}
