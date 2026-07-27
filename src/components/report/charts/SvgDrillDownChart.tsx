@@ -55,18 +55,31 @@ const DRILL_TAB_META: {
 
 // PT 點工商家識別集合（不含電費、瓦斯 — 已移至現金支出）
 const PT_MERCHANT_SET = new Set([
-  '拖地', '收垃圾', '林安邦', '陳東海', '林進賢', 'Dee', '垃圾（廚餘）', '洗碗',
+  '拖地', '收垃圾', '林安邦', '陳東海', '林進賢', 'Dee', '垃圾（廚餘）', '洗碗', 'PT',
 ]);
 
 const PAYMENT_MERCHANT_SET = new Set([
-  '檯布', '惠通(一)', '酒', '大友(二)', '惠通(二)',
+  '檯布', '惠通', '酒', '大友(二)',
+  // 向下相容舊資料
+  '惠通(一)', '惠通(二)',
 ]);
+
+/** 舊 merchant 名稱 → 現行圖表子科目標籤 */
+const LEGACY_MERCHANT_ALIASES: Record<string, string> = {
+  '惠通(一)': '惠通',
+  '惠通(二)': '惠通',
+};
+
+function resolveSubLabel(merchant: string, order: readonly string[]): string {
+  const normalized = LEGACY_MERCHANT_ALIASES[merchant] ?? merchant;
+  return order.includes(normalized) ? normalized : '其他';
+}
 
 // 子科目顯示順序
 const SUB_ORDER: Record<DrillTab, string[]> = {
   cash: ['菜金', '油條', '雞', '乾貨', '便當盒', '雜貨', '電費', '瓦斯', '其他'],
-  pt:   ['拖地', '收垃圾', '林安邦', '陳東海', '林進賢', 'Dee', '垃圾（廚餘）', '洗碗', '其他'],
-  payment: ['檯布', '惠通(一)', '酒', '大友(二)', '惠通(二)', '其他'],
+  pt:   ['拖地', '收垃圾', '林安邦', '陳東海', '林進賢', 'Dee', '垃圾（廚餘）', '洗碗', 'PT', '其他'],
+  payment: ['檯布', '惠通', '酒', '大友(二)', '其他'],
   repair: ['修繕', '其他'],
   fixed_salary: [
     '曾美惠', '梁桂蓮', '林美玉', '陳速華', '陳棋瑞',
@@ -121,15 +134,15 @@ const SUB_COLORS: Record<DrillTab, Record<string, string>> = {
     'Dee':         MUTED_PALETTE[5],
     '垃圾（廚餘）': MUTED_PALETTE[6],
     '洗碗':        MUTED_PALETTE[7],
-    '其他':        MUTED_PALETTE[8],
+    'PT':          MUTED_PALETTE[8],
+    '其他':        MUTED_PALETTE[9],
   },
   payment: {
     '檯布':    MUTED_PALETTE[0],
-    '惠通(一)': MUTED_PALETTE[1],
+    '惠通':    MUTED_PALETTE[1],
     '酒':      MUTED_PALETTE[2],
     '大友(二)': MUTED_PALETTE[3],
-    '惠通(二)': MUTED_PALETTE[4],
-    '其他':    MUTED_PALETTE[5],
+    '其他':    MUTED_PALETTE[4],
   },
   repair: {
     '修繕': MUTED_PALETTE[3],
@@ -356,7 +369,7 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
 
     for (const e of expenses) {
       if (classifyTab(e) !== activeTab) continue;
-      const key = order.includes(e.merchant) ? e.merchant : '其他';
+      const key = resolveSubLabel(e.merchant, order);
       buckets[key] = (buckets[key] ?? 0) + e.amount;
     }
 

@@ -1,10 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
-import {
-  clearRememberedSession,
-  resolveLoginEmail,
-} from '../lib/authSession';
+import { clearRememberedSession } from '../lib/authSession';
 import LanguageSwitcher from './common/LanguageSwitcher';
 
 interface LoginPageProps {
@@ -12,11 +9,11 @@ interface LoginPageProps {
 }
 
 /**
- * 登入牆 — Supabase Auth + 記住我自動登入 + 雙語切換。
+ * 登入牆 — 左側品牌 Logo、右側登入表單。
  */
 export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const { t } = useLanguage();
-  const [identity, setIdentity] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
@@ -26,45 +23,44 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     event.preventDefault();
     setError('');
 
-    const trimmedIdentity = identity.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
 
-    if (!trimmedIdentity) {
-      setError(t('errIdentityRequired'));
+    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+      setError(t('errInvalidEmail'));
       return;
     }
     if (!trimmedPassword) {
       setError(t('errPasswordRequired'));
       return;
     }
-    if (trimmedPassword.length < 4) {
-      setError(t('errPasswordMin'));
-      return;
-    }
 
     setLoading(true);
 
-    const email = resolveLoginEmail(trimmedIdentity);
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password: trimmedPassword,
-    });
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: trimmedEmail,
+        password: trimmedPassword,
+      });
 
-    setLoading(false);
+      if (signInError || !data.session) {
+        setError(signInError?.message ?? t('errLoginFailed'));
+        return;
+      }
 
-    if (signInError || !data.session) {
-      setError(t('errLoginFailed'));
-      return;
+      if (rememberMe) {
+        localStorage.setItem('is_remember_me', 'true');
+        localStorage.setItem('remember_me_session', JSON.stringify(data.session));
+      } else {
+        clearRememberedSession();
+      }
+
+      onLoginSuccess();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('errLoginFailed'));
+    } finally {
+      setLoading(false);
     }
-
-    if (rememberMe) {
-      localStorage.setItem('is_remember_me', 'true');
-      localStorage.setItem('remember_me_session', JSON.stringify(data.session));
-    } else {
-      clearRememberedSession();
-    }
-
-    onLoginSuccess();
   }
 
   return (
@@ -83,7 +79,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
         </div>
 
         <div className="mx-auto w-full max-w-md">
-          <div className="mb-10 flex items-center gap-3">
+          <div className="mb-3 flex items-center gap-3">
             <img
               src="/logo.png"
               alt={t('brandName')}
@@ -95,41 +91,34 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
           </div>
 
           <h1 className="text-2xl font-bold leading-snug text-canton-dark">
-            {t('brandName')} · {t('appTitle')}
+            {t('appTitle')}
           </h1>
 
           <form className="mt-12 space-y-8" onSubmit={handleSubmit} noValidate>
             <div>
-              <label
-                htmlFor="identity"
-                className="mb-2 block text-sm text-canton-dark/70"
-              >
-                {t('identityLabel')}
+              <label htmlFor="email" className="mb-2 block text-sm text-canton-dark/70">
+                {t('loginEmailLabel')}
               </label>
               <input
-                id="identity"
-                type="text"
+                id="email"
+                type="email"
                 className="canton-input"
-                placeholder={t('identityPlaceholder')}
-                value={identity}
-                onChange={(e) => setIdentity(e.target.value)}
-                autoComplete="username"
+                placeholder={t('loginEmailPlaceholder')}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 disabled={loading}
               />
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm text-canton-dark/70"
-              >
+              <label htmlFor="password" className="mb-2 block text-sm text-canton-dark/70">
                 {t('passwordLabel')}
               </label>
               <input
                 id="password"
                 type="password"
                 className="canton-input"
-                placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"

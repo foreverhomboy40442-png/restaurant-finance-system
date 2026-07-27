@@ -49,7 +49,7 @@ export default function ExpenseConfirmModal({
             onClick={onCancel}
             className="flex-1 rounded-sm border border-canton-dark/20 py-3 text-sm text-canton-dark/70 transition-colors hover:bg-canton-bg"
           >
-            取消
+            Cancel
           </button>
           <button
             type="button"

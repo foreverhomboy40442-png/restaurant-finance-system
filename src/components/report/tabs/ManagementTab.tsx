@@ -283,6 +283,7 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
         </div>
 
         {catBreakdown.total > 0 ? (
+          <div className="w-full overflow-x-auto block whitespace-nowrap">
           <table className="w-full min-w-[400px]">
             {/* 表頭 */}
             <thead>
@@ -378,6 +379,7 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
               </tr>
             </tfoot>
           </table>
+          </div>
         ) : (
           <div className="flex h-28 items-center justify-center text-sm text-slate-400">
             {t('noExpenseData')}

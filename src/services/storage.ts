@@ -10,6 +10,7 @@
  */
 
 import {
+  AUDIT_STATUS,
   createFinancialDate,
   createMoney,
   isAuditStatus,
@@ -458,4 +459,60 @@ export function saveExpense(items: ExpenseItem[]): void {
   assertLockedExpensesIntegrity(existing, items);
 
   writeRaw(RESTAURANT_EXPENSE_STORAGE_KEY, JSON.stringify(items));
+}
+
+/**
+ * 將指定支出明細核帳鎖定（draft → locked）。
+ * 以 localStorage 完整快照為基底做 in-place 更新，絕不以 filter 重建陣列，
+ * 確保已鎖定項目不會從傳入 saveExpense 的陣列中消失。
+ */
+export function lockExpenseItem(id: string, snapshot: ExpenseItem): void {
+  if (snapshot.id !== id) {
+    throw new Error(`支出 id 不一致：${snapshot.id} ≠ ${id}`);
+  }
+  if (snapshot.auditStatus !== AUDIT_STATUS.DRAFT) {
+    throw new Error('僅草稿狀態可核帳鎖定');
+  }
+
+  const existing = loadExpenses();
+  const index = existing.findIndex((item) => item.id === id);
+
+  const updated =
+    index >= 0
+      ? existing.map((item) =>
+          item.id === id && item.auditStatus === AUDIT_STATUS.DRAFT
+            ? { ...item, ...snapshot, auditStatus: AUDIT_STATUS.LOCKED }
+            : item,
+        )
+      : [...existing, { ...snapshot, auditStatus: AUDIT_STATUS.LOCKED }];
+
+  saveExpense(updated);
+}
+
+/**
+ * 將指定營收明細核帳鎖定（draft → locked）。
+ * 以 localStorage 完整快照為基底做 in-place 更新，絕不以 filter 重建陣列，
+ * 確保已鎖定項目不會從傳入 saveRevenue 的陣列中消失。
+ */
+export function lockRevenueItem(id: string, snapshot: RevenueItem): void {
+  if (snapshot.id !== id) {
+    throw new Error(`營收 id 不一致：${snapshot.id} ≠ ${id}`);
+  }
+  if (snapshot.auditStatus !== AUDIT_STATUS.DRAFT) {
+    throw new Error('僅草稿狀態可核帳鎖定');
+  }
+
+  const existing = loadRevenues();
+  const index = existing.findIndex((item) => item.id === id);
+
+  const updated =
+    index >= 0
+      ? existing.map((item) =>
+          item.id === id && item.auditStatus === AUDIT_STATUS.DRAFT
+            ? { ...item, ...snapshot, auditStatus: AUDIT_STATUS.LOCKED }
+            : item,
+        )
+      : [...existing, { ...snapshot, auditStatus: AUDIT_STATUS.LOCKED }];
+
+  saveRevenue(updated);
 }

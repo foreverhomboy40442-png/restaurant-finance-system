@@ -22,7 +22,7 @@ import {
 } from '../../types';
 import type { ExpenseCategory, ExpenseItem } from '../../types';
 import { EXPENSE_CATEGORY } from '../../types';
-import { saveExpense } from '../../services/storage';
+import { lockExpenseItem } from '../../services/storage';
 import {
   deleteExpenseRecord,
   insertExpenseRecord,
@@ -377,15 +377,12 @@ export default function ExpenseManagement({
   // ---------------------------------------------------------------------------
 
   function handleLockItem(id: string) {
-    const updated = expenses.map((item) =>
-      item.id === id && item.auditStatus === AUDIT_STATUS.DRAFT
-        ? { ...item, auditStatus: AUDIT_STATUS.LOCKED }
-        : item,
-    );
+    const target = expenses.find((item) => item.id === id);
+    if (!target || target.auditStatus !== AUDIT_STATUS.DRAFT) return;
 
     try {
-      saveExpense(updated);
-      onExpensesChange();
+      lockExpenseItem(id, target);
+      void onExpensesChange();
       if (editingId === id) handleCancelEdit();
     } catch (error) {
       setEditFormError(error instanceof Error ? error.message : '鎖定失敗');
@@ -460,7 +457,7 @@ export default function ExpenseManagement({
                 className="grid grid-cols-1 gap-5 md:grid-cols-2"
                 onSubmit={handleEditSubmit}
               >
-                <div>
+                <div className="w-full max-w-full min-w-0 box-border">
                   <label
                     htmlFor="edit-date"
                     className="mb-2 block text-sm text-canton-dark/70"
@@ -470,7 +467,7 @@ export default function ExpenseManagement({
                   <input
                     id="edit-date"
                     type="date"
-                    className="canton-input"
+                    className="canton-input !w-[80%] max-w-[260px] mx-auto block box-border"
                     value={editForm.dateInput}
                     onChange={(e) => updateEditForm('dateInput', e.target.value)}
                     required
@@ -682,7 +679,7 @@ export default function ExpenseManagement({
       >
         {confirmPayload && (
           <p>
-            {confirmMode === 'update' ? '請確認更新內容：' : '請確認支出內容：'}
+            {confirmMode === 'update' ? 'Please confirm the update:' : 'Please confirm expense details:'}
             <br />
             <span className="mt-2 inline-block font-medium text-canton-dark">
               {getExpenseCategoryLabel(lang, confirmPayload.category)} ·{' '}
@@ -698,19 +695,19 @@ export default function ExpenseManagement({
             )}
             <br />
             <span className="mt-3 inline-block font-mono text-2xl tabular-nums text-canton-red">
-              共{' '}
+              Total:{' '}
               {confirmAmountValidation.parsedValue !== null
                 ? formatMoneyDisplay(confirmAmountValidation.parsedValue)
                 : '—'}{' '}
-              元
+              TWD
             </span>
             <br />
             <span className="mt-2 inline-block text-sm text-canton-dark/50">
-              財務日：{confirmPayload.dateInput}
+              Date: {confirmPayload.dateInput}
             </span>
             <br />
             <span className="mt-1 inline-block text-sm text-canton-dark/45">
-              確認無誤？存入後仍可在流水帳中編輯（草稿期）。
+              Is this correct? Entry can still be edited in the log later.
             </span>
           </p>
         )}

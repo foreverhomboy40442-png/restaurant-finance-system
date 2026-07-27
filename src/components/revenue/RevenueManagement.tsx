@@ -2,7 +2,6 @@ import { useMemo, useState, type FormEvent } from 'react';
 import {
   AUDIT_STATUS,
   createFinancialDate,
-  createMoney,
   toFinancialDateFromDate,
 } from '../../types';
 import type { RevenueItem, RevenuePeriod } from '../../types';
@@ -11,7 +10,12 @@ import {
 } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { getRevenuePeriodLabel, translateAmountValidationError } from '../../utils/lang';
-import { saveRevenue } from '../../services/storage';
+import {
+  deleteRevenueRecord,
+  insertRevenueRecord,
+  updateRevenueRecord,
+} from '../../services/financialRecords';
+import { lockRevenueItem } from '../../services/storage';
 import {
   formatMoneyDisplay,
   validateRevenueAmountInput,
@@ -33,7 +37,7 @@ type ConfirmMode = 'create' | 'update' | 'delete' | null;
 
 interface RevenueManagementProps {
   revenues: RevenueItem[];
-  onRevenuesChange: () => void;
+  onRevenuesChange: () => void | Promise<void>;
   defaultOperatorId?: string;
 }
 
@@ -83,6 +87,7 @@ export default function RevenueManagement({
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmMode, setConfirmMode] = useState<ConfirmMode>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const isEditing = editingId !== null;
 
@@ -188,61 +193,54 @@ export default function RevenueManagement({
     setConfirmMode(isEditing ? 'update' : 'create');
   }
 
-  function buildRevenuePayload(): RevenueItem {
-    if (!amountValidation.valid || amountValidation.parsedValue === null) {
-      throw new Error('金額不合法');
-    }
+  async function handleConfirmSave() {
+    if (isSaving) return;
 
-    const base = {
-      date: createFinancialDate(form.dateInput),
-      period: form.period,
-      amount: createMoney(amountValidation.parsedValue, { allowZero: false }),
-      operatorId: form.operatorId.trim(),
-      auditStatus: AUDIT_STATUS.DRAFT,
-      ...(form.note.trim() ? { note: form.note.trim() } : {}),
-    };
+    setIsSaving(true);
+    setFormError(null);
 
-    if (isEditing && editingId) {
-      const existing = revenues.find((item) => item.id === editingId);
-      if (!existing) {
-        throw new Error('找不到要更新的帳目');
-      }
-      return {
-        ...existing,
-        ...base,
-      };
-    }
-
-    return {
-      id: crypto.randomUUID(),
-      ...base,
-      createdAt: new Date().toISOString(),
-    };
-  }
-
-  function handleConfirmSave() {
     try {
-      const payload = buildRevenuePayload();
-
-      if (isEditing && editingId) {
-        saveRevenue(
-          revenues.map((item) => (item.id === editingId ? payload : item)),
-        );
-      } else {
-        saveRevenue([...revenues, payload]);
+      if (!amountValidation.valid || amountValidation.parsedValue === null) {
+        throw new Error(amountValidation.error ?? '金額不合法');
       }
 
-      onRevenuesChange();
+      const recordInput = {
+        date: form.dateInput,
+        period: form.period,
+        amount: amountValidation.parsedValue,
+        operatorId: form.operatorId.trim(),
+        note: form.note.trim(),
+      };
+
+      if (confirmMode === 'create') {
+        const result = await insertRevenueRecord(recordInput);
+        if (!result.ok) {
+          throw new Error(result.message);
+        }
+      } else if (confirmMode === 'update' && editingId) {
+        const result = await updateRevenueRecord(editingId, recordInput);
+        if (!result.ok) {
+          throw new Error(result.message);
+        }
+      } else {
+        throw new Error('無效的儲存模式');
+      }
+
+      await onRevenuesChange();
       resetForm();
       setConfirmMode(null);
     } catch (error) {
-      setFormError(t('errSaveFailed'));
+      setFormError(
+        error instanceof Error ? error.message : t('errSaveFailed'),
+      );
       setConfirmMode(null);
+    } finally {
+      setIsSaving(false);
     }
   }
 
-  function handleConfirmDelete() {
-    if (!pendingDeleteId) {
+  async function handleConfirmDelete() {
+    if (!pendingDeleteId || isSaving) {
       return;
     }
 
@@ -253,30 +251,36 @@ export default function RevenueManagement({
       return;
     }
 
+    setIsSaving(true);
+
     try {
-      saveRevenue(revenues.filter((item) => item.id !== pendingDeleteId));
-      onRevenuesChange();
+      const result = await deleteRevenueRecord(pendingDeleteId);
+      if (!result.ok) {
+        throw new Error(result.message);
+      }
+
+      await onRevenuesChange();
       if (editingId === pendingDeleteId) {
         resetForm();
       }
-    } catch {
-      setFormError(t('errDeleteFailed'));
+    } catch (error) {
+      setFormError(
+        error instanceof Error ? error.message : t('errDeleteFailed'),
+      );
     } finally {
+      setIsSaving(false);
       setConfirmMode(null);
       setPendingDeleteId(null);
     }
   }
 
   function handleLockItem(id: string) {
-    const updated = revenues.map((item) =>
-      item.id === id && item.auditStatus === AUDIT_STATUS.DRAFT
-        ? { ...item, auditStatus: AUDIT_STATUS.LOCKED }
-        : item,
-    );
+    const target = revenues.find((item) => item.id === id);
+    if (!target || target.auditStatus !== AUDIT_STATUS.DRAFT) return;
 
     try {
-      saveRevenue(updated);
-      onRevenuesChange();
+      lockRevenueItem(id, target);
+      void onRevenuesChange();
       if (editingId === id) {
         resetForm();
       }

@@ -182,7 +182,7 @@ export default function AmountInputModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-canton-dark/40 p-4"
+      className="fixed inset-0 z-[60] flex min-h-screen w-full items-center justify-center bg-canton-dark/40 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="amount-modal-title"
@@ -191,7 +191,7 @@ export default function AmountInputModal({
       }}
     >
       <div
-        className="w-full max-w-sm rounded-sm border border-canton-dark/10 bg-white p-5 shadow-canton-md sm:p-6"
+        className="mx-auto w-full max-w-md rounded-sm border border-canton-dark/10 bg-white p-5 shadow-canton-md sm:p-6"
         onKeyDown={handleKeyDown}
       >
         {/* 標頭：快捷鍵名稱 + 科目徽章 */}
@@ -211,7 +211,7 @@ export default function AmountInputModal({
         </div>
 
         {/* 財務歸屬日：預設今天，可自由選取歷史日期補登 */}
-        <div className="mb-4">
+        <div className="mb-4 w-full">
           <label
             htmlFor="amount-modal-date"
             className="mb-1.5 block text-sm text-canton-dark/70"
@@ -222,7 +222,7 @@ export default function AmountInputModal({
           <input
             id="amount-modal-date"
             type="date"
-            className="canton-input"
+            className="canton-input !w-[80%] max-w-[260px] mx-auto block box-border"
             value={dateInput}
             onChange={(e) => setDateInput(e.target.value)}
           />

@@ -7,10 +7,11 @@ import {
   clearRememberedSession,
   loadRememberedSession,
 } from './lib/authSession';
-import { loadRevenues } from './services/storage';
-import { fetchExpenseRecords } from './services/financialRecords';
+import { loadExpenses, loadRevenues } from './services/storage';
+import { fetchExpenseRecords, fetchRevenueRecords } from './services/financialRecords';
 import { preloadRestaurantParameters } from './services/restaurantParameters';
 import type { ExpenseItem, RevenueItem } from './types';
+import { isLockedAuditStatus } from './types';
 
 export type NavTab = 'dashboard' | 'revenue' | 'expense' | 'report' | 'settings';
 
@@ -28,14 +29,36 @@ export default function App() {
   const [revenues, setRevenues] = useState<RevenueItem[]>([]);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
 
-  const refreshRevenues = useCallback(() => {
-    const items = loadRevenues();
-    setRevenues(items);
+  const refreshRevenues = useCallback(async () => {
+    const items = await fetchRevenueRecords();
+    const localLockedById = new Map(
+      loadRevenues()
+        .filter((item) => isLockedAuditStatus(item.auditStatus))
+        .map((item) => [item.id, item.auditStatus] as const),
+    );
+    setRevenues(
+      items.map((item) =>
+        localLockedById.has(item.id)
+          ? { ...item, auditStatus: localLockedById.get(item.id)! }
+          : item,
+      ),
+    );
   }, []);
 
   const refreshExpenses = useCallback(async () => {
     const items = await fetchExpenseRecords();
-    setExpenses(items);
+    const localLockedById = new Map(
+      loadExpenses()
+        .filter((item) => isLockedAuditStatus(item.auditStatus))
+        .map((item) => [item.id, item.auditStatus] as const),
+    );
+    setExpenses(
+      items.map((item) =>
+        localLockedById.has(item.id)
+          ? { ...item, auditStatus: localLockedById.get(item.id)! }
+          : item,
+      ),
+    );
   }, []);
 
   useEffect(() => {
@@ -106,7 +129,7 @@ export default function App() {
 
   useEffect(() => {
     if (authStatus === 'authenticated') {
-      refreshRevenues();
+      void refreshRevenues();
       void refreshExpenses();
       preloadRestaurantParameters().catch((err) => {
         console.error('[App] 預載 restaurant_parameters 失敗：', err);

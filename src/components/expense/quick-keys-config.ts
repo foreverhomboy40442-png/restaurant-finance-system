@@ -153,6 +153,12 @@ export const PT_QUICK_KEYS: QuickKeyItem[] = [
     merchant: '洗碗',
     category: EXPENSE_CATEGORY.LABOR,
   },
+  {
+    key: 'pt-PT',
+    label: 'PT',
+    merchant: 'PT',
+    category: EXPENSE_CATEGORY.LABOR,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -168,9 +174,9 @@ export const PAYMENT_QUICK_KEYS: QuickKeyItem[] = [
     defaultNote: '支付貨款',
   },
   {
-    key: 'pay-惠通一',
-    label: '惠通(一)',
-    merchant: '惠通(一)',
+    key: 'pay-惠通',
+    label: '惠通',
+    merchant: '惠通',
     category: EXPENSE_CATEGORY.INGREDIENTS,
     defaultNote: '支付貨款',
   },
@@ -185,13 +191,6 @@ export const PAYMENT_QUICK_KEYS: QuickKeyItem[] = [
     key: 'pay-大友二',
     label: '大友(二)',
     merchant: '大友(二)',
-    category: EXPENSE_CATEGORY.INGREDIENTS,
-    defaultNote: '支付貨款',
-  },
-  {
-    key: 'pay-惠通二',
-    label: '惠通(二)',
-    merchant: '惠通(二)',
     category: EXPENSE_CATEGORY.INGREDIENTS,
     defaultNote: '支付貨款',
   },
