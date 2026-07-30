@@ -135,6 +135,7 @@ export default function ExpenseManagement({
     createEmptyForm(defaultOperatorId),
   );
   const [editFormError, setEditFormError] = useState<string | null>(null);
+  const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // 刪除確認
@@ -276,6 +277,7 @@ export default function ExpenseManagement({
 
     setIsSaving(true);
     setEditFormError(null);
+    setSaveNotice(null);
 
     try {
       const validation = validateRevenueAmountInput(confirmPayload.amountRaw);
@@ -296,6 +298,9 @@ export default function ExpenseManagement({
         if (!result.ok) {
           throw new Error(result.message);
         }
+        if ('warning' in result && result.warning) {
+          setSaveNotice(result.warning);
+        }
       } else if (confirmMode === 'update' && editingId) {
         const result = await updateExpenseRecord(editingId, {
           date: confirmPayload.dateInput,
@@ -309,6 +314,9 @@ export default function ExpenseManagement({
         if (!result.ok) {
           throw new Error(result.message);
         }
+        if ('warning' in result && result.warning) {
+          setSaveNotice(result.warning);
+        }
 
         setEditingId(null);
         setEditForm(createEmptyForm(defaultOperatorId));
@@ -320,9 +328,9 @@ export default function ExpenseManagement({
       setConfirmMode(null);
       setConfirmPayload(null);
     } catch (error) {
-      setEditFormError(
-        error instanceof Error ? error.message : '儲存失敗',
-      );
+      const message = error instanceof Error ? error.message : '儲存失敗';
+      setEditFormError(message);
+      setSaveNotice(message);
       setConfirmMode(null);
       setConfirmPayload(null);
     } finally {
@@ -403,6 +411,19 @@ export default function ExpenseManagement({
 
   return (
     <div className="space-y-6 md:space-y-10">
+      {(saveNotice || editFormError) && (
+        <div
+          className={`rounded-sm border px-4 py-3 text-sm ${
+            editFormError
+              ? 'border-canton-red/25 bg-canton-red/[0.06] text-canton-red'
+              : 'border-amber-300/60 bg-amber-50 text-amber-900'
+          }`}
+          role="alert"
+        >
+          {editFormError ?? saveNotice}
+        </div>
+      )}
+
       {/* ── 頂部：三分頁 Tab 輸入區 ── */}
       <section className="max-w-full overflow-hidden rounded-sm border border-canton-dark/8 bg-white shadow-canton">
         {/* 分頁 Tab 列 */}

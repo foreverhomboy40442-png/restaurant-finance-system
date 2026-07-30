@@ -97,6 +97,44 @@ function parseAuditStatus(value: unknown): AuditStatus {
   return AUDIT_STATUS.DRAFT;
 }
 
+function isMissingColumnError(error: { message?: string; code?: string }): boolean {
+  return error.code === '42703' || (error.message?.includes('does not exist') ?? false);
+}
+
+interface ExpenseRecordPayload {
+  date: string;
+  type: 'expense';
+  main_category: string;
+  amount: number;
+  merchant?: string;
+  note?: string;
+  operator_id?: string;
+  audit_status?: string;
+}
+
+function buildExpenseRecordPayload(
+  input: InsertExpenseRecordInput,
+  includeDetails: boolean,
+): ExpenseRecordPayload {
+  const selectedDate = normalizeExpenseDate(input.date || getTodayDateString());
+  const base: ExpenseRecordPayload = {
+    date: selectedDate,
+    type: 'expense',
+    main_category: toMainCategory(input.category),
+    amount: -Math.abs(input.amount),
+  };
+
+  if (!includeDetails) return base;
+
+  return {
+    ...base,
+    ...(input.merchant?.trim() ? { merchant: input.merchant.trim() } : {}),
+    ...(input.note?.trim() ? { note: input.note.trim() } : {}),
+    ...(input.operatorId?.trim() ? { operator_id: input.operatorId.trim() } : {}),
+    audit_status: AUDIT_STATUS.DRAFT,
+  };
+}
+
 function mapRowToExpenseItem(row: FinancialRecordRow): ExpenseItem | null {
   try {
     const rawAmount = Number(row.amount);
@@ -182,34 +220,61 @@ export async function fetchRevenueRecords(): Promise<RevenueItem[]> {
   return items;
 }
 
+async function insertExpensePayload(
+  payload: ExpenseRecordPayload,
+): Promise<{ ok: true } | { ok: false; message: string; missingColumn?: boolean }> {
+  const { error } = await supabase.from('financial_records').insert([payload]);
+
+  if (error) {
+    console.error('[financialRecords] 新增失敗：', error.message);
+    return {
+      ok: false,
+      message: error.message,
+      missingColumn: isMissingColumnError(error),
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function insertExpenseRecord(
   input: InsertExpenseRecordInput,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  const selectedDate = normalizeExpenseDate(input.date || getTodayDateString());
+): Promise<{ ok: true; warning?: string } | { ok: false; message: string }> {
   const enteredAmount = input.amount;
 
   if (!Number.isFinite(enteredAmount) || enteredAmount <= 0) {
     return { ok: false, message: '金額必須為正數' };
   }
 
-  const payload = {
-    date: selectedDate,
-    type: 'expense' as const,
-    main_category: toMainCategory(input.category),
-    amount: -Math.abs(enteredAmount),
-    ...(input.merchant?.trim() ? { merchant: input.merchant.trim() } : {}),
-    ...(input.note?.trim() ? { note: input.note.trim() } : {}),
-    ...(input.operatorId?.trim() ? { operator_id: input.operatorId.trim() } : {}),
-  };
+  const fullPayload = buildExpenseRecordPayload(
+    { ...input, amount: enteredAmount },
+    true,
+  );
+  const result = await insertExpensePayload(fullPayload);
 
-  const { error } = await supabase.from('financial_records').insert([payload]);
-
-  if (error) {
-    console.error('[financialRecords] 新增失敗：', error.message);
-    return { ok: false, message: error.message };
+  if (result.ok) {
+    return { ok: true };
   }
 
-  return { ok: true };
+  if (!result.missingColumn) {
+    return { ok: false, message: result.message };
+  }
+
+  const fallbackPayload = buildExpenseRecordPayload(
+    { ...input, amount: enteredAmount },
+    false,
+  );
+  const fallbackResult = await insertExpensePayload(fallbackPayload);
+
+  if (!fallbackResult.ok) {
+    return { ok: false, message: fallbackResult.message };
+  }
+
+  return {
+    ok: true,
+    warning:
+      '支出已入帳，但 Supabase 尚未建立 merchant / note 欄位，供應商細節暫未寫入雲端。請在 Supabase SQL Editor 執行專案內 migration 後重新入帳。',
+  };
 }
 
 export async function insertRevenueRecord(
@@ -239,36 +304,67 @@ export async function insertRevenueRecord(
   return { ok: true };
 }
 
+async function updateExpensePayload(
+  id: string,
+  payload: ExpenseRecordPayload,
+): Promise<{ ok: true } | { ok: false; message: string; missingColumn?: boolean }> {
+  const { error } = await supabase
+    .from('financial_records')
+    .update(payload)
+    .eq('id', id)
+    .eq('type', 'expense');
+
+  if (error) {
+    console.error('[financialRecords] 更新失敗：', error.message);
+    return {
+      ok: false,
+      message: error.message,
+      missingColumn: isMissingColumnError(error),
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function updateExpenseRecord(
   id: string,
   input: InsertExpenseRecordInput,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  const selectedDate = normalizeExpenseDate(input.date);
+): Promise<{ ok: true; warning?: string } | { ok: false; message: string }> {
   const enteredAmount = input.amount;
 
   if (!Number.isFinite(enteredAmount) || enteredAmount <= 0) {
     return { ok: false, message: '金額必須為正數' };
   }
 
-  const { error } = await supabase
-    .from('financial_records')
-    .update({
-      date: selectedDate,
-      main_category: toMainCategory(input.category),
-      amount: -Math.abs(enteredAmount),
-      ...(input.merchant?.trim() ? { merchant: input.merchant.trim() } : {}),
-      ...(input.note?.trim() ? { note: input.note.trim() } : {}),
-      ...(input.operatorId?.trim() ? { operator_id: input.operatorId.trim() } : {}),
-    })
-    .eq('id', id)
-    .eq('type', 'expense');
+  const fullPayload = buildExpenseRecordPayload(
+    { ...input, amount: enteredAmount },
+    true,
+  );
+  const result = await updateExpensePayload(id, fullPayload);
 
-  if (error) {
-    console.error('[financialRecords] 更新失敗：', error.message);
-    return { ok: false, message: error.message };
+  if (result.ok) {
+    return { ok: true };
   }
 
-  return { ok: true };
+  if (!result.missingColumn) {
+    return { ok: false, message: result.message };
+  }
+
+  const fallbackPayload = buildExpenseRecordPayload(
+    { ...input, amount: enteredAmount },
+    false,
+  );
+  const fallbackResult = await updateExpensePayload(id, fallbackPayload);
+
+  if (!fallbackResult.ok) {
+    return { ok: false, message: fallbackResult.message };
+  }
+
+  return {
+    ok: true,
+    warning:
+      '支出已更新，但 Supabase 尚未建立 merchant / note 欄位，供應商細節暫未寫入雲端。',
+  };
 }
 
 export async function updateRevenueRecord(
