@@ -98,7 +98,14 @@ function parseAuditStatus(value: unknown): AuditStatus {
 }
 
 function isMissingColumnError(error: { message?: string; code?: string }): boolean {
-  return error.code === '42703' || (error.message?.includes('does not exist') ?? false);
+  const message = error.message?.toLowerCase() ?? '';
+  return (
+    error.code === '42703' ||
+    error.code === 'PGRST204' ||
+    message.includes('does not exist') ||
+    message.includes('could not find') ||
+    message.includes('schema cache')
+  );
 }
 
 interface ExpenseRecordPayload {
@@ -131,7 +138,6 @@ function buildExpenseRecordPayload(
     ...(input.merchant?.trim() ? { merchant: input.merchant.trim() } : {}),
     ...(input.note?.trim() ? { note: input.note.trim() } : {}),
     ...(input.operatorId?.trim() ? { operator_id: input.operatorId.trim() } : {}),
-    audit_status: AUDIT_STATUS.DRAFT,
   };
 }
 
