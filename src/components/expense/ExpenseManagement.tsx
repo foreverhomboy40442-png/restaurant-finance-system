@@ -196,7 +196,7 @@ export default function ExpenseManagement({
       dateInput: date.trim() || getTodayDateInput(),
       category: pendingKey.category,
       amountRaw: amount,
-      merchant,
+      merchant: merchant.trim() || pendingKey.merchant.trim() || pendingKey.label,
       invoiceNumber: '',
       operatorId: defaultOperatorId,
       note,

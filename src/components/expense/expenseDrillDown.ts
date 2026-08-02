@@ -6,7 +6,7 @@
  */
 
 import type { ExpenseItem } from '../../types';
-import { EXPENSE_CATEGORY, EXPENSE_CATEGORY_LABEL } from '../../types';
+import { EXPENSE_CATEGORY } from '../../types';
 import { QUICK_KEYS_BY_TAB, type ExpenseTab } from './quick-keys-config';
 
 export const PAYMENT_MERCHANT_SET = new Set([
@@ -38,18 +38,9 @@ const SUB_LABEL_ALIASES: Record<string, string> = {
   '燈泡': '修繕',
 };
 
-const GENERIC_SUB_LABELS = new Set([
-  ...Object.values(EXPENSE_CATEGORY_LABEL),
-  '支出',
-]);
-
 function normalizeMerchant(merchant: string): string {
   const trimmed = merchant.trim();
   return LEGACY_MERCHANT_ALIASES[trimmed] ?? trimmed;
-}
-
-function isGenericSubLabel(text: string): boolean {
-  return GENERIC_SUB_LABELS.has(text.trim());
 }
 
 /** 判定一筆支出屬於哪個入帳分頁（與 ExpenseManagement 五大 Tab 一致） */
@@ -114,8 +105,8 @@ export function resolveExpenseSubLabel(item: ExpenseItem, tab: ExpenseTab): stri
   const merchant = normalizeMerchant(item.merchant);
   const note = item.note?.trim() ?? '';
 
-  // 1. 明確的子項目名稱（菜金、油條、林安邦…）
-  if (merchant && !isGenericSubLabel(merchant)) {
+  // 1. 快捷鍵允許的子項目（含與大科目同名的「修繕」「房租」等，不可被 isGenericSubLabel 擋掉）
+  if (merchant) {
     const matched = matchAllowedSubLabel(merchant, allowed);
     if (matched) return matched;
   }

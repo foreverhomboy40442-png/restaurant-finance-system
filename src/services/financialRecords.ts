@@ -149,6 +149,7 @@ function buildExpenseRecordPayload(
   includeDetails: boolean,
 ): ExpenseRecordPayload {
   const selectedDate = normalizeExpenseDate(input.date || getTodayDateString());
+  const merchant = input.merchant?.trim() ?? '';
   const base: ExpenseRecordPayload = {
     date: selectedDate,
     type: 'expense',
@@ -161,11 +162,46 @@ function buildExpenseRecordPayload(
   return {
     ...base,
     audit_status: AUDIT_STATUS.DRAFT,
-    ...(input.merchant?.trim() ? { merchant: input.merchant.trim() } : {}),
+    merchant,
     ...(input.note?.trim() ? { note: input.note.trim() } : {}),
     ...(input.operatorId?.trim() ? { operator_id: input.operatorId.trim() } : {}),
   };
 }
+
+/** 寫入前驗證：食材等科目必須有子項目 merchant（菜金/油條/雞…） */
+function validateExpenseMerchantInput(
+  input: InsertExpenseRecordInput,
+): { ok: true; merchant: string } | { ok: false; message: string } {
+  const merchant = input.merchant?.trim() ?? '';
+
+  if (input.category === EXPENSE_CATEGORY.FIXED_SALARY) {
+    if (!merchant) {
+      return { ok: false, message: '請選擇員工姓名' };
+    }
+    return { ok: true, merchant };
+  }
+
+  const merchantRequired =
+    input.category === EXPENSE_CATEGORY.INGREDIENTS ||
+    input.category === EXPENSE_CATEGORY.LABOR ||
+    input.category === EXPENSE_CATEGORY.UTILITIES ||
+    input.category === EXPENSE_CATEGORY.REPAIR ||
+    input.category === EXPENSE_CATEGORY.RENT ||
+    input.category === EXPENSE_CATEGORY.MARKETING ||
+    input.category === EXPENSE_CATEGORY.OTHER;
+
+  if (merchantRequired && !merchant) {
+    return {
+      ok: false,
+      message: '請填寫支出子項目（如菜金、油條、雞、電費、林安邦等）',
+    };
+  }
+
+  return { ok: true, merchant };
+}
+
+const MIGRATION_REQUIRED_MESSAGE =
+  'Supabase 尚未建立 merchant 等欄位，請在 SQL Editor 執行 supabase/migrations/001_financial_records_details.sql 後再入帳。';
 
 /** 標準科目中文標籤（main_category 常見值，不可當子項目名稱） */
 const STANDARD_MAIN_CATEGORY_LABELS = new Set(Object.values(EXPENSE_CATEGORY_LABEL));
@@ -412,35 +448,26 @@ export async function insertExpenseRecord(
     return { ok: false, message: '金額必須為正數' };
   }
 
-  const fullPayload = buildExpenseRecordPayload(
-    { ...input, amount: enteredAmount },
+  const merchantCheck = validateExpenseMerchantInput(input);
+  if (!merchantCheck.ok) {
+    return merchantCheck;
+  }
+
+  const payload = buildExpenseRecordPayload(
+    { ...input, amount: enteredAmount, merchant: merchantCheck.merchant },
     true,
   );
-  const result = await insertExpensePayload(fullPayload);
+  const result = await insertExpensePayload(payload);
 
   if (result.ok) {
     return { ok: true };
   }
 
-  if (!result.missingColumn) {
-    return { ok: false, message: result.message };
+  if (result.missingColumn) {
+    return { ok: false, message: MIGRATION_REQUIRED_MESSAGE };
   }
 
-  const fallbackPayload = buildExpenseRecordPayload(
-    { ...input, amount: enteredAmount },
-    false,
-  );
-  const fallbackResult = await insertExpensePayload(fallbackPayload);
-
-  if (!fallbackResult.ok) {
-    return { ok: false, message: fallbackResult.message };
-  }
-
-  return {
-    ok: true,
-    warning:
-      '支出已入帳，但 Supabase 尚未建立 merchant / note 欄位，供應商細節暫未寫入雲端。請在 Supabase SQL Editor 執行專案內 migration 後重新入帳。',
-  };
+  return { ok: false, message: result.message };
 }
 
 interface RevenueRecordPayload {
@@ -586,35 +613,26 @@ export async function updateExpenseRecord(
     return { ok: false, message: '金額必須為正數' };
   }
 
-  const fullPayload = buildExpenseRecordPayload(
-    { ...input, amount: enteredAmount },
+  const merchantCheck = validateExpenseMerchantInput(input);
+  if (!merchantCheck.ok) {
+    return merchantCheck;
+  }
+
+  const payload = buildExpenseRecordPayload(
+    { ...input, amount: enteredAmount, merchant: merchantCheck.merchant },
     true,
   );
-  const result = await updateExpensePayload(id, fullPayload);
+  const result = await updateExpensePayload(id, payload);
 
   if (result.ok) {
     return { ok: true };
   }
 
-  if (!result.missingColumn) {
-    return { ok: false, message: result.message };
+  if (result.missingColumn) {
+    return { ok: false, message: MIGRATION_REQUIRED_MESSAGE };
   }
 
-  const fallbackPayload = buildExpenseRecordPayload(
-    { ...input, amount: enteredAmount },
-    false,
-  );
-  const fallbackResult = await updateExpensePayload(id, fallbackPayload);
-
-  if (!fallbackResult.ok) {
-    return { ok: false, message: fallbackResult.message };
-  }
-
-  return {
-    ok: true,
-    warning:
-      '支出已更新，但 Supabase 尚未建立 merchant / note 欄位，供應商細節暫未寫入雲端。',
-  };
+  return { ok: false, message: result.message };
 }
 
 export async function updateRevenueRecord(

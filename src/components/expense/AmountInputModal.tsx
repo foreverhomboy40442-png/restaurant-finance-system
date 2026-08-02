@@ -162,7 +162,7 @@ export default function AmountInputModal({
     if (!isConfirmable || !quickKey) return;
     onConfirm(
       amount.trim(),
-      quickKey.merchant || merchant.trim(),
+      quickKey.merchant.trim() || merchant.trim() || quickKey.label,
       note.trim(),
       dateInput,
     );
