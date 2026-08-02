@@ -2,7 +2,7 @@
  * 支出結構分析 — 五大類別與子科目分組（與支出入帳分頁對齊）
  *
  * 外圈：現金支出 / PT薪資 / 支付貨款 / 修繕 / 固定支出
- * 內圈：各分頁底下的實際項目（菜金、油條、林安邦…）分別加總
+ * 內圈：僅顯示各分頁快捷鍵已定義的項目，其餘併入該分頁的兜底項目（如 PT、其他）
  */
 
 import type { ExpenseItem } from '../../types';
@@ -17,6 +17,30 @@ export const PAYMENT_MERCHANT_SET = new Set([
 const LEGACY_MERCHANT_ALIASES: Record<string, string> = {
   '惠通(一)': '惠通',
   '惠通(二)': '惠通',
+};
+
+/** 無法對應到快捷鍵項目時，併入各分頁既有的兜底標籤 */
+const TAB_FALLBACK_LABEL: Record<ExpenseTab, string> = {
+  cash: '其他',
+  pt: 'PT',
+  payment: '其他',
+  repair: '其他',
+  fixed_salary: '正職薪資',
+};
+
+/** 舊資料 / 資料庫 fallback 名稱 → 快捷鍵項目 */
+const SUB_LABEL_ALIASES: Record<string, string> = {
+  'PT 薪資': 'PT',
+  'PT薪資': 'PT',
+  '支出': '其他',
+  '雜支': '其他',
+  '食材': '其他',
+  '水電': '其他',
+  '行銷': '其他',
+  '固定支出': '正職薪資',
+  '裝潢': '修繕',
+  '冷氣': '修繕',
+  '燈泡': '修繕',
 };
 
 function normalizeMerchant(merchant: string): string {
@@ -43,12 +67,11 @@ export function classifyExpenseTab(item: ExpenseItem): ExpenseTab {
   return 'cash';
 }
 
-/** 子科目顯示名稱：供應商 → 備註 → 科目中文標籤 */
+/** 從原始紀錄解析子科目名稱（供應商 → 備註 → 科目標籤） */
 export function resolveExpenseSubLabel(item: ExpenseItem): string {
   const merchant = normalizeMerchant(item.merchant);
   const note = item.note?.trim();
 
-  // 修繕：備註細分（裝潢 / 冷氣 / 燈泡）
   if (item.category === EXPENSE_CATEGORY.REPAIR && note) {
     if (!merchant || merchant === '修繕') return note;
   }
@@ -58,35 +81,31 @@ export function resolveExpenseSubLabel(item: ExpenseItem): string {
   return EXPENSE_CATEGORY_LABEL[item.category];
 }
 
-/** 各分頁快捷鍵定義的項目順序（作為圖表排序優先） */
-export function getPreferredSubLabels(tab: ExpenseTab): string[] {
-  const labels: string[] = [];
-  const seen = new Set<string>();
-
+/** 各分頁快捷鍵允許出現在圖表上的項目集合 */
+export function getAllowedSubLabelSet(tab: ExpenseTab): Set<string> {
+  const labels = new Set<string>();
   for (const key of QUICK_KEYS_BY_TAB[tab]) {
-    if (key.label === '其他' && !key.merchant.trim()) continue;
-
-    if (!seen.has(key.label)) {
-      labels.push(key.label);
-      seen.add(key.label);
-    }
-
-    if (key.merchant.trim() && key.merchant !== key.label && !seen.has(key.merchant)) {
-      labels.push(key.merchant);
-      seen.add(key.merchant);
-    }
-
+    labels.add(key.label);
+    if (key.merchant.trim()) labels.add(key.merchant);
     if (key.merchantOptions) {
-      for (const name of key.merchantOptions) {
-        if (!seen.has(name)) {
-          labels.push(name);
-          seen.add(name);
-        }
-      }
+      for (const name of key.merchantOptions) labels.add(name);
     }
   }
-
   return labels;
+}
+
+/** 將任意名稱映射到該分頁快捷鍵項目（杜絕圖表出現未定義的新項目） */
+export function normalizeToAllowedSubLabel(tab: ExpenseTab, raw: string): string {
+  const allowed = getAllowedSubLabelSet(tab);
+  const trimmed = raw.trim();
+
+  if (allowed.has(trimmed)) return trimmed;
+
+  const aliased = SUB_LABEL_ALIASES[trimmed];
+  if (aliased && allowed.has(aliased)) return aliased;
+
+  const fallback = TAB_FALLBACK_LABEL[tab];
+  return allowed.has(fallback) ? fallback : fallback;
 }
 
 export interface SubCategoryBucket {
@@ -94,7 +113,7 @@ export interface SubCategoryBucket {
   value: number;
 }
 
-/** 依分頁加總各子科目（每個項目獨立一行，不再整包歸「其他」） */
+/** 依分頁加總各子科目，僅顯示快捷鍵項目，依金額遞減排序 */
 export function buildSubCategoryBuckets(
   expenses: ExpenseItem[],
   tab: ExpenseTab,
@@ -103,29 +122,13 @@ export function buildSubCategoryBuckets(
 
   for (const e of expenses) {
     if (classifyExpenseTab(e) !== tab) continue;
-    const label = resolveExpenseSubLabel(e);
+    const raw = resolveExpenseSubLabel(e);
+    const label = normalizeToAllowedSubLabel(tab, raw);
     buckets.set(label, (buckets.get(label) ?? 0) + e.amount);
   }
 
-  const preferred = getPreferredSubLabels(tab);
-  const result: SubCategoryBucket[] = [];
-  const used = new Set<string>();
-
-  for (const label of preferred) {
-    const value = buckets.get(label);
-    if (value !== undefined && value > 0) {
-      result.push({ label, value });
-      used.add(label);
-    }
-  }
-
-  const extras = [...buckets.entries()]
-    .filter(([label, value]) => value > 0 && !used.has(label))
-    .sort((a, b) => b[1] - a[1]);
-
-  for (const [label, value] of extras) {
-    result.push({ label, value });
-  }
-
-  return result;
+  return [...buckets.entries()]
+    .filter(([, value]) => value > 0)
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value);
 }
