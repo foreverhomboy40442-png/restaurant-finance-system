@@ -167,17 +167,43 @@ function buildExpenseRecordPayload(
   };
 }
 
+/** 標準科目中文標籤（main_category 常見值，不可當子項目名稱） */
+const STANDARD_MAIN_CATEGORY_LABELS = new Set(Object.values(EXPENSE_CATEGORY_LABEL));
+
+/**
+ * 從雲端列推斷供應商／子項目名稱。
+ * 優先 merchant 欄；若缺欄位且 main_category 為「菜金」等非科目名稱，視為子項目。
+ */
+function inferExpenseMerchant(row: FinancialRecordRow): string {
+  const merchantCol = row.merchant?.trim() ?? '';
+  if (merchantCol && !STANDARD_MAIN_CATEGORY_LABELS.has(merchantCol)) {
+    return merchantCol;
+  }
+
+  const mainCat = row.main_category?.trim() ?? '';
+  if (mainCat && !STANDARD_MAIN_CATEGORY_LABELS.has(mainCat)) {
+    return mainCat;
+  }
+
+  return merchantCol;
+}
+
 function mapRowToExpenseItem(row: FinancialRecordRow): ExpenseItem | null {
   try {
     const rawAmount = Number(row.amount);
     if (!Number.isFinite(rawAmount)) return null;
 
+    const category = fromMainCategory(row.main_category);
+    const merchant = inferExpenseMerchant(row)
+      || EXPENSE_CATEGORY_LABEL[category]
+      || '支出';
+
     return {
       id: String(row.id),
       date: createFinancialDate(normalizeRowDate(row.date)),
-      category: fromMainCategory(row.main_category),
+      category,
       amount: createMoney(Math.abs(rawAmount), { allowZero: false }),
-      merchant: (row.merchant?.trim() || row.main_category || '支出').trim(),
+      merchant,
       operatorId: row.operator_id?.trim() || 'admin',
       auditStatus: parseAuditStatus(row.audit_status),
       ...(row.note?.trim() ? { note: row.note.trim() } : {}),
