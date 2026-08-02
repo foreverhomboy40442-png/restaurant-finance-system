@@ -36,6 +36,23 @@ interface FinancialRecordRow {
   created_at?: string | null;
 }
 
+/** Supabase PostgREST 單次查詢上限 */
+const FETCH_PAGE_SIZE = 1000;
+
+export interface FetchRecordsOk<T> {
+  ok: true;
+  data: T[];
+  totalRows: number;
+  droppedCount: number;
+}
+
+export interface FetchRecordsErr {
+  ok: false;
+  message: string;
+}
+
+export type FetchRecordsResult<T> = FetchRecordsOk<T> | FetchRecordsErr;
+
 export interface InsertExpenseRecordInput {
   date: string;
   category: ExpenseCategory;
@@ -62,6 +79,14 @@ export function normalizeExpenseDate(dateInput: string): string {
   const trimmed = dateInput.trim();
   createFinancialDate(trimmed);
   return trimmed;
+}
+
+/** 將 Supabase 回傳日期正規化為 YYYY-MM-DD（相容 ISO 時間戳與斜線格式） */
+function normalizeRowDate(raw: string): string {
+  const normalized = raw.trim().replace(/\//g, '-');
+  const match = normalized.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) return match[1];
+  return normalized;
 }
 
 function toMainCategory(category: ExpenseCategory): string {
@@ -135,6 +160,7 @@ function buildExpenseRecordPayload(
 
   return {
     ...base,
+    audit_status: AUDIT_STATUS.DRAFT,
     ...(input.merchant?.trim() ? { merchant: input.merchant.trim() } : {}),
     ...(input.note?.trim() ? { note: input.note.trim() } : {}),
     ...(input.operatorId?.trim() ? { operator_id: input.operatorId.trim() } : {}),
@@ -148,7 +174,7 @@ function mapRowToExpenseItem(row: FinancialRecordRow): ExpenseItem | null {
 
     return {
       id: String(row.id),
-      date: createFinancialDate(row.date),
+      date: createFinancialDate(normalizeRowDate(row.date)),
       category: fromMainCategory(row.main_category),
       amount: createMoney(Math.abs(rawAmount), { allowZero: false }),
       merchant: (row.merchant?.trim() || row.main_category || '支出').trim(),
@@ -169,7 +195,7 @@ function mapRowToRevenueItem(row: FinancialRecordRow): RevenueItem | null {
 
     return {
       id: String(row.id),
-      date: createFinancialDate(row.date),
+      date: createFinancialDate(normalizeRowDate(row.date)),
       period: fromRevenueMainCategory(row.main_category),
       amount: createMoney(Math.abs(rawAmount), { allowZero: false }),
       operatorId: row.operator_id?.trim() || 'admin',
@@ -182,48 +208,156 @@ function mapRowToRevenueItem(row: FinancialRecordRow): RevenueItem | null {
   }
 }
 
-export async function fetchExpenseRecords(): Promise<ExpenseItem[]> {
-  const { data, error } = await supabase
-    .from('financial_records')
-    .select('*')
-    .eq('type', 'expense')
-    .order('date', { ascending: false });
+async function fetchAllRowsByType(
+  type: 'expense' | 'revenue',
+): Promise<{ rows: FinancialRecordRow[] } | { error: string }> {
+  const rows: FinancialRecordRow[] = [];
+  let from = 0;
 
-  if (error) {
-    console.error('[financialRecords] 載入失敗：', error.message);
-    return [];
+  while (true) {
+    const { data, error } = await supabase
+      .from('financial_records')
+      .select('*')
+      .eq('type', type)
+      .order('date', { ascending: false })
+      .range(from, from + FETCH_PAGE_SIZE - 1);
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    const page = (data ?? []) as FinancialRecordRow[];
+    rows.push(...page);
+
+    if (page.length < FETCH_PAGE_SIZE) break;
+    from += FETCH_PAGE_SIZE;
   }
 
-  if (!data?.length) return [];
-
-  const items: ExpenseItem[] = [];
-  for (const row of data as FinancialRecordRow[]) {
-    const item = mapRowToExpenseItem(row);
-    if (item) items.push(item);
-  }
-  return items;
+  return { rows };
 }
 
-export async function fetchRevenueRecords(): Promise<RevenueItem[]> {
+function mapRowsToItems<T>(
+  rows: FinancialRecordRow[],
+  mapper: (row: FinancialRecordRow) => T | null,
+): { items: T[]; droppedCount: number } {
+  const items: T[] = [];
+  let droppedCount = 0;
+
+  for (const row of rows) {
+    const item = mapper(row);
+    if (item) {
+      items.push(item);
+    } else {
+      droppedCount += 1;
+    }
+  }
+
+  if (droppedCount > 0) {
+    console.warn(
+      `[financialRecords] ${droppedCount} 筆雲端紀錄因格式不符已略過，網站加總可能低於雲端總額`,
+    );
+  }
+
+  return { items, droppedCount };
+}
+
+export async function fetchExpenseRecords(): Promise<FetchRecordsResult<ExpenseItem>> {
+  const result = await fetchAllRowsByType('expense');
+  if ('error' in result) {
+    console.error('[financialRecords] 載入失敗：', result.error);
+    return { ok: false, message: result.error };
+  }
+
+  const { items, droppedCount } = mapRowsToItems(result.rows, mapRowToExpenseItem);
+  return {
+    ok: true,
+    data: items,
+    totalRows: result.rows.length,
+    droppedCount,
+  };
+}
+
+export async function fetchRevenueRecords(): Promise<FetchRecordsResult<RevenueItem>> {
+  const result = await fetchAllRowsByType('revenue');
+  if ('error' in result) {
+    console.error('[financialRecords] 營收載入失敗：', result.error);
+    return { ok: false, message: result.error };
+  }
+
+  const { items, droppedCount } = mapRowsToItems(result.rows, mapRowToRevenueItem);
+  return {
+    ok: true,
+    data: items,
+    totalRows: result.rows.length,
+    droppedCount,
+  };
+}
+
+/** 將本機曾鎖定但雲端仍為 draft 的帳目，補寫 audit_status 至 Supabase */
+export async function migrateLocalLocksToCloud(
+  localLockedIds: string[],
+  cloudItems: Array<{ id: string; auditStatus: AuditStatus }>,
+): Promise<void> {
+  const cloudDraftIds = new Set(
+    cloudItems
+      .filter((item) => item.auditStatus === AUDIT_STATUS.DRAFT)
+      .map((item) => item.id),
+  );
+
+  for (const id of localLockedIds) {
+    if (!cloudDraftIds.has(id)) continue;
+    await supabase
+      .from('financial_records')
+      .update({ audit_status: AUDIT_STATUS.LOCKED })
+      .eq('id', id)
+      .eq('audit_status', AUDIT_STATUS.DRAFT);
+  }
+}
+
+export async function lockExpenseRecord(
+  id: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
   const { data, error } = await supabase
     .from('financial_records')
-    .select('*')
-    .eq('type', 'revenue')
-    .order('date', { ascending: false });
+    .update({ audit_status: AUDIT_STATUS.LOCKED })
+    .eq('id', id)
+    .eq('type', 'expense')
+    .eq('audit_status', AUDIT_STATUS.DRAFT)
+    .select('id');
 
   if (error) {
-    console.error('[financialRecords] 營收載入失敗：', error.message);
-    return [];
+    console.error('[financialRecords] 支出鎖定失敗：', error.message);
+    return { ok: false, message: error.message };
   }
 
-  if (!data?.length) return [];
-
-  const items: RevenueItem[] = [];
-  for (const row of data as FinancialRecordRow[]) {
-    const item = mapRowToRevenueItem(row);
-    if (item) items.push(item);
+  if (!data?.length) {
+    return { ok: false, message: '找不到可鎖定的草稿支出，或該筆已在雲端鎖定' };
   }
-  return items;
+
+  return { ok: true };
+}
+
+export async function lockRevenueRecord(
+  id: string,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  const { data, error } = await supabase
+    .from('financial_records')
+    .update({ audit_status: AUDIT_STATUS.LOCKED })
+    .eq('id', id)
+    .eq('type', 'revenue')
+    .eq('audit_status', AUDIT_STATUS.DRAFT)
+    .select('id');
+
+  if (error) {
+    console.error('[financialRecords] 營收鎖定失敗：', error.message);
+    return { ok: false, message: error.message };
+  }
+
+  if (!data?.length) {
+    return { ok: false, message: '找不到可鎖定的草稿營收，或該筆已在雲端鎖定' };
+  }
+
+  return { ok: true };
 }
 
 async function insertExpensePayload(
@@ -283,28 +417,112 @@ export async function insertExpenseRecord(
   };
 }
 
+interface RevenueRecordPayload {
+  date: string;
+  type: 'revenue';
+  main_category: string;
+  amount: number;
+  operator_id?: string;
+  note?: string;
+  audit_status?: string;
+}
+
+function buildRevenueRecordPayload(
+  input: InsertRevenueRecordInput,
+  includeDetails: boolean,
+): RevenueRecordPayload {
+  const selectedDate = normalizeExpenseDate(input.date || getTodayDateString());
+  const base: RevenueRecordPayload = {
+    date: selectedDate,
+    type: 'revenue',
+    main_category: toRevenueMainCategory(input.period),
+    amount: Math.abs(input.amount),
+  };
+
+  if (!includeDetails) return base;
+
+  return {
+    ...base,
+    audit_status: AUDIT_STATUS.DRAFT,
+    ...(input.operatorId?.trim() ? { operator_id: input.operatorId.trim() } : {}),
+    ...(input.note?.trim() ? { note: input.note.trim() } : {}),
+  };
+}
+
+async function insertRevenuePayload(
+  payload: RevenueRecordPayload,
+): Promise<{ ok: true } | { ok: false; message: string; missingColumn?: boolean }> {
+  const { error } = await supabase.from('financial_records').insert([payload]);
+
+  if (error) {
+    console.error('[financialRecords] 營收新增失敗：', error.message);
+    return {
+      ok: false,
+      message: error.message,
+      missingColumn: isMissingColumnError(error),
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function insertRevenueRecord(
   input: InsertRevenueRecordInput,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  const selectedDate = normalizeExpenseDate(input.date || getTodayDateString());
+): Promise<{ ok: true; warning?: string } | { ok: false; message: string }> {
   const enteredAmount = input.amount;
 
   if (!Number.isFinite(enteredAmount) || enteredAmount <= 0) {
     return { ok: false, message: '金額必須為正數' };
   }
 
-  const payload = {
-    date: selectedDate,
-    type: 'revenue' as const,
-    main_category: toRevenueMainCategory(input.period),
-    amount: Math.abs(enteredAmount),
-  };
+  const fullPayload = buildRevenueRecordPayload(
+    { ...input, amount: enteredAmount },
+    true,
+  );
+  const result = await insertRevenuePayload(fullPayload);
 
-  const { error } = await supabase.from('financial_records').insert([payload]);
+  if (result.ok) {
+    return { ok: true };
+  }
+
+  if (!result.missingColumn) {
+    return { ok: false, message: result.message };
+  }
+
+  const fallbackPayload = buildRevenueRecordPayload(
+    { ...input, amount: enteredAmount },
+    false,
+  );
+  const fallbackResult = await insertRevenuePayload(fallbackPayload);
+
+  if (!fallbackResult.ok) {
+    return { ok: false, message: fallbackResult.message };
+  }
+
+  return {
+    ok: true,
+    warning:
+      '營收已入帳，但 Supabase 尚未建立 operator_id / note 欄位，部分細節暫未寫入雲端。請執行專案 migration 後重新入帳。',
+  };
+}
+
+async function updateRevenuePayload(
+  id: string,
+  payload: RevenueRecordPayload,
+): Promise<{ ok: true } | { ok: false; message: string; missingColumn?: boolean }> {
+  const { error } = await supabase
+    .from('financial_records')
+    .update(payload)
+    .eq('id', id)
+    .eq('type', 'revenue');
 
   if (error) {
-    console.error('[financialRecords] 營收新增失敗：', error.message);
-    return { ok: false, message: error.message };
+    console.error('[financialRecords] 營收更新失敗：', error.message);
+    return {
+      ok: false,
+      message: error.message,
+      missingColumn: isMissingColumnError(error),
+    };
   }
 
   return { ok: true };
@@ -376,30 +594,42 @@ export async function updateExpenseRecord(
 export async function updateRevenueRecord(
   id: string,
   input: InsertRevenueRecordInput,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  const selectedDate = normalizeExpenseDate(input.date);
+): Promise<{ ok: true; warning?: string } | { ok: false; message: string }> {
   const enteredAmount = input.amount;
 
   if (!Number.isFinite(enteredAmount) || enteredAmount <= 0) {
     return { ok: false, message: '金額必須為正數' };
   }
 
-  const { error } = await supabase
-    .from('financial_records')
-    .update({
-      date: selectedDate,
-      main_category: toRevenueMainCategory(input.period),
-      amount: Math.abs(enteredAmount),
-    })
-    .eq('id', id)
-    .eq('type', 'revenue');
+  const fullPayload = buildRevenueRecordPayload(
+    { ...input, amount: enteredAmount },
+    true,
+  );
+  const result = await updateRevenuePayload(id, fullPayload);
 
-  if (error) {
-    console.error('[financialRecords] 營收更新失敗：', error.message);
-    return { ok: false, message: error.message };
+  if (result.ok) {
+    return { ok: true };
   }
 
-  return { ok: true };
+  if (!result.missingColumn) {
+    return { ok: false, message: result.message };
+  }
+
+  const fallbackPayload = buildRevenueRecordPayload(
+    { ...input, amount: enteredAmount },
+    false,
+  );
+  const fallbackResult = await updateRevenuePayload(id, fallbackPayload);
+
+  if (!fallbackResult.ok) {
+    return { ok: false, message: fallbackResult.message };
+  }
+
+  return {
+    ok: true,
+    warning:
+      '營收已更新，但 Supabase 尚未建立 operator_id / note 欄位，部分細節暫未寫入雲端。',
+  };
 }
 
 export async function deleteExpenseRecord(

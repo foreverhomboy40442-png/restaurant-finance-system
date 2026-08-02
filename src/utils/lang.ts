@@ -144,6 +144,8 @@ const zh = {
   errSaveFailed: '儲存失敗',
   errDeleteFailed: '刪除失敗',
   errLockFailed: '鎖定失敗',
+  syncErrorBanner: '無法同步雲端財務資料：{message}。目前顯示的數字可能不是最新，請重新整理。',
+  syncRetry: '重新同步',
   errAmountNoDecimalOrNegative: '金額不可包含小數或負數',
   errAmountInvalidInteger: '請輸入有效的整數金額',
   errAmountOutOfRange: '金額超出可接受範圍',
@@ -190,9 +192,10 @@ const zh = {
   catRent: '房租',
   catUtilities: '水電瓦斯',
   catMarketing: '行銷推廣',
-  catRepair: '修繕',
+  catRepair: '修繕費用',
   catFixedSalary: '固定支出',
   catOther: '雜支',
+  catOperatingMisc: '營運雜支',
 
   // ── 支出科目（表單）──
   expenseCatIngredients: '食材',
@@ -394,6 +397,8 @@ const en: Record<keyof typeof zh, string> = {
   errSaveFailed: 'Save failed.',
   errDeleteFailed: 'Delete failed.',
   errLockFailed: 'Lock failed.',
+  syncErrorBanner: 'Could not sync financial data from cloud: {message}. Displayed totals may be outdated.',
+  syncRetry: 'Retry sync',
   errAmountNoDecimalOrNegative: 'Amount cannot contain decimals or negatives.',
   errAmountInvalidInteger: 'Please enter a valid whole number.',
   errAmountOutOfRange: 'Amount exceeds acceptable range.',
@@ -437,9 +442,10 @@ const en: Record<keyof typeof zh, string> = {
   catRent: 'Rent',
   catUtilities: 'Utilities',
   catMarketing: 'Marketing',
-  catRepair: 'Repairs',
+  catRepair: 'Repairs & Maintenance',
   catFixedSalary: 'Fixed Costs',
   catOther: 'Miscellaneous',
+  catOperatingMisc: 'Operating Misc.',
 
   expenseCatIngredients: 'Food & Ingredients',
   expenseCatLabor: 'Labor & Payroll',
@@ -555,6 +561,15 @@ const BREAKDOWN_CAT_KEYS: Record<string, TranslationKey> = {
   other: 'catOther',
 };
 
+/** 財務報表 5 大科目標籤（ManagementTab / ShareholderTab / Excel 共用） */
+const REPORT_CAT_KEYS: Record<string, TranslationKey> = {
+  ingredients: 'catIngredients',
+  labor: 'catLabor',
+  utilities: 'catUtilities',
+  repair: 'catRepair',
+  operating_misc: 'catOperatingMisc',
+};
+
 /** 資料庫／報表可能出現的中文標籤 → 英文顯示（不影響寫入或比對） */
 export const DATA_LABEL_EN: Readonly<Record<string, string>> = {
   '營業總收入': 'Gross Revenue',
@@ -623,6 +638,16 @@ export function getBreakdownCategoryLabel(
   key: string,
 ): string {
   const tk = BREAKDOWN_CAT_KEYS[key];
+  if (tk) return translate(lang, tk);
+  return translateDataLabel(lang, key);
+}
+
+/** 財務報表 5 大科目顯示標籤 */
+export function getReportCategoryLabel(
+  lang: Lang,
+  key: string,
+): string {
+  const tk = REPORT_CAT_KEYS[key];
   if (tk) return translate(lang, tk);
   return translateDataLabel(lang, key);
 }

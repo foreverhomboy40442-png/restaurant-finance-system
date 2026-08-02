@@ -5,7 +5,7 @@
  * 供各報表 Tab 元件引用，避免重複計算邏輯散落各處。
  */
 
-import type { ExpenseItem, RevenueItem } from '../../../types';
+import type { ExpenseCategory, ExpenseItem, RevenueItem } from '../../../types';
 
 // ── 型別定義 ───────────────────────────────────────────────────────────────
 
@@ -21,7 +21,7 @@ export interface MonthlyData {
   cumNet: number;   // 累計淨利（現金流）
 }
 
-/** 支出科目加總 */
+/** 支出科目加總（8 科目，對應 DB category 欄位） */
 export interface CategoryBreakdown {
   ingredients: number;
   labor: number;
@@ -32,6 +32,64 @@ export interface CategoryBreakdown {
   fixed_salary: number;
   other: number;
   total: number;
+}
+
+/**
+ * 財務報表用 5 大科目（與首頁儀表板支出總額一致，但依老闆審視習慣合併顯示）。
+ *
+ * 對應關係：
+ *   食材採購 ← ingredients
+ *   人事成本 ← labor + fixed_salary（PT 薪資 + 正職薪資）
+ *   水電瓦斯 ← utilities
+ *   修繕費用 ← repair
+ *   營運雜支 ← other + rent + marketing（雜支 + 房租 + 行銷）
+ */
+export type ReportCategoryKey =
+  | 'ingredients'
+  | 'labor'
+  | 'utilities'
+  | 'repair'
+  | 'operating_misc';
+
+export interface ReportCategoryBreakdown {
+  ingredients: number;
+  labor: number;
+  utilities: number;
+  repair: number;
+  operating_misc: number;
+  total: number;
+}
+
+/** 財務報表科目顯示順序 */
+export const REPORT_CATEGORY_ORDER: ReportCategoryKey[] = [
+  'ingredients',
+  'labor',
+  'utilities',
+  'repair',
+  'operating_misc',
+];
+
+/** 將 DB 8 科目映射至財務報表 5 大科目 */
+export function mapExpenseCategoryToReportCategory(
+  category: ExpenseCategory,
+): ReportCategoryKey {
+  switch (category) {
+    case 'ingredients':
+      return 'ingredients';
+    case 'labor':
+    case 'fixed_salary':
+      return 'labor';
+    case 'utilities':
+      return 'utilities';
+    case 'repair':
+      return 'repair';
+    case 'rent':
+    case 'other':
+    case 'marketing':
+      return 'operating_misc';
+    default:
+      return 'operating_misc';
+  }
 }
 
 // ── 日期工具 ───────────────────────────────────────────────────────────────
@@ -155,6 +213,37 @@ export function getCategoryBreakdown(expenses: ExpenseItem[]): CategoryBreakdown
     b.total += e.amount;
   }
   return b;
+}
+
+/** 財務報表 5 大科目加總（ManagementTab / ShareholderTab / Excel 共用） */
+export function getReportCategoryBreakdown(
+  expenses: ExpenseItem[],
+): ReportCategoryBreakdown {
+  const raw = getCategoryBreakdown(expenses);
+  return {
+    ingredients: raw.ingredients,
+    labor: raw.labor + raw.fixed_salary,
+    utilities: raw.utilities,
+    repair: raw.repair,
+    operating_misc: raw.other + raw.rent + raw.marketing,
+    total: raw.total,
+  };
+}
+
+/** 依財務報表 5 大科目分組支出明細（供展開列使用） */
+export function groupExpensesByReportCategory(
+  expenses: ExpenseItem[],
+): Map<ReportCategoryKey, ExpenseItem[]> {
+  const map = new Map<ReportCategoryKey, ExpenseItem[]>();
+  for (const e of expenses) {
+    const key = mapExpenseCategoryToReportCategory(e.category);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(e);
+  }
+  for (const items of map.values()) {
+    items.sort((a, b) => b.date.localeCompare(a.date));
+  }
+  return map;
 }
 
 /** 取得所有已出現月份（排序後），供月選器使用 */

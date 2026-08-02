@@ -19,7 +19,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
-import { getBreakdownCategoryLabel } from '../../../utils/lang';
+import { getReportCategoryLabel } from '../../../utils/lang';
 import {
   preloadRestaurantParameters,
   saveRestaurantParameters,
@@ -30,7 +30,8 @@ import {
   fmt,
   fmtSigned,
   getAllMonths,
-  getCategoryBreakdown,
+  getReportCategoryBreakdown,
+  REPORT_CATEGORY_ORDER,
   monthToLabel,
   sumExpenses,
   sumRevenues,
@@ -165,7 +166,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
 
   const grossRevenue      = sumRevenues(selRev);
   const operatingExpenses = sumExpenses(selExp);
-  const catBreakdown      = useMemo(() => getCategoryBreakdown(selExp), [selExp]);
+  const catBreakdown      = useMemo(() => getReportCategoryBreakdown(selExp), [selExp]);
   const yearEndBonus      = yearEndMonthly * selectedMonths.length;
 
   // ── 逐月 PnL → 橫向 reduce 加總（確保虧損月紅利為負值，與 Excel 合計欄精確對齊）──
@@ -420,21 +421,12 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
               </button>
               {expenseDetailOpen && (
                 <div className="mb-2 ml-8 space-y-1">
-                  {Object.keys({
-                    ingredients: true,
-                    labor: true,
-                    rent: true,
-                    utilities: true,
-                    marketing: true,
-                    repair: true,
-                    fixed_salary: true,
-                    other: true,
-                  }).map((key) => {
-                    const val = catBreakdown[key as keyof typeof catBreakdown] as number;
+                  {REPORT_CATEGORY_ORDER.map((key) => {
+                    const val = catBreakdown[key];
                     if (val === 0) return null;
                     return (
                       <div key={key} className="flex items-center justify-between text-xs">
-                        <span className="text-canton-dark/50">└ {getBreakdownCategoryLabel(lang, key)}</span>
+                        <span className="text-canton-dark/50">└ {getReportCategoryLabel(lang, key)}</span>
                         <span className="font-mono tabular-nums text-canton-dark/50">
                           −${fmt(val)}
                         </span>

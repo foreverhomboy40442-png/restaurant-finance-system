@@ -22,7 +22,7 @@ import {
 } from '../../types';
 import type { ExpenseCategory, ExpenseItem } from '../../types';
 import { EXPENSE_CATEGORY } from '../../types';
-import { lockExpenseItem } from '../../services/storage';
+import { lockExpenseRecord } from '../../services/financialRecords';
 import {
   deleteExpenseRecord,
   insertExpenseRecord,
@@ -384,16 +384,23 @@ export default function ExpenseManagement({
   // 鎖定
   // ---------------------------------------------------------------------------
 
-  function handleLockItem(id: string) {
+  async function handleLockItem(id: string) {
     const target = expenses.find((item) => item.id === id);
     if (!target || target.auditStatus !== AUDIT_STATUS.DRAFT) return;
 
+    setIsSaving(true);
     try {
-      lockExpenseItem(id, target);
-      void onExpensesChange();
+      const result = await lockExpenseRecord(id);
+      if (!result.ok) {
+        setEditFormError(result.message);
+        return;
+      }
+      await onExpensesChange();
       if (editingId === id) handleCancelEdit();
     } catch (error) {
-      setEditFormError(error instanceof Error ? error.message : '鎖定失敗');
+      setEditFormError(error instanceof Error ? error.message : t('errLockFailed'));
+    } finally {
+      setIsSaving(false);
     }
   }
 

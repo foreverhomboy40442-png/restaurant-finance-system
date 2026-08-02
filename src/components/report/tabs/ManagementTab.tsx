@@ -10,7 +10,7 @@
 import { useMemo, useState, useCallback } from 'react';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
-import { formatMonthShortLabel, getBreakdownCategoryLabel } from '../../../utils/lang';
+import { formatMonthShortLabel, getReportCategoryLabel } from '../../../utils/lang';
 import SvgLineChart from '../charts/SvgLineChart';
 import {
   filterExpenses,
@@ -19,7 +19,9 @@ import {
   filterRevenuesByDateRange,
   fmt,
   fmtPct,
-  getCategoryBreakdown,
+  getReportCategoryBreakdown,
+  groupExpensesByReportCategory,
+  REPORT_CATEGORY_ORDER,
   getCurrentMonthPrefix,
   getCurrentYear,
   getMonthlyData,
@@ -40,14 +42,11 @@ interface ManagementTabProps {
 // ─── 靜態設定 ─────────────────────────────────────────────────────────────────
 
 const CATEGORY_COLORS: Record<string, string> = {
-  ingredients:  '#C9882B',
-  labor:        '#A62424',
-  rent:         '#1A6FA8',
-  utilities:    '#2A7A3B',
-  marketing:    '#8B5CF6',
-  repair:       '#E07040',
-  fixed_salary: '#0891B2',
-  other:        '#888888',
+  ingredients:    '#C9882B',
+  labor:          '#A62424',
+  utilities:      '#2A7A3B',
+  repair:         '#E07040',
+  operating_misc: '#888888',
 };
 
 // ─── 工具 ─────────────────────────────────────────────────────────────────────
@@ -121,29 +120,22 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
   // ── 科目拆解（隨時間篩選同步） ───────────────────────────────────────────
 
   const catBreakdown = useMemo(
-    () => getCategoryBreakdown(filteredExpenses),
+    () => getReportCategoryBreakdown(filteredExpenses),
     [filteredExpenses],
   );
 
   const catEntries = useMemo(
     () =>
-      (Object.entries(catBreakdown).filter(([k]) => k !== 'total') as [string, number][])
-        .filter(([, v]) => v > 0)
-        .sort(([, a], [, b]) => b - a),
+      REPORT_CATEGORY_ORDER
+        .map((key) => [key, catBreakdown[key]] as const)
+        .filter(([, v]) => v > 0),
     [catBreakdown],
   );
 
-  const expensesByCategory = useMemo(() => {
-    const map = new Map<string, ExpenseItem[]>();
-    for (const e of filteredExpenses) {
-      if (!map.has(e.category)) map.set(e.category, []);
-      map.get(e.category)!.push(e);
-    }
-    for (const items of map.values()) {
-      items.sort((a, b) => b.date.localeCompare(a.date));
-    }
-    return map;
-  }, [filteredExpenses]);
+  const expensesByCategory = useMemo(
+    () => groupExpensesByReportCategory(filteredExpenses),
+    [filteredExpenses],
+  );
 
   const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set());
   const toggleCat = useCallback((key: string) => {
@@ -298,7 +290,7 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
               {catEntries.map(([key, total]) => {
                 const pct    = safeDivide(total, catBreakdown.total) * 100;
                 const color  = CATEGORY_COLORS[key] ?? '#888';
-                const label  = getBreakdownCategoryLabel(lang, key);
+                const label  = getReportCategoryLabel(lang, key);
                 const items  = expensesByCategory.get(key) ?? [];
                 const isOpen = expandedCats.has(key);
 

@@ -8,7 +8,11 @@ import {
   loadRememberedSession,
 } from './lib/authSession';
 import { loadExpenses, loadRevenues } from './services/storage';
-import { fetchExpenseRecords, fetchRevenueRecords } from './services/financialRecords';
+import {
+  fetchExpenseRecords,
+  fetchRevenueRecords,
+  migrateLocalLocksToCloud,
+} from './services/financialRecords';
 import { preloadRestaurantParameters } from './services/restaurantParameters';
 import type { ExpenseItem, RevenueItem } from './types';
 import { isLockedAuditStatus } from './types';
@@ -28,38 +32,98 @@ export default function App() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [revenues, setRevenues] = useState<RevenueItem[]>([]);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncWarning, setSyncWarning] = useState<string | null>(null);
+
+  const loadRevenuesFromCloud = useCallback(async (): Promise<boolean> => {
+    const localLockedIds = loadRevenues()
+      .filter((item) => isLockedAuditStatus(item.auditStatus))
+      .map((item) => item.id);
+
+    const result = await fetchRevenueRecords();
+    if (!result.ok) {
+      setSyncError(`營收同步失敗：${result.message}`);
+      return false;
+    }
+
+    if (localLockedIds.length > 0) {
+      await migrateLocalLocksToCloud(localLockedIds, result.data);
+      const refreshed = await fetchRevenueRecords();
+      if (refreshed.ok) {
+        setRevenues(refreshed.data);
+        setSyncWarning(
+          refreshed.droppedCount > 0
+            ? `有 ${refreshed.droppedCount} 筆營收紀錄格式不符已略過，若金額與雲端不符請聯繫管理員。`
+            : null,
+        );
+      } else {
+        setRevenues(result.data);
+      }
+    } else {
+      setRevenues(result.data);
+      setSyncWarning(
+        result.droppedCount > 0
+          ? `有 ${result.droppedCount} 筆營收紀錄格式不符已略過，若金額與雲端不符請聯繫管理員。`
+          : null,
+      );
+    }
+
+    return true;
+  }, []);
+
+  const loadExpensesFromCloud = useCallback(async (): Promise<boolean> => {
+    const localLockedIds = loadExpenses()
+      .filter((item) => isLockedAuditStatus(item.auditStatus))
+      .map((item) => item.id);
+
+    const result = await fetchExpenseRecords();
+    if (!result.ok) {
+      setSyncError(`支出同步失敗：${result.message}`);
+      return false;
+    }
+
+    if (localLockedIds.length > 0) {
+      await migrateLocalLocksToCloud(localLockedIds, result.data);
+      const refreshed = await fetchExpenseRecords();
+      if (refreshed.ok) {
+        setExpenses(refreshed.data);
+        if (refreshed.droppedCount > 0) {
+          setSyncWarning(
+            `有 ${refreshed.droppedCount} 筆支出紀錄格式不符已略過，若金額與雲端不符請聯繫管理員。`,
+          );
+        }
+      } else {
+        setExpenses(result.data);
+      }
+    } else {
+      setExpenses(result.data);
+      if (result.droppedCount > 0) {
+        setSyncWarning(
+          `有 ${result.droppedCount} 筆支出紀錄格式不符已略過，若金額與雲端不符請聯繫管理員。`,
+        );
+      }
+    }
+
+    return true;
+  }, []);
 
   const refreshRevenues = useCallback(async () => {
-    const items = await fetchRevenueRecords();
-    const localLockedById = new Map(
-      loadRevenues()
-        .filter((item) => isLockedAuditStatus(item.auditStatus))
-        .map((item) => [item.id, item.auditStatus] as const),
-    );
-    setRevenues(
-      items.map((item) =>
-        localLockedById.has(item.id)
-          ? { ...item, auditStatus: localLockedById.get(item.id)! }
-          : item,
-      ),
-    );
-  }, []);
+    await loadRevenuesFromCloud();
+  }, [loadRevenuesFromCloud]);
 
   const refreshExpenses = useCallback(async () => {
-    const items = await fetchExpenseRecords();
-    const localLockedById = new Map(
-      loadExpenses()
-        .filter((item) => isLockedAuditStatus(item.auditStatus))
-        .map((item) => [item.id, item.auditStatus] as const),
-    );
-    setExpenses(
-      items.map((item) =>
-        localLockedById.has(item.id)
-          ? { ...item, auditStatus: localLockedById.get(item.id)! }
-          : item,
-      ),
-    );
-  }, []);
+    await loadExpensesFromCloud();
+  }, [loadExpensesFromCloud]);
+
+  const refreshAllFinancialData = useCallback(async () => {
+    const [revOk, expOk] = await Promise.all([
+      loadRevenuesFromCloud(),
+      loadExpensesFromCloud(),
+    ]);
+    if (revOk && expOk) {
+      setSyncError(null);
+    }
+  }, [loadRevenuesFromCloud, loadExpensesFromCloud]);
 
   useEffect(() => {
     let mounted = true;
@@ -129,13 +193,25 @@ export default function App() {
 
   useEffect(() => {
     if (authStatus === 'authenticated') {
-      void refreshRevenues();
-      void refreshExpenses();
+      void refreshAllFinancialData();
       preloadRestaurantParameters().catch((err) => {
         console.error('[App] 預載 restaurant_parameters 失敗：', err);
       });
     }
-  }, [authStatus, refreshRevenues, refreshExpenses]);
+  }, [authStatus, refreshAllFinancialData]);
+
+  useEffect(() => {
+    if (authStatus !== 'authenticated') return;
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === 'visible') {
+        void refreshAllFinancialData();
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [authStatus, refreshAllFinancialData]);
 
   function handleLoginSuccess() {
     setAuthStatus('authenticated');
@@ -178,6 +254,9 @@ export default function App() {
     <MainDashboard
       revenues={revenues}
       expenses={expenses}
+      syncError={syncError}
+      syncWarning={syncWarning}
+      onRetrySync={refreshAllFinancialData}
       activeTab={activeTab}
       onTabChange={handleTabChange}
       onLogout={handleLogout}

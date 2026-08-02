@@ -15,7 +15,7 @@ import {
   insertRevenueRecord,
   updateRevenueRecord,
 } from '../../services/financialRecords';
-import { lockRevenueItem } from '../../services/storage';
+import { lockRevenueRecord } from '../../services/financialRecords';
 import {
   formatMoneyDisplay,
   validateRevenueAmountInput,
@@ -274,18 +274,25 @@ export default function RevenueManagement({
     }
   }
 
-  function handleLockItem(id: string) {
+  async function handleLockItem(id: string) {
     const target = revenues.find((item) => item.id === id);
     if (!target || target.auditStatus !== AUDIT_STATUS.DRAFT) return;
 
+    setIsSaving(true);
     try {
-      lockRevenueItem(id, target);
-      void onRevenuesChange();
+      const result = await lockRevenueRecord(id);
+      if (!result.ok) {
+        setFormError(result.message);
+        return;
+      }
+      await onRevenuesChange();
       if (editingId === id) {
         resetForm();
       }
     } catch {
       setFormError(t('errLockFailed'));
+    } finally {
+      setIsSaving(false);
     }
   }
 

@@ -14,7 +14,7 @@ import type { ExpenseItem, RevenueItem } from '../../../types';
 import {
   calcPnl,
   filterByMonths,
-  getCategoryBreakdown,
+  getReportCategoryBreakdown,
   monthToLabel,
   sumExpenses,
   sumRevenues,
@@ -39,10 +39,9 @@ interface MonthData {
   operatingExpenses: number;
   ingredients:       number;
   labor:             number;
-  rent:              number;
   utilities:         number;
   repair:            number;
-  otherExp:          number;
+  operatingMisc:     number;
   yearEndBonus:      number;
   netBeforeTax:      number;
   taxAmount:         number;
@@ -139,9 +138,7 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     );
     const grossRevenue      = sumRevenues(mRev);
     const operatingExpenses = sumExpenses(mExp);
-    const cat               = getCategoryBreakdown(mExp);
-    const labor             = cat.labor + cat.fixed_salary;
-    const otherExp          = cat.marketing + cat.other;
+    const cat               = getReportCategoryBreakdown(mExp);
     const yearEndBonus      = p.yearEndMonthly;
 
     // 使用共用 calcPnl — 正確處理虧損月（不再 Math.max 歸零）
@@ -158,11 +155,10 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
       grossRevenue,
       operatingExpenses,
       ingredients:       cat.ingredients,
-      labor,
-      rent:              cat.rent,
+      labor:             cat.labor,
       utilities:         cat.utilities,
       repair:            cat.repair,
-      otherExp,
+      operatingMisc:     cat.operating_misc,
       yearEndBonus,
       netBeforeTax:       pnl.netBeforeTax,
       taxAmount:          pnl.taxAmount,
@@ -182,10 +178,9 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     operatingExpenses:  sumKey('operatingExpenses'),
     ingredients:        sumKey('ingredients'),
     labor:              sumKey('labor'),
-    rent:               sumKey('rent'),
     utilities:          sumKey('utilities'),
     repair:             sumKey('repair'),
-    otherExp:           sumKey('otherExp'),
+    operatingMisc:      sumKey('operatingMisc'),
     yearEndBonus:       sumKey('yearEndBonus'),
     netBeforeTax:       sumKey('netBeforeTax'),
     taxAmount:          sumKey('taxAmount'),
@@ -289,14 +284,13 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     { bold: true, labelBold: true },
   );
 
-  // 六大科目（合計 > 0 才顯示）
+  // 五大科目（合計 > 0 才顯示）
   const catDefs: [string, keyof MonthData][] = [
     ['  └ 食材採購', 'ingredients'],
     ['  └ 人事成本', 'labor'],
-    ['  └ 房租費用', 'rent'],
     ['  └ 水電瓦斯', 'utilities'],
     ['  └ 修繕費用', 'repair'],
-    ['  └ 營運雜支', 'otherExp'],
+    ['  └ 營運雜支', 'operatingMisc'],
   ];
 
   for (const [label, key] of catDefs) {

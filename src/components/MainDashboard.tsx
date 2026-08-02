@@ -12,10 +12,13 @@ import AccountSettings from './settings/AccountSettings';
 interface MainDashboardProps {
   revenues: RevenueItem[];
   expenses: ExpenseItem[];
+  syncError: string | null;
+  syncWarning: string | null;
+  onRetrySync: () => void | Promise<void>;
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
   onLogout: () => void;
-  onRevenuesChange: () => void;
+  onRevenuesChange: () => void | Promise<void>;
   onExpensesChange: () => void | Promise<void>;
   isMobileSidebarOpen: boolean;
   onOpenSidebar: () => void;
@@ -153,6 +156,9 @@ function SidebarContent({ activeTab, onTabChange, onLogout, onClose }: SidebarCo
 export default function MainDashboard({
   revenues,
   expenses,
+  syncError,
+  syncWarning,
+  onRetrySync,
   activeTab,
   onTabChange,
   onLogout,
@@ -249,6 +255,33 @@ export default function MainDashboard({
 
         {/* 內容區 */}
         <main className="flex-1 px-4 py-5 sm:px-6 md:px-10 md:py-10">
+          {syncError && (
+            <div
+              className="mb-4 flex flex-col gap-3 rounded-sm border border-canton-red/30 bg-canton-red/[0.06] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+              role="alert"
+            >
+              <p className="text-sm text-canton-red">
+                {t('syncErrorBanner', { message: syncError })}
+              </p>
+              <button
+                type="button"
+                onClick={() => void onRetrySync()}
+                className="shrink-0 rounded-sm border border-canton-red/40 px-3 py-1.5 text-xs font-medium text-canton-red hover:bg-canton-red/10"
+              >
+                {t('syncRetry')}
+              </button>
+            </div>
+          )}
+
+          {!syncError && syncWarning && (
+            <div
+              className="mb-4 rounded-sm border border-amber-300/60 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+              role="status"
+            >
+              {syncWarning}
+            </div>
+          )}
+
           {activeTab === 'dashboard' && (
             <DashboardHome
               revenues={revenues}
