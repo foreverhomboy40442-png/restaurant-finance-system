@@ -1,28 +1,24 @@
 /**
  * 支出結構 — 五層下鑽式甜甜圈圖
  *
- * 外圈：現金支出 / PT薪資 / 支付貨款 / 修繕費用 / 固定薪資 佔比
- * 內圈：點選 Tab 後即時渲染該類別的子科目明細
+ * 外圈：現金支出 / PT薪資 / 支付貨款 / 修繕費用 / 固定支出 佔比
+ * 內圈：各分頁底下的實際項目（菜金、油條、雜支…）分別列出金額
  *
- * 分類優先順序：
- *   1. category === 'repair'       → repair tab
- *   2. category === 'fixed_salary' → fixed_salary tab
- *   3. merchant in PT_SET          → pt tab
- *   4. merchant in PAYMENT_SET     → payment tab
- *   5. 其餘                        → cash tab
- *
- * 純 SVG，無第三方依賴；w-full h-auto viewBox 強韌 RWD 不爆版。
+ * 分類邏輯與支出入帳分頁一致，見 expenseDrillDown.ts
  */
 
 import { useMemo, useState } from 'react';
+import {
+  buildSubCategoryBuckets,
+  classifyExpenseTab,
+} from '../../expense/expenseDrillDown';
+import type { ExpenseTab } from '../../expense/quick-keys-config';
 import { useLanguage } from '../../../context/LanguageContext';
 import type { ExpenseItem } from '../../../types';
 import { translateDataLabel } from '../../../utils/lang';
 import type { TranslationKey } from '../../../utils/lang';
 
 // ─── 型別 ────────────────────────────────────────────────────────────────────
-
-type DrillTab = 'cash' | 'pt' | 'payment' | 'repair' | 'fixed_salary';
 
 interface ChartSegment {
   label: string;
@@ -31,7 +27,7 @@ interface ChartSegment {
 }
 
 interface DrillTabConfig {
-  id: DrillTab;
+  id: ExpenseTab;
   btnLabel: string;
   topLabel: string;
   shortLabel: string;
@@ -41,7 +37,7 @@ interface DrillTabConfig {
 // ─── 靜態設定 ─────────────────────────────────────────────────────────────────
 
 const DRILL_TAB_META: {
-  id: DrillTab;
+  id: ExpenseTab;
   labelKey: TranslationKey;
   shortKey: TranslationKey;
   color: string;
@@ -53,113 +49,12 @@ const DRILL_TAB_META: {
   { id: 'fixed_salary', labelKey: 'expenseTabFixed',   shortKey: 'drillShortFixed',   color: '#695788' },
 ];
 
-// PT 點工商家識別集合（不含電費、瓦斯 — 已移至現金支出）
-const PT_MERCHANT_SET = new Set([
-  '拖地', '收垃圾', '林安邦', '陳東海', '林進賢', 'Dee', '垃圾（廚餘）', '洗碗', 'PT',
-]);
-
-const PAYMENT_MERCHANT_SET = new Set([
-  '檯布', '惠通', '酒', '大友(二)',
-  // 向下相容舊資料
-  '惠通(一)', '惠通(二)',
-]);
-
-/** 舊 merchant 名稱 → 現行圖表子科目標籤 */
-const LEGACY_MERCHANT_ALIASES: Record<string, string> = {
-  '惠通(一)': '惠通',
-  '惠通(二)': '惠通',
-};
-
-function resolveSubLabel(merchant: string, order: readonly string[]): string {
-  const normalized = LEGACY_MERCHANT_ALIASES[merchant] ?? merchant;
-  return order.includes(normalized) ? normalized : '其他';
-}
-
-// 子科目顯示順序
-const SUB_ORDER: Record<DrillTab, string[]> = {
-  cash: ['菜金', '油條', '雞', '乾貨', '便當盒', '雜貨', '電費', '瓦斯', '其他'],
-  pt:   ['拖地', '收垃圾', '林安邦', '陳東海', '林進賢', 'Dee', '垃圾（廚餘）', '洗碗', 'PT', '其他'],
-  payment: ['檯布', '惠通', '酒', '大友(二)', '其他'],
-  repair: ['修繕', '其他'],
-  fixed_salary: [
-    '曾美惠', '梁桂蓮', '林美玉', '陳速華', '陳棋瑞',
-    '高雲鵬', '黃楚平', '林安邦', '陳世郎', '鍾耀霆',
-    'Noel', '吳慧芬', '張綺蓮', '小惠', '吳啟德', '吳大衛', '鍾正綱', '其他',
-  ],
-};
-
-/**
- * 全站共用低飽和色盤（18 色）
- * 設計原則：冷暖交錯、明度接近、彼此可辨、不刺眼
- */
 const MUTED_PALETTE = [
-  '#A84B4B', // brick
-  '#4A6D95', // steel blue
-  '#3D7260', // sage
-  '#956F35', // ochre
-  '#695788', // dusty violet
-  '#7A6347', // warm taupe
-  '#3D7A8A', // teal
-  '#8A4A6A', // mauve
-  '#6A8A4A', // olive
-  '#3A5A8A', // navy
-  '#8A7A3A', // warm gold
-  '#5A3A8A', // deep violet
-  '#3A7A6A', // seafoam
-  '#8A5A3A', // rust
-  '#5A8A3A', // moss
-  '#8A3A5A', // plum
-  '#3A688A', // slate
-  '#7A7A3A', // khaki
+  '#A84B4B', '#4A6D95', '#3D7260', '#956F35', '#695788',
+  '#7A6347', '#3D7A8A', '#8A4A6A', '#6A8A4A', '#3A5A8A',
+  '#8A7A3A', '#5A3A8A', '#3A7A6A', '#8A5A3A', '#5A8A3A',
+  '#8A3A5A', '#3A688A', '#7A7A3A',
 ] as const;
-
-const SUB_COLORS: Record<DrillTab, Record<string, string>> = {
-  cash: {
-    '菜金':  MUTED_PALETTE[0],
-    '油條':  MUTED_PALETTE[1],
-    '雞':    MUTED_PALETTE[2],
-    '乾貨':  MUTED_PALETTE[3],
-    '便當盒': MUTED_PALETTE[4],
-    '雜貨':  MUTED_PALETTE[5],
-    '電費':  MUTED_PALETTE[6],
-    '瓦斯':  MUTED_PALETTE[7],
-    '其他':  MUTED_PALETTE[8],
-  },
-  pt: {
-    '拖地':        MUTED_PALETTE[0],
-    '收垃圾':      MUTED_PALETTE[1],
-    '林安邦':      MUTED_PALETTE[2],
-    '陳東海':      MUTED_PALETTE[3],
-    '林進賢':      MUTED_PALETTE[4],
-    'Dee':         MUTED_PALETTE[5],
-    '垃圾（廚餘）': MUTED_PALETTE[6],
-    '洗碗':        MUTED_PALETTE[7],
-    'PT':          MUTED_PALETTE[8],
-    '其他':        MUTED_PALETTE[9],
-  },
-  payment: {
-    '檯布':    MUTED_PALETTE[0],
-    '惠通':    MUTED_PALETTE[1],
-    '酒':      MUTED_PALETTE[2],
-    '大友(二)': MUTED_PALETTE[3],
-    '其他':    MUTED_PALETTE[4],
-  },
-  repair: {
-    '修繕': MUTED_PALETTE[3],
-    '其他': MUTED_PALETTE[5],
-  },
-  fixed_salary: {
-    '曾美惠': MUTED_PALETTE[0],  '梁桂蓮': MUTED_PALETTE[1],
-    '林美玉': MUTED_PALETTE[2],  '陳速華': MUTED_PALETTE[3],
-    '陳棋瑞': MUTED_PALETTE[4],  '高雲鵬': MUTED_PALETTE[5],
-    '黃楚平': MUTED_PALETTE[6],  '林安邦': MUTED_PALETTE[7],
-    '陳世郎': MUTED_PALETTE[8],  '鍾耀霆': MUTED_PALETTE[9],
-    'Noel':   MUTED_PALETTE[10], '吳慧芬': MUTED_PALETTE[11],
-    '張綺蓮': MUTED_PALETTE[12], '小惠':   MUTED_PALETTE[13],
-    '吳啟德': MUTED_PALETTE[14], '吳大衛': MUTED_PALETTE[15],
-    '鍾正綱': MUTED_PALETTE[16], '其他':   MUTED_PALETTE[17],
-  },
-};
 
 // ─── SVG 幾何工具 ────────────────────────────────────────────────────────────
 
@@ -182,8 +77,6 @@ function segmentPath(
   ].join(' ');
 }
 
-// ─── 格式化 ──────────────────────────────────────────────────────────────────
-
 function fmt(v: number): string {
   return v.toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
@@ -191,17 +84,6 @@ function fmt(v: number): string {
 function compactAmount(v: number): string {
   if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
   return `${Math.round(v / 1000)}K`;
-}
-
-// ─── 資料分類（類別欄位優先，向下相容舊資料的商家名稱判斷） ───────────────────
-
-function classifyTab(item: ExpenseItem): DrillTab {
-  if (item.category === 'repair') return 'repair';
-  if (item.category === 'fixed_salary') return 'fixed_salary';
-  if (PT_MERCHANT_SET.has(item.merchant)) return 'pt';
-  if (PAYMENT_MERCHANT_SET.has(item.merchant)) return 'payment';
-  if (typeof item.note === 'string' && item.note.includes('支付貨款')) return 'payment';
-  return 'cash';
 }
 
 // ─── 子元件：甜甜圈 SVG ───────────────────────────────────────────────────────
@@ -266,8 +148,6 @@ function DonutSvg({ segments, size, innerLabel, innerValue }: DonutSvgProps) {
   );
 }
 
-// ─── 子元件：圖例列表 ─────────────────────────────────────────────────────────
-
 interface LegendRowsProps {
   segments: ChartSegment[];
   total: number;
@@ -324,7 +204,7 @@ export interface SvgDrillDownChartProps {
 
 export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) {
   const { t, lang } = useLanguage();
-  const [activeTab, setActiveTab] = useState<DrillTab>('cash');
+  const [activeTab, setActiveTab] = useState<ExpenseTab>('cash');
 
   const drillTabs = useMemo<DrillTabConfig[]>(
     () =>
@@ -338,12 +218,12 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
     [t],
   );
 
-  const tabTotals = useMemo<Record<DrillTab, number>>(() => {
-    const totals: Record<DrillTab, number> = {
+  const tabTotals = useMemo(() => {
+    const totals: Record<ExpenseTab, number> = {
       cash: 0, pt: 0, payment: 0, repair: 0, fixed_salary: 0,
     };
     for (const e of expenses) {
-      totals[classifyTab(e)] += e.amount;
+      totals[classifyExpenseTab(e)] += e.amount;
     }
     return totals;
   }, [expenses]);
@@ -363,23 +243,12 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
   );
 
   const subSegments = useMemo<ChartSegment[]>(() => {
-    const order = SUB_ORDER[activeTab];
-    const colors = SUB_COLORS[activeTab];
-    const buckets: Record<string, number> = {};
-
-    for (const e of expenses) {
-      if (classifyTab(e) !== activeTab) continue;
-      const key = resolveSubLabel(e.merchant, order);
-      buckets[key] = (buckets[key] ?? 0) + e.amount;
-    }
-
-    return order
-      .map((label) => ({
-        label: translateDataLabel(lang, label),
-        value: buckets[label] ?? 0,
-        color: colors[label] ?? '#AAAAAA',
-      }))
-      .filter((s) => s.value > 0);
+    const buckets = buildSubCategoryBuckets(expenses, activeTab);
+    return buckets.map((bucket, index) => ({
+      label: translateDataLabel(lang, bucket.label),
+      value: bucket.value,
+      color: MUTED_PALETTE[index % MUTED_PALETTE.length],
+    }));
   }, [expenses, activeTab, lang]);
 
   const subTotal = tabTotals[activeTab];
@@ -396,7 +265,6 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
 
-      {/* ── 左欄：五大類別總覽 ──────────────────────────────────────────── */}
       <div className="flex flex-col gap-4">
         <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
           {t('chartExpenseCategoryShare')}
@@ -426,7 +294,6 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
         </div>
       </div>
 
-      {/* ── 右欄：Tab 切換 + 子科目下鑽 ──────────────────────────────── */}
       <div className="flex flex-col gap-4">
 
         <div className="block md:hidden border-t border-slate-100 -mx-1" />
@@ -435,7 +302,6 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
           {t('chartSubCategoryDrill')}
         </p>
 
-        {/* Tab 切換按鈕 — 2 行排列（5 顆較小，避免擠版） */}
         <div className="grid grid-cols-3 gap-1 sm:grid-cols-5">
           {drillTabs.map((tab) => {
             const isActive = activeTab === tab.id;
@@ -456,7 +322,6 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
           })}
         </div>
 
-        {/* 子科目甜甜圈 + 圖例 */}
         {subTotal > 0 ? (
           <div className="flex items-start gap-5">
             <div className="shrink-0" style={{ width: 120 }}>
