@@ -7,6 +7,7 @@ export interface RestaurantParameters {
   year_end_monthly: number;
   employee_bonus_pct: number;
   reserve_rate: number;
+  repair_fund_monthly: number;
 }
 
 export const DEFAULT_RESTAURANT_PARAMETERS: Omit<RestaurantParameters, 'id'> = {
@@ -14,6 +15,7 @@ export const DEFAULT_RESTAURANT_PARAMETERS: Omit<RestaurantParameters, 'id'> = {
   year_end_monthly: 69000,
   employee_bonus_pct: 10,
   reserve_rate: 0,
+  repair_fund_monthly: 50000,
 };
 
 const PARAMS_ROW_ID = 1;
@@ -22,6 +24,13 @@ let cachedParams: RestaurantParameters | null = null;
 let preloadPromise: Promise<RestaurantParameters> | null = null;
 
 function toSafeNumber(value: unknown, fallback: number): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+/** 欄位為 null／undefined 才用預設值；0 為使用者明確設定，必須保留 */
+function toOptionalNumber(value: unknown, fallback: number): number {
+  if (value === null || value === undefined || value === '') return fallback;
   const n = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(n) ? n : fallback;
 }
@@ -41,6 +50,10 @@ function mapRow(row: Record<string, unknown>): RestaurantParameters {
     reserve_rate: toSafeNumber(
       row.reserve_rate,
       DEFAULT_RESTAURANT_PARAMETERS.reserve_rate,
+    ),
+    repair_fund_monthly: toOptionalNumber(
+      row.repair_fund_monthly,
+      DEFAULT_RESTAURANT_PARAMETERS.repair_fund_monthly,
     ),
   };
 }
@@ -90,6 +103,7 @@ export async function saveRestaurantParameters(
     year_end_monthly: params.year_end_monthly,
     employee_bonus_pct: params.employee_bonus_pct,
     reserve_rate: params.reserve_rate,
+    repair_fund_monthly: params.repair_fund_monthly,
   };
 
   const { error } = await supabase

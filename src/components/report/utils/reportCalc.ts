@@ -359,6 +359,7 @@ export interface PnlCalcParams {
   grossRevenue:     number;
   operatingExpenses:number;
   yearEndBonus:     number;
+  repairFund:       number;
   taxRate:          number;  // 百分比，如 5 代表 5%
   employeeBonusPct: number;  // 百分比
   reserveRate:      number;  // 百分比
@@ -388,7 +389,7 @@ export interface PnlCalcResult {
  * ③ 預留盈餘：只在股東盈餘 > 0 時計提（虧損月不扣）
  */
 export function calcPnl(p: PnlCalcParams): PnlCalcResult {
-  const netBeforeTax = p.grossRevenue - p.operatingExpenses - p.yearEndBonus;
+  const netBeforeTax = p.grossRevenue - p.operatingExpenses - p.yearEndBonus - p.repairFund;
 
   // ① 所得稅（虧損月為 0）
   const taxAmount   = netBeforeTax > 0 ? netBeforeTax * (p.taxRate / 100) : 0;

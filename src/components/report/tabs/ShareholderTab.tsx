@@ -5,12 +5,13 @@
  * 1. 營收（Gross Revenue）
  * 2. 支出（Operating Expenses）
  * 3. 年終獎金儲備（預設每月 69,000）
- * 4. = 稅前淨利（Net Income Before Tax）
- * 5. 所得稅（可編輯 %，預設 1%）
- * 6. 員工紅利（稅後淨利 × 10%）
- * 7. = 股東盈餘
- * 8. 預留盈餘（可編輯 %，預設 10%）
- * 9. ★ 最終可分配盈餘（大字加粗）
+ * 4. 修繕金儲備（預設每月 50,000，年 600,000）
+ * 5. = 稅前淨利（Net Income Before Tax）
+ * 6. 所得稅（可編輯 %，預設 1%）
+ * 7. 員工紅利（稅後淨利 × 10%）
+ * 8. = 股東盈餘
+ * 9. 預留盈餘（可編輯 %，預設 10%）
+ * 10. ★ 最終可分配盈餘（大字加粗）
  *
  * 細項預設折疊，保持畫面整潔。
  * 自訂月份組合：勾選任意月份計算累計。
@@ -52,6 +53,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   // ── 已提交（計算用）參數 ──────────────────────────────────────────────────
   const [taxRate, setTaxRate] = useState<number>(0);
   const [yearEndMonthly, setYearEndMonthly] = useState<number>(69000);
+  const [repairFundMonthly, setRepairFundMonthly] = useState<number>(50000);
   const [employeeBonusPct, setEmployeeBonusPct] = useState<number>(10);
   const [reserveRate, setReserveRate] = useState<number>(0);
   const [expenseDetailOpen, setExpenseDetailOpen] = useState(false);
@@ -62,6 +64,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   // ── 暫存草稿（解鎖期間編輯，未確認前不影響計算）────────────────────────
   const [draftTax, setDraftTax] = useState(0);
   const [draftYearEnd, setDraftYearEnd] = useState(69000);
+  const [draftRepairFund, setDraftRepairFund] = useState(50000);
   const [draftBonus, setDraftBonus] = useState(10);
   const [draftReserve, setDraftReserve] = useState(0);
   const [paramsLoading, setParamsLoading] = useState(true);
@@ -80,10 +83,12 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
 
       setTaxRate(row.tax_rate);
       setYearEndMonthly(row.year_end_monthly);
+      setRepairFundMonthly(row.repair_fund_monthly);
       setEmployeeBonusPct(row.employee_bonus_pct);
       setReserveRate(row.reserve_rate);
       setDraftTax(row.tax_rate);
       setDraftYearEnd(row.year_end_monthly);
+      setDraftRepairFund(row.repair_fund_monthly);
       setDraftBonus(row.employee_bonus_pct);
       setDraftReserve(row.reserve_rate);
       setParamsLoading(false);
@@ -101,6 +106,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
     !paramsLocked && (
       draftTax        !== taxRate        ||
       draftYearEnd    !== yearEndMonthly ||
+      draftRepairFund !== repairFundMonthly ||
       draftBonus      !== employeeBonusPct ||
       draftReserve    !== reserveRate
     );
@@ -110,12 +116,14 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
       // 重新鎖定：放棄草稿，回復已提交值
       setDraftTax(taxRate);
       setDraftYearEnd(yearEndMonthly);
+      setDraftRepairFund(repairFundMonthly);
       setDraftBonus(employeeBonusPct);
       setDraftReserve(reserveRate);
     } else {
       // 解鎖：草稿初始化為目前已提交值
       setDraftTax(taxRate);
       setDraftYearEnd(yearEndMonthly);
+      setDraftRepairFund(repairFundMonthly);
       setDraftBonus(employeeBonusPct);
       setDraftReserve(reserveRate);
     }
@@ -129,6 +137,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
     const result = await saveRestaurantParameters({
       tax_rate: draftTax,
       year_end_monthly: draftYearEnd,
+      repair_fund_monthly: draftRepairFund,
       employee_bonus_pct: draftBonus,
       reserve_rate: draftReserve,
     });
@@ -142,6 +151,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
 
     setTaxRate(draftTax);
     setYearEndMonthly(draftYearEnd);
+    setRepairFundMonthly(draftRepairFund);
     setEmployeeBonusPct(draftBonus);
     setReserveRate(draftReserve);
     setParamsLocked(true);
@@ -168,6 +178,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const operatingExpenses = sumExpenses(selExp);
   const catBreakdown      = useMemo(() => getReportCategoryBreakdown(selExp), [selExp]);
   const yearEndBonus      = yearEndMonthly * selectedMonths.length;
+  const repairFundReserve = repairFundMonthly * selectedMonths.length;
 
   // ── 逐月 PnL → 橫向 reduce 加總（確保虧損月紅利為負值，與 Excel 合計欄精確對齊）──
   const perMonthPnl = useMemo(() =>
@@ -177,13 +188,14 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
         grossRevenue:      sumRevenues(mRev),
         operatingExpenses: sumExpenses(mExp),
         yearEndBonus:      yearEndMonthly,
+        repairFund:        repairFundMonthly,
         taxRate,
         employeeBonusPct,
         reserveRate,
       });
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [revenues, expenses, selectedMonths, yearEndMonthly, taxRate, employeeBonusPct, reserveRate],
+    [revenues, expenses, selectedMonths, yearEndMonthly, repairFundMonthly, taxRate, employeeBonusPct, reserveRate],
   );
 
   const netBeforeTax       = perMonthPnl.reduce((s, p) => s + p.netBeforeTax,       0);
@@ -199,6 +211,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
       revenues,
       expenses,
       yearEndMonthly,
+      repairFundMonthly,
       taxRate,
       employeeBonusPct,
       reserveRate,
@@ -295,8 +308,8 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
           </label>
         </div>
 
-        {/* 四張輸入卡片 */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {/* 五張輸入卡片 */}
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           <ParamInput
             key={`tax-${paramsLocked}`}
             label={t('taxRateLabel')}
@@ -322,6 +335,16 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
             label={t('yearEndReserveLabel')}
             value={paramsLocked ? yearEndMonthly : draftYearEnd}
             onChange={setDraftYearEnd}
+            unit={t('unitCurrency')}
+            min={0}
+            max={500000}
+            disabled={paramsLocked || paramsLoading || paramsSaving}
+          />
+          <ParamInput
+            key={`repair-${paramsLocked}`}
+            label={t('repairFundLabel')}
+            value={paramsLocked ? repairFundMonthly : draftRepairFund}
+            onChange={setDraftRepairFund}
             unit={t('unitCurrency')}
             min={0}
             max={500000}
@@ -444,6 +467,16 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                 months: selectedMonths.length,
               })}
               value={-yearEndBonus}
+              sub
+            />
+
+            {/* 4. 修繕金儲備 */}
+            <WaterfallRow
+              label={t('repairFundReserve', {
+                monthly: fmt(repairFundMonthly),
+                months: selectedMonths.length,
+              })}
+              value={-repairFundReserve}
               sub
             />
 

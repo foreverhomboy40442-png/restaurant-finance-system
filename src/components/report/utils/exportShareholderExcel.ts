@@ -27,6 +27,7 @@ export interface ExportShareholderParams {
   revenues: RevenueItem[];
   expenses: ExpenseItem[];
   yearEndMonthly: number;
+  repairFundMonthly: number;
   taxRate: number;
   employeeBonusPct: number;
   reserveRate: number;
@@ -43,6 +44,7 @@ interface MonthData {
   repair:            number;
   operatingMisc:     number;
   yearEndBonus:      number;
+  repairFund:        number;
   netBeforeTax:      number;
   taxAmount:         number;
   employeeBonus:     number;
@@ -140,12 +142,14 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     const operatingExpenses = sumExpenses(mExp);
     const cat               = getReportCategoryBreakdown(mExp);
     const yearEndBonus      = p.yearEndMonthly;
+    const repairFund        = p.repairFundMonthly;
 
     // 使用共用 calcPnl — 正確處理虧損月（不再 Math.max 歸零）
     const pnl = calcPnl({
       grossRevenue,
       operatingExpenses,
       yearEndBonus,
+      repairFund,
       taxRate:          p.taxRate,
       employeeBonusPct: p.employeeBonusPct,
       reserveRate:      p.reserveRate,
@@ -160,6 +164,7 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
       repair:            cat.repair,
       operatingMisc:     cat.operating_misc,
       yearEndBonus,
+      repairFund,
       netBeforeTax:       pnl.netBeforeTax,
       taxAmount:          pnl.taxAmount,
       employeeBonus:      pnl.employeeBonus,
@@ -182,6 +187,7 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     repair:             sumKey('repair'),
     operatingMisc:      sumKey('operatingMisc'),
     yearEndBonus:       sumKey('yearEndBonus'),
+    repairFund:         sumKey('repairFund'),
     netBeforeTax:       sumKey('netBeforeTax'),
     taxAmount:          sumKey('taxAmount'),
     employeeBonus:      sumKey('employeeBonus'),
@@ -305,7 +311,14 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     -totals.yearEndBonus,
   );
 
-  // ④ 稅前淨利（medium 上下雙線）
+  // ④ 修繕金攤提（每月固定 −repairFundMonthly）
+  dataRow(
+    `預留修繕金攤提（${p.repairFundMonthly.toLocaleString('zh-TW')}/月）`,
+    monthly.map((m) => -m.repairFund),
+    -totals.repairFund,
+  );
+
+  // ⑤ 稅前淨利（medium 上下雙線）
   dataRow(
     '稅前淨利',
     monthly.map((m) => m.netBeforeTax),
@@ -313,7 +326,7 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     { bold: true, labelBold: true, border: bdBoth, totalBorder: bdTotalBoth },
   );
 
-  // ⑤ 利潤分派扣除（各項為 0 則跳過）
+  // ⑥ 利潤分派扣除（各項為 0 則跳過）
   if (totals.taxAmount !== 0) {
     dataRow(
       `  └ 所得稅（${p.taxRate}%）`,
@@ -336,7 +349,7 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     );
   }
 
-  // ⑥ 最終可分配盈餘（medium 上下雙線 · 全表核心）
+  // ⑦ 最終可分配盈餘（medium 上下雙線 · 全表核心）
   dataRow(
     '★ 最終可分配盈餘',
     monthly.map((m) => m.finalDistributable),
