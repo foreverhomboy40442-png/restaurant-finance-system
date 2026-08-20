@@ -232,6 +232,8 @@ const FIXED_SALARY_EMPLOYEES = [
   '高雲鵬', '黃楚平', '林安邦', '陳世郎', '鍾耀霆',
   'Noel', '吳慧芬', '張綺蓮', '小惠', '吳啟德',
   '吳大衛', '鍾正綱',
+  '陳世育', '李偉文', '吳區',
+  'Ho', 'Carmen', 'Edison', 'Daily2',
 ] as const;
 
 export const FIXED_SALARY_QUICK_KEYS: QuickKeyItem[] = [
