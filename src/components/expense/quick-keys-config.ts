@@ -44,6 +44,12 @@ export const EXPENSE_TAB_LABEL: Record<ExpenseTab, string> = {
 
 export const CASH_QUICK_KEYS: QuickKeyItem[] = [
   {
+    key: 'cash-食材',
+    label: '食材',
+    merchant: '食材',
+    category: EXPENSE_CATEGORY.INGREDIENTS,
+  },
+  {
     key: 'cash-菜金',
     label: '菜金',
     merchant: '菜金',
