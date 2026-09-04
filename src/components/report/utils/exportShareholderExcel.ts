@@ -2,9 +2,9 @@
  * 股東財務損益報表 — Excel 匯出（單工作表・含真實圖表圖檔）
  *
  * 紙本列印友善：同一張工作表內依序為
- *   標題 → 營收折線圖 → 支出甜甜圈圖 → 損益數據表 → 科目組成說明
+ *   標題 → 損益數據表 → 科目組成說明 → 營收折線圖 + 營業總支出甜甜圈圖
  *
- * 圖表以 PNG 嵌入（折線圖／甜甜圈圖），非另開工作表。
+ * 圖表以 PNG 嵌入，不上第二個工作表；列印設為 fit 單頁。
  */
 
 import ExcelJS from 'exceljs';
@@ -265,7 +265,7 @@ export async function exportShareholderExcel(
       yUnit: '元',
     },
     donut: {
-      title: '支出結構比例（五大科目）',
+      title: '營業總支出（五大科目比例）',
       segments: expenseSegments,
       totalLabel: '合計',
     },
@@ -275,11 +275,11 @@ export async function exportShareholderExcel(
   wb.creator = '粵香園財務管理系統';
   const ws = wb.addWorksheet('股東財務損益報告', {
     pageSetup: {
-      paperSize: 9,
+      paperSize: 9, // A4
       orientation: nMonths > 6 ? 'landscape' : 'portrait',
       fitToPage: true,
       fitToWidth: 1,
-      fitToHeight: 0,
+      fitToHeight: 1, // 紙本單頁列印
       horizontalCentered: true,
     },
     properties: { defaultRowHeight: 18 },
@@ -291,7 +291,7 @@ export async function exportShareholderExcel(
     { width: 15 },
   ];
 
-  // ── 標題區 ────────────────────────────────────────────────────────────────
+  // ── 1) 標題區 ─────────────────────────────────────────────────────────────
   ws.mergeCells(1, 1, 1, numCols);
   const titleCell = ws.getCell(1, 1);
   titleCell.value = '粵香園 · 股東財務損益報告';
@@ -314,40 +314,9 @@ export async function exportShareholderExcel(
   };
   periodCell.alignment = { horizontal: 'center', vertical: 'middle' };
 
-  // 預留圖表空間（同一張表、便於紙本列印）
-  // row 4 起放折線圖；其下再放甜甜圈圖
-  const LINE_IMG_ROW = 3; // 0-based for addImage tl.row
-  const DONUT_IMG_ROW = 16;
-  const TABLE_START_ROW = 30; // 1-based Excel row for P&L header area
+  // ── 2) 損益數據表（數據面在上）────────────────────────────────────────────
+  let row = 4;
 
-  for (let r = 3; r < TABLE_START_ROW; r++) {
-    ws.getRow(r).height = 15;
-  }
-
-  const lineImgId = wb.addImage({
-    base64: uint8ToBase64(linePng),
-    extension: 'png',
-  });
-  const donutImgId = wb.addImage({
-    base64: uint8ToBase64(donutPng),
-    extension: 'png',
-  });
-
-  ws.addImage(lineImgId, {
-    tl: { col: 0, row: LINE_IMG_ROW },
-    ext: { width: 520, height: 260 },
-    editAs: 'oneCell',
-  });
-  ws.addImage(donutImgId, {
-    tl: { col: 0, row: DONUT_IMG_ROW },
-    ext: { width: 480, height: 300 },
-    editAs: 'oneCell',
-  });
-
-  // ── 損益數據表 ────────────────────────────────────────────────────────────
-  let row = TABLE_START_ROW;
-
-  // 小標
   ws.mergeCells(row, 1, row, numCols);
   const sectionCell = ws.getCell(row, 1);
   sectionCell.value = '損益數據明細';
@@ -502,12 +471,57 @@ export async function exportShareholderExcel(
   }
 
   row += 1;
+
+  // ── 3) 圖表面（數據下方：營收折線 + 營業總支出甜甜圈，同表並排）──────────
+  ws.mergeCells(row, 1, row, numCols);
+  const chartSection = ws.getCell(row, 1);
+  chartSection.value = '視覺化圖表（營收折線圖／營業總支出甜甜圈圖）';
+  chartSection.font = { name: 'Arial', size: 13, bold: true, color: { argb: BLACK } };
+  chartSection.alignment = { horizontal: 'left', vertical: 'middle' };
+  ws.getRow(row).height = 22;
+  row += 1;
+
+  // 預留並排圖表高度（約 12 列），避免另開工作表
+  const chartAnchorRow0 = row - 1; // 0-based for ExcelJS tl.row
+  const chartBlockRows = 14;
+  for (let i = 0; i < chartBlockRows; i++) {
+    ws.getRow(row + i).height = 14;
+  }
+  row += chartBlockRows;
+
+  const lineImgId = wb.addImage({
+    base64: uint8ToBase64(linePng),
+    extension: 'png',
+  });
+  const donutImgId = wb.addImage({
+    base64: uint8ToBase64(donutPng),
+    extension: 'png',
+  });
+
+  // 左：營收折線圖；右：營業總支出甜甜圈圖（同一張工作表）
+  ws.addImage(lineImgId, {
+    tl: { col: 0, row: chartAnchorRow0 },
+    ext: { width: 430, height: 215 },
+    editAs: 'oneCell',
+  });
+  ws.addImage(donutImgId, {
+    tl: { col: Math.min(5, Math.max(3, numCols - 1)), row: chartAnchorRow0 },
+    ext: { width: 390, height: 250 },
+    editAs: 'oneCell',
+  });
+
+  row += 1;
   ws.mergeCells(row, 1, row, numCols);
   const now = new Date();
   const ts = `報告產生時間：${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const tsCell = ws.getCell(row, 1);
   tsCell.value = ts;
   styleLabelCell(tsCell, { italic: true, size: 9 });
+
+  // 保險：只保留單一工作表
+  while (wb.worksheets.length > 1) {
+    wb.removeWorksheet(wb.worksheets[wb.worksheets.length - 1].id);
+  }
 
   const fileTs = periodStr.replace(/[\s~/]/g, '-').replace(/-+/g, '-');
   const buffer = await wb.xlsx.writeBuffer();

@@ -195,8 +195,8 @@ const zh = {
   emptyMonths: '請至少選取一個月份。',
   shareholderRevenueTrend: '營收成長趨勢',
   shareholderRevenueTrendDesc: '依所選月份顯示營業總收入走勢',
-  shareholderExpenseShare: '支出結構比例',
-  shareholderExpenseShareDesc: '依五大支出科目顯示佔比分析',
+  shareholderExpenseShare: '營業總支出比例',
+  shareholderExpenseShareDesc: '依五大支出科目顯示營業總支出佔比',
 
   // ── 支出科目（報表細項標籤）──
   catIngredients: '食材採購',
@@ -462,8 +462,8 @@ const en: Record<keyof typeof zh, string> = {
   emptyMonths: 'Please select at least one month.',
   shareholderRevenueTrend: 'Revenue Growth Trend',
   shareholderRevenueTrendDesc: 'Gross revenue by selected months',
-  shareholderExpenseShare: 'Expense Structure Share',
-  shareholderExpenseShareDesc: 'Share of the five expense categories',
+  shareholderExpenseShare: 'Operating Expense Share',
+  shareholderExpenseShareDesc: 'Share of operating expenses by five categories',
 
   catIngredients: 'Food & Ingredients',
   catLabor: 'Labor & Payroll',

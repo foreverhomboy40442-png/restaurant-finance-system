@@ -434,63 +434,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
         )}
       </div>
 
-      {/* ── 視覺化圖表（數據瀑布流維持不變） ── */}
-      {selectedMonths.length > 0 && (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {/* 營收成長趨勢 */}
-          <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
-            <h3 className="text-base font-bold text-canton-dark">
-              {t('shareholderRevenueTrend')}
-            </h3>
-            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
-              {t('shareholderRevenueTrendDesc')}
-            </p>
-            <SvgLineChart
-              xLabels={sortedSelectedMonths.map((m) => formatMonthShortLabel(lang, m))}
-              series={[
-                {
-                  label: t('grossRevenue'),
-                  color: REVENUE_TREND_COLOR,
-                  values: revenueTrendValues,
-                },
-              ]}
-              height={260}
-              yUnit={t('unitCurrency')}
-              emptyText={t('chartNoData')}
-              emphasis
-            />
-          </div>
-
-          {/* 五大支出比例 */}
-          <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
-            <h3 className="text-base font-bold text-canton-dark">
-              {t('shareholderExpenseShare')}
-            </h3>
-            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
-              {t('shareholderExpenseShareDesc')}
-            </p>
-            {expenseShareSegments.length > 0 ? (
-              <SvgDonutChart
-                segments={expenseShareSegments.map(({ label, value, color }) => ({
-                  label,
-                  value,
-                  color,
-                }))}
-                size={220}
-                emphasis
-                emptyText={t('chartNoData')}
-                totalLabel={t('totalLabel')}
-              />
-            ) : (
-              <div className="flex h-40 items-center justify-center text-base text-canton-dark/55">
-                {t('chartNoData')}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── 財務瀑布流報表 ── */}
+      {/* ── 財務瀑布流報表（數據面在上） ── */}
       {selectedMonths.length === 0 ? (
         <EmptyState message={t('emptyMonths')} />
       ) : (
@@ -679,6 +623,60 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
             <p className="mt-1.5 text-xs text-slate-600">
               {t('statsFooter', { count: selectedMonths.length })}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── 視覺化圖表（數據面下方：營收折線 + 營業總支出甜甜圈） ── */}
+      {selectedMonths.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
+            <h3 className="text-base font-bold text-canton-dark">
+              {t('shareholderRevenueTrend')}
+            </h3>
+            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
+              {t('shareholderRevenueTrendDesc')}
+            </p>
+            <SvgLineChart
+              xLabels={sortedSelectedMonths.map((m) => formatMonthShortLabel(lang, m))}
+              series={[
+                {
+                  label: t('grossRevenue'),
+                  color: REVENUE_TREND_COLOR,
+                  values: revenueTrendValues,
+                },
+              ]}
+              height={260}
+              yUnit={t('unitCurrency')}
+              emptyText={t('chartNoData')}
+              emphasis
+            />
+          </div>
+
+          <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
+            <h3 className="text-base font-bold text-canton-dark">
+              {t('shareholderExpenseShare')}
+            </h3>
+            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
+              {t('shareholderExpenseShareDesc')}
+            </p>
+            {expenseShareSegments.length > 0 ? (
+              <SvgDonutChart
+                segments={expenseShareSegments.map(({ label, value, color }) => ({
+                  label,
+                  value,
+                  color,
+                }))}
+                size={220}
+                emphasis
+                emptyText={t('chartNoData')}
+                totalLabel={t('totalLabel')}
+              />
+            ) : (
+              <div className="flex h-40 items-center justify-center text-base text-canton-dark/55">
+                {t('chartNoData')}
+              </div>
+            )}
           </div>
         </div>
       )}
