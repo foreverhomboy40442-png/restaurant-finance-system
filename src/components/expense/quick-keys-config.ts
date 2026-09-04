@@ -142,6 +142,12 @@ export const PT_QUICK_KEYS: QuickKeyItem[] = [
     category: EXPENSE_CATEGORY.LABOR,
   },
   {
+    key: 'pt-葉俊宏',
+    label: '葉俊宏',
+    merchant: '葉俊宏',
+    category: EXPENSE_CATEGORY.LABOR,
+  },
+  {
     key: 'pt-垃圾廚餘',
     label: '垃圾（廚餘）',
     merchant: '垃圾（廚餘）',
