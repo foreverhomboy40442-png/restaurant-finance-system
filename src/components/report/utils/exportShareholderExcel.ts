@@ -362,11 +362,11 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
   // 科目組成說明（固定定義，不含金額；置於損益流下方避免干擾閱讀）
   mergeRow('科目組成說明（定義）', { bold: true, sz: 10, border: bdAll });
   const compositionLines = [
-    '食材採購：菜金、油條、雞、乾貨、酒水與供應商貨款（惠通、大友等）',
-    '人事成本：PT 點工薪資、正職薪資',
-    '水電瓦斯：電費、瓦斯',
-    '修繕費用：裝潢、冷氣、燈泡等店內修繕與設備維護',
-    '營運雜支：房租、雜貨、便當盒、檯布、行銷及其他雜支',
+    '食材採購：食材、乾貨、酒水與食材貨款',
+    '人事成本：PT 薪資、正職薪資',
+    '水電瓦斯：電費、瓦斯、水費',
+    '修繕費用：裝潢、整/維修、設備維護',
+    '營運雜支：房租、雜貨、檯布、行銷及其他雜支',
   ];
   for (const line of compositionLines) {
     mergeRow(line, { sz: 9, italic: true, border: bdAll });
