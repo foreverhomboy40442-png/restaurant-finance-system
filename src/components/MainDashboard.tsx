@@ -92,13 +92,20 @@ function SidebarContent({ activeTab, onTabChange, onLogout, onClose }: SidebarCo
 
   return (
     <>
-      {/* Logo 區塊 */}
+      {/* Logo 區塊：點擊回首頁儀表板 */}
       <div className="flex items-center gap-2.5 border-b border-white/15 px-5 py-5">
-        <img src="/logo.png" alt={t('brandName')} className="h-9 w-9 object-contain" />
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-semibold text-white">{t('brandName')}</p>
-          <p className="text-xs text-white/60">{t('appTitle')}</p>
-        </div>
+        <button
+          type="button"
+          onClick={() => onTabChange('dashboard')}
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm text-left transition-colors hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/50"
+          aria-label={t('headingDashboard')}
+        >
+          <img src="/logo.png" alt="" className="h-9 w-9 object-contain" />
+          <div className="min-w-0 flex-1">
+            <p className="text-base font-semibold text-white">{t('brandName')}</p>
+            <p className="text-xs text-white/60">{t('appTitle')}</p>
+          </div>
+        </button>
         {onClose && (
           <button
             type="button"
