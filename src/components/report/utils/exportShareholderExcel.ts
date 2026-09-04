@@ -1,15 +1,13 @@
 /**
- * 股東財務損益報表 — Excel 匯出工具（月份矩陣版）
+ * 股東財務損益報表 — Excel 匯出（單工作表・含真實圖表圖檔）
  *
- * 結構：A欄項目名稱 | B欄月1 | C欄月2 | ... | 最末欄合計
+ * 紙本列印友善：同一張工作表內依序為
+ *   標題 → 損益數據表 → 科目組成說明 → 營收折線圖 + 營業總支出甜甜圈圖
  *
- * 財務美學：白底黑字 · 極淡灰細格線 · 無色塊 · 無 Emoji
- * 關鍵小計（稅前淨利 / 最終可分配盈餘）用 medium border 上下雙線
- * 合計欄全欄加粗 + medium 左側分隔線
- * A4 直向（≤6 月）/ 橫向（>6 月），fit-to-page 自動縮放
+ * 圖表以 PNG 嵌入，不上第二個工作表；列印設為 fit 單頁。
  */
 
-import XLSX from 'xlsx-js-style';
+import ExcelJS from 'exceljs';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import {
   calcPnl,
@@ -19,8 +17,7 @@ import {
   sumExpenses,
   sumRevenues,
 } from './reportCalc';
-
-// ── 公開介面 ──────────────────────────────────────────────────────────────────
+import { renderShareholderChartPngs } from './exportShareholderCharts';
 
 export interface ExportShareholderParams {
   selectedMonths: string[];
@@ -33,264 +30,363 @@ export interface ExportShareholderParams {
   reserveRate: number;
 }
 
-// ── 逐月計算結果 ──────────────────────────────────────────────────────────────
-
 interface MonthData {
-  grossRevenue:      number;
+  grossRevenue: number;
   operatingExpenses: number;
-  ingredients:       number;
-  labor:             number;
-  utilities:         number;
-  repair:            number;
-  operatingMisc:     number;
-  yearEndBonus:      number;
-  repairFund:        number;
-  netBeforeTax:      number;
-  taxAmount:         number;
-  employeeBonus:     number;
-  reservedSurplus:   number;
-  finalDistributable:number;
+  ingredients: number;
+  labor: number;
+  utilities: number;
+  repair: number;
+  operatingMisc: number;
+  yearEndBonus: number;
+  repairFund: number;
+  netBeforeTax: number;
+  taxAmount: number;
+  employeeBonus: number;
+  reservedSurplus: number;
+  finalDistributable: number;
 }
 
-// ── 樣式常數 ──────────────────────────────────────────────────────────────────
-
-const WHITE    = 'FFFFFF';
-const HDR_FILL = 'EBEBEB';   // 表頭列底色（極淡灰）
-const BLACK    = '000000';
-const GRAY_BD  = 'C8C8C8';   // 一般細格線
-const DARK_BD  = '1A1A1A';   // 小計雙線
-
-type BorderSide = { style: string; color: { rgb: string } };
-type BorderObj  = { top?: BorderSide; bottom?: BorderSide; left?: BorderSide; right?: BorderSide };
-
-const thin: BorderSide = { style: 'thin',   color: { rgb: GRAY_BD } };
-const med:  BorderSide = { style: 'medium', color: { rgb: DARK_BD } };
-
-const bdAll:  BorderObj = { top: thin, bottom: thin, left: thin, right: thin };
-const bdBoth: BorderObj = { ...bdAll, top: med, bottom: med };
-
-// 合計欄：medium 左側分隔線
-const bdTotal:      BorderObj = { ...bdAll, left: med };
-const bdTotalBoth:  BorderObj = { ...bdBoth, left: med };
-
-/** Excel 金額格式：$5,125,000 / -$5,125,000 */
 const MONEY_FMT = '"$"#,##0;\\-"$"#,##0';
+const THIN = 'FFC8C8C8';
+const MED = 'FF1A1A1A';
+const BLACK = 'FF000000';
+const HDR = 'FFEBEBEB';
+const WHITE = 'FFFFFFFF';
 
-// ── Cell 工廠 ─────────────────────────────────────────────────────────────────
+const CHART_CATEGORY_COLORS = {
+  ingredients: '#92400E',
+  labor: '#7F1D1D',
+  utilities: '#14532D',
+  repair: '#9A3412',
+  operating_misc: '#44403C',
+} as const;
 
-interface CS {
-  bold?:   boolean;
-  italic?: boolean;
-  sz?:     number;
-  align?:  'left' | 'center' | 'right';
-  fmt?:    string;
-  border?: BorderObj;
-  fill?:   string;
+function thinBorder(): Partial<ExcelJS.Borders> {
+  const side: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: THIN } };
+  return { top: side, bottom: side, left: side, right: side };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mk(value: string | number, s: CS = {}): Record<string, any> {
-  const isNum = typeof value === 'number';
-  return {
-    v: value,
-    t: isNum ? 'n' : 's',
-    ...(s.fmt ? { z: s.fmt } : {}),
-    s: {
-      font: {
-        name:   'Arial',
-        sz:     s.sz   ?? 10,
-        bold:   s.bold ?? false,
-        italic: s.italic ?? false,
-        color:  { rgb: BLACK },
-      },
-      fill:      { fgColor: { rgb: s.fill ?? WHITE } },
-      border:    s.border ?? bdAll,
-      alignment: {
-        horizontal: s.align ?? (isNum ? 'right' : 'left'),
-        vertical:   'center',
-      },
-    },
+function medVBorder(): Partial<ExcelJS.Borders> {
+  const thin: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: THIN } };
+  const med: Partial<ExcelJS.Border> = { style: 'medium', color: { argb: MED } };
+  return { top: med, bottom: med, left: thin, right: thin };
+}
+
+function medVBorderTotal(): Partial<ExcelJS.Borders> {
+  const thin: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: THIN } };
+  const med: Partial<ExcelJS.Border> = { style: 'medium', color: { argb: MED } };
+  return { top: med, bottom: med, left: med, right: thin };
+}
+
+function totalLeftBorder(): Partial<ExcelJS.Borders> {
+  const thin: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: THIN } };
+  const med: Partial<ExcelJS.Border> = { style: 'medium', color: { argb: MED } };
+  return { top: thin, bottom: thin, left: med, right: thin };
+}
+
+function styleLabelCell(
+  cell: ExcelJS.Cell,
+  opts: { bold?: boolean; italic?: boolean; size?: number; center?: boolean } = {},
+) {
+  cell.font = {
+    name: 'Arial',
+    size: opts.size ?? 11,
+    bold: opts.bold ?? false,
+    italic: opts.italic ?? false,
+    color: { argb: BLACK },
   };
+  cell.alignment = {
+    vertical: 'middle',
+    horizontal: opts.center ? 'center' : 'left',
+  };
+  cell.border = thinBorder() as ExcelJS.Borders;
+  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } };
 }
 
-function empty(fill = WHITE) {
-  return mk('', { fill, border: bdAll });
+function styleMoneyCell(
+  cell: ExcelJS.Cell,
+  value: number,
+  opts: { bold?: boolean; totalCol?: boolean; emphasis?: boolean } = {},
+) {
+  cell.value = value;
+  cell.numFmt = MONEY_FMT;
+  cell.font = {
+    name: 'Arial',
+    size: 11,
+    bold: opts.bold ?? false,
+    color: { argb: BLACK },
+  };
+  cell.alignment = { vertical: 'middle', horizontal: 'right' };
+  cell.border = (
+    opts.emphasis
+      ? opts.totalCol
+        ? medVBorderTotal()
+        : medVBorder()
+      : opts.totalCol
+        ? totalLeftBorder()
+        : thinBorder()
+  ) as ExcelJS.Borders;
+  cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } };
 }
 
-// ── 主匯出函式 ────────────────────────────────────────────────────────────────
+function downloadBuffer(buffer: ExcelJS.Buffer, filename: string) {
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
-export function exportShareholderExcel(p: ExportShareholderParams): void {
-  const sorted  = [...p.selectedMonths].sort();
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+export async function exportShareholderExcel(
+  p: ExportShareholderParams,
+): Promise<void> {
+  const sorted = [...p.selectedMonths].sort();
   const nMonths = sorted.length;
-
   if (nMonths === 0) return;
 
-  const numCols = nMonths + 2;  // 項目欄 + N月 + 合計欄
-
-  // ── 統計區間文字 ────────────────────────────────────────────────────────────
+  const numCols = nMonths + 2;
   const periodStr =
     nMonths === 1
       ? monthToLabel(sorted[0])
       : `${monthToLabel(sorted[0])} ~ ${monthToLabel(sorted[nMonths - 1])}`;
 
-  // ── 逐月計算 ────────────────────────────────────────────────────────────────
   const monthly: MonthData[] = sorted.map((month) => {
     const { revenues: mRev, expenses: mExp } = filterByMonths(
-      p.revenues, p.expenses, [month],
+      p.revenues,
+      p.expenses,
+      [month],
     );
-    const grossRevenue      = sumRevenues(mRev);
+    const grossRevenue = sumRevenues(mRev);
     const operatingExpenses = sumExpenses(mExp);
-    const cat               = getReportCategoryBreakdown(mExp);
-    const yearEndBonus      = p.yearEndMonthly;
-    const repairFund        = p.repairFundMonthly;
-
-    // 使用共用 calcPnl — 正確處理虧損月（不再 Math.max 歸零）
+    const cat = getReportCategoryBreakdown(mExp);
+    const yearEndBonus = p.yearEndMonthly;
+    const repairFund = p.repairFundMonthly;
     const pnl = calcPnl({
       grossRevenue,
       operatingExpenses,
       yearEndBonus,
       repairFund,
-      taxRate:          p.taxRate,
+      taxRate: p.taxRate,
       employeeBonusPct: p.employeeBonusPct,
-      reserveRate:      p.reserveRate,
+      reserveRate: p.reserveRate,
     });
 
     return {
       grossRevenue,
       operatingExpenses,
-      ingredients:       cat.ingredients,
-      labor:             cat.labor,
-      utilities:         cat.utilities,
-      repair:            cat.repair,
-      operatingMisc:     cat.operating_misc,
+      ingredients: cat.ingredients,
+      labor: cat.labor,
+      utilities: cat.utilities,
+      repair: cat.repair,
+      operatingMisc: cat.operating_misc,
       yearEndBonus,
       repairFund,
-      netBeforeTax:       pnl.netBeforeTax,
-      taxAmount:          pnl.taxAmount,
-      employeeBonus:      pnl.employeeBonus,
-      reservedSurplus:    pnl.reservedSurplus,
+      netBeforeTax: pnl.netBeforeTax,
+      taxAmount: pnl.taxAmount,
+      employeeBonus: pnl.employeeBonus,
+      reservedSurplus: pnl.reservedSurplus,
       finalDistributable: pnl.finalDistributable,
     };
   });
 
-  // ── 合計（各列逐月加總）──────────────────────────────────────────────────
-  function sumKey(key: keyof MonthData): number {
-    return monthly.reduce((s, m) => s + m[key], 0);
-  }
+  const sumKey = (key: keyof MonthData) =>
+    monthly.reduce((s, m) => s + m[key], 0);
 
   const totals: MonthData = {
-    grossRevenue:       sumKey('grossRevenue'),
-    operatingExpenses:  sumKey('operatingExpenses'),
-    ingredients:        sumKey('ingredients'),
-    labor:              sumKey('labor'),
-    utilities:          sumKey('utilities'),
-    repair:             sumKey('repair'),
-    operatingMisc:      sumKey('operatingMisc'),
-    yearEndBonus:       sumKey('yearEndBonus'),
-    repairFund:         sumKey('repairFund'),
-    netBeforeTax:       sumKey('netBeforeTax'),
-    taxAmount:          sumKey('taxAmount'),
-    employeeBonus:      sumKey('employeeBonus'),
-    reservedSurplus:    sumKey('reservedSurplus'),
+    grossRevenue: sumKey('grossRevenue'),
+    operatingExpenses: sumKey('operatingExpenses'),
+    ingredients: sumKey('ingredients'),
+    labor: sumKey('labor'),
+    utilities: sumKey('utilities'),
+    repair: sumKey('repair'),
+    operatingMisc: sumKey('operatingMisc'),
+    yearEndBonus: sumKey('yearEndBonus'),
+    repairFund: sumKey('repairFund'),
+    netBeforeTax: sumKey('netBeforeTax'),
+    taxAmount: sumKey('taxAmount'),
+    employeeBonus: sumKey('employeeBonus'),
+    reservedSurplus: sumKey('reservedSurplus'),
     finalDistributable: sumKey('finalDistributable'),
   };
 
-  // ── 列建構器 ────────────────────────────────────────────────────────────────
+  // ── 產生真實折線圖／甜甜圈圖 PNG ──────────────────────────────────────────
+  const revenueValues = monthly.map((m) => m.grossRevenue);
+  const expenseSegments = [
+    {
+      label: '食材採購',
+      value: totals.ingredients,
+      color: CHART_CATEGORY_COLORS.ingredients,
+    },
+    {
+      label: '人事成本',
+      value: totals.labor,
+      color: CHART_CATEGORY_COLORS.labor,
+    },
+    {
+      label: '水電瓦斯',
+      value: totals.utilities,
+      color: CHART_CATEGORY_COLORS.utilities,
+    },
+    {
+      label: '修繕費用',
+      value: totals.repair,
+      color: CHART_CATEGORY_COLORS.repair,
+    },
+    {
+      label: '營運雜支',
+      value: totals.operatingMisc,
+      color: CHART_CATEGORY_COLORS.operating_misc,
+    },
+  ].filter((s) => s.value > 0);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  type Row = Record<string, any>[];
-  const rows:   Row[]                                                = [];
-  const merges: { s: { r: number; c: number }; e: { r: number; c: number } }[] = [];
+  const { linePng, donutPng } = await renderShareholderChartPngs({
+    line: {
+      title: '營收成長趨勢',
+      xLabels: sorted.map((m) => {
+        const mm = parseInt(m.split('-')[1], 10);
+        return `${mm}月`;
+      }),
+      values: revenueValues,
+      seriesLabel: '營業總收入',
+      yUnit: '元',
+    },
+    donut: {
+      title: '營業總支出（五大科目比例）',
+      segments: expenseSegments,
+      totalLabel: '合計',
+    },
+  });
 
-  /** 全欄合併列（標題 / 期間） */
-  function mergeRow(text: string, s: CS) {
-    const r = rows.length;
-    const cells: Row = [mk(text, s)];
-    for (let i = 1; i < numCols; i++) cells.push(mk('', { fill: s.fill, border: s.border ?? bdAll }));
-    merges.push({ s: { r, c: 0 }, e: { r, c: numCols - 1 } });
-    rows.push(cells);
+  const wb = new ExcelJS.Workbook();
+  wb.creator = '粵香園財務管理系統';
+  const ws = wb.addWorksheet('股東財務損益報告', {
+    pageSetup: {
+      paperSize: 9, // A4
+      orientation: nMonths > 6 ? 'landscape' : 'portrait',
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 1, // 紙本單頁列印
+      horizontalCentered: true,
+    },
+    properties: { defaultRowHeight: 18 },
+  });
+
+  ws.columns = [
+    { width: 34 },
+    ...sorted.map(() => ({ width: 13 })),
+    { width: 15 },
+  ];
+
+  // ── 1) 標題區 ─────────────────────────────────────────────────────────────
+  ws.mergeCells(1, 1, 1, numCols);
+  const titleCell = ws.getCell(1, 1);
+  titleCell.value = '粵香園 · 股東財務損益報告';
+  titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: BLACK } };
+  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  titleCell.border = {
+    ...thinBorder(),
+    bottom: { style: 'medium', color: { argb: MED } },
+  } as ExcelJS.Borders;
+  ws.getRow(1).height = 28;
+
+  ws.mergeCells(2, 1, 2, numCols);
+  const periodCell = ws.getCell(2, 1);
+  periodCell.value = `統計區間：${periodStr}（共 ${nMonths} 個月）`;
+  periodCell.font = {
+    name: 'Arial',
+    size: 11,
+    italic: true,
+    color: { argb: BLACK },
+  };
+  periodCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  // ── 2) 損益數據表（數據面在上）────────────────────────────────────────────
+  let row = 4;
+
+  ws.mergeCells(row, 1, row, numCols);
+  const sectionCell = ws.getCell(row, 1);
+  sectionCell.value = '損益數據明細';
+  sectionCell.font = { name: 'Arial', size: 13, bold: true, color: { argb: BLACK } };
+  sectionCell.alignment = { horizontal: 'left', vertical: 'middle' };
+  ws.getRow(row).height = 22;
+  row += 1;
+
+  // 表頭
+  const header = ws.getRow(row);
+  header.getCell(1).value = '項目';
+  sorted.forEach((m, i) => {
+    header.getCell(i + 2).value = monthToLabel(m);
+  });
+  header.getCell(numCols).value = '合計';
+  for (let c = 1; c <= numCols; c++) {
+    const cell = header.getCell(c);
+    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: BLACK } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: HDR } };
+    cell.alignment = {
+      horizontal: c === 1 ? 'left' : 'center',
+      vertical: 'middle',
+    };
+    cell.border = {
+      ...thinBorder(),
+      bottom: { style: 'medium', color: { argb: MED } },
+    } as ExcelJS.Borders;
   }
+  row += 1;
 
-  /** 空列 */
-  function emptyRow() {
-    rows.push(Array.from({ length: numCols }, () => empty()));
-  }
-
-  /** 表頭列：項目 | 月1 | 月2 | ... | 合計 */
-  function headerRow() {
-    const hdrBd: BorderObj = { ...bdAll, bottom: med };
-    const cells: Row = [mk('項目', { bold: true, fill: HDR_FILL, border: hdrBd })];
-    for (const m of sorted) {
-      cells.push(mk(monthToLabel(m), { bold: true, align: 'center', fill: HDR_FILL, border: hdrBd }));
+  const writeDataRow = (
+    label: string,
+    vals: number[],
+    total: number,
+    opts: { bold?: boolean; emphasis?: boolean } = {},
+  ) => {
+    const r = ws.getRow(row);
+    const labelCell = r.getCell(1);
+    labelCell.value = label;
+    styleLabelCell(labelCell, { bold: opts.bold ?? false });
+    if (opts.emphasis) {
+      labelCell.border = medVBorder() as ExcelJS.Borders;
     }
-    cells.push(mk('合計', { bold: true, align: 'center', fill: HDR_FILL, border: { ...hdrBd, left: med } }));
-    rows.push(cells);
-  }
+    vals.forEach((v, i) => {
+      styleMoneyCell(r.getCell(i + 2), v, {
+        bold: opts.bold,
+        emphasis: opts.emphasis,
+      });
+    });
+    styleMoneyCell(r.getCell(numCols), total, {
+      bold: true,
+      totalCol: true,
+      emphasis: opts.emphasis,
+    });
+    row += 1;
+  };
 
-  /**
-   * 數據列
-   * @param label      - 項目名稱（含縮排前綴）
-   * @param vals       - 逐月數值（已含正負號）
-   * @param total      - 合計值（已含正負號）
-   * @param opts.bold         - label + 月份欄是否粗體
-   * @param opts.labelBold    - label 是否單獨粗體（預設同 bold）
-   * @param opts.border       - 月份欄 border（預設 bdAll）
-   * @param opts.totalBorder  - 合計欄 border（預設 bdTotal）
-   */
-  function dataRow(
-    label:  string,
-    vals:   number[],
-    total:  number,
-    opts: {
-      bold?:        boolean;
-      labelBold?:   boolean;
-      border?:      BorderObj;
-      totalBorder?: BorderObj;
-    } = {},
-  ) {
-    const bold = opts.bold ?? false;
-    const bd   = opts.border       ?? bdAll;
-    const tbd  = opts.totalBorder  ?? bdTotal;
-    const cells: Row = [mk(label, { bold: opts.labelBold ?? bold, border: bd })];
-    for (const v of vals)  cells.push(mk(v,     { bold, fmt: MONEY_FMT, border: bd }));
-    cells.push(             mk(total, { bold: true, fmt: MONEY_FMT, border: tbd }));
-    rows.push(cells);
-  }
-
-  // ── 組建表格 ────────────────────────────────────────────────────────────────
-
-  // 大標（合併 + 底部 medium 線）
-  mergeRow(
-    '粵香園 · 股東財務損益報告',
-    { bold: true, sz: 14, align: 'center', border: { ...bdAll, bottom: med } },
-  );
-
-  // 統計區間（合併）
-  mergeRow(
-    `統計區間：${periodStr}（共 ${nMonths} 個月）`,
-    { italic: true, align: 'center' },
-  );
-
-  emptyRow();
-  headerRow();
-
-  // ① 營業總收入
-  dataRow(
+  writeDataRow(
     '營業總收入',
     monthly.map((m) => m.grossRevenue),
     totals.grossRevenue,
-    { bold: true, labelBold: true },
+    { bold: true },
   );
-
-  // ② 營業總支出
-  dataRow(
+  writeDataRow(
     '營業總支出',
     monthly.map((m) => -m.operatingExpenses),
     -totals.operatingExpenses,
-    { bold: true, labelBold: true },
+    { bold: true },
   );
 
-  // 五大科目（合計 > 0 才顯示）
   const catDefs: [string, keyof MonthData][] = [
     ['  └ 食材採購', 'ingredients'],
     ['  └ 人事成本', 'labor'],
@@ -298,69 +394,67 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     ['  └ 修繕費用', 'repair'],
     ['  └ 營運雜支', 'operatingMisc'],
   ];
-
   for (const [label, key] of catDefs) {
     if (totals[key] <= 0) continue;
-    dataRow(label, monthly.map((m) => -m[key]), -totals[key]);
+    writeDataRow(
+      label,
+      monthly.map((m) => -(m[key] as number)),
+      -(totals[key] as number),
+    );
   }
 
-  // ③ 年終獎金攤提（每月固定 −yearEndMonthly）
-  dataRow(
+  writeDataRow(
     `預留年終獎金攤提（${p.yearEndMonthly.toLocaleString('zh-TW')}/月）`,
     monthly.map((m) => -m.yearEndBonus),
     -totals.yearEndBonus,
   );
-
-  // ④ 修繕金攤提（每月固定 −repairFundMonthly）
-  dataRow(
+  writeDataRow(
     `預留修繕金攤提（${p.repairFundMonthly.toLocaleString('zh-TW')}/月）`,
     monthly.map((m) => -m.repairFund),
     -totals.repairFund,
   );
-
-  // ⑤ 稅前淨利（medium 上下雙線）
-  dataRow(
+  writeDataRow(
     '稅前淨利',
     monthly.map((m) => m.netBeforeTax),
     totals.netBeforeTax,
-    { bold: true, labelBold: true, border: bdBoth, totalBorder: bdTotalBoth },
+    { bold: true, emphasis: true },
   );
 
-  // ⑥ 利潤分派扣除（各項為 0 則跳過）
   if (totals.taxAmount !== 0) {
-    dataRow(
+    writeDataRow(
       `  └ 所得稅（${p.taxRate}%）`,
       monthly.map((m) => -m.taxAmount),
       -totals.taxAmount,
     );
   }
-
-  dataRow(
+  writeDataRow(
     `  └ 員工紅利（稅後淨利 × ${p.employeeBonusPct}%）`,
     monthly.map((m) => m.employeeBonus),
     totals.employeeBonus,
   );
-
   if (totals.reservedSurplus !== 0) {
-    dataRow(
+    writeDataRow(
       `  └ 預留盈餘（${p.reserveRate}%）`,
       monthly.map((m) => -m.reservedSurplus),
       -totals.reservedSurplus,
     );
   }
-
-  // ⑦ 最終可分配盈餘（medium 上下雙線 · 全表核心）
-  dataRow(
+  writeDataRow(
     '★ 最終可分配盈餘',
     monthly.map((m) => m.finalDistributable),
     totals.finalDistributable,
-    { bold: true, labelBold: true, border: bdBoth, totalBorder: bdTotalBoth },
+    { bold: true, emphasis: true },
   );
 
-  emptyRow();
+  row += 1;
 
-  // 科目組成說明（固定定義，不含金額；置於損益流下方避免干擾閱讀）
-  mergeRow('科目組成說明（定義）', { bold: true, sz: 10, border: bdAll });
+  // 科目組成說明
+  ws.mergeCells(row, 1, row, numCols);
+  const defTitle = ws.getCell(row, 1);
+  defTitle.value = '科目組成說明（定義）';
+  styleLabelCell(defTitle, { bold: true, size: 11 });
+  row += 1;
+
   const compositionLines = [
     '食材採購：食材、乾貨、酒水與食材貨款',
     '人事成本：PT 薪資、正職薪資',
@@ -369,61 +463,67 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     '營運雜支：房租、雜貨、檯布、行銷及其他雜支',
   ];
   for (const line of compositionLines) {
-    mergeRow(line, { sz: 9, italic: true, border: bdAll });
+    ws.mergeCells(row, 1, row, numCols);
+    const cell = ws.getCell(row, 1);
+    cell.value = line;
+    styleLabelCell(cell, { italic: true, size: 10 });
+    row += 1;
   }
 
-  emptyRow();
+  row += 1;
 
-  // 頁尾時間戳
-  const now = new Date();
-  const ts  = `報告產生時間：${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const tsRow: Row = [mk(ts, { italic: true, sz: 9 })];
-  for (let i = 1; i < numCols; i++) tsRow.push(empty());
-  merges.push({ s: { r: rows.length, c: 0 }, e: { r: rows.length, c: numCols - 1 } });
-  rows.push(tsRow);
+  // ── 3) 圖表面（數據下方：營收折線 + 營業總支出甜甜圈，同表並排）──────────
+  ws.mergeCells(row, 1, row, numCols);
+  const chartSection = ws.getCell(row, 1);
+  chartSection.value = '視覺化圖表（營收折線圖／營業總支出甜甜圈圖）';
+  chartSection.font = { name: 'Arial', size: 13, bold: true, color: { argb: BLACK } };
+  chartSection.alignment = { horizontal: 'left', vertical: 'middle' };
+  ws.getRow(row).height = 22;
+  row += 1;
 
-  // ── 組建 WorkSheet ─────────────────────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ws: Record<string, any> = {};
+  // 預留並排圖表高度（約 12 列），避免另開工作表
+  const chartAnchorRow0 = row - 1; // 0-based for ExcelJS tl.row
+  const chartBlockRows = 14;
+  for (let i = 0; i < chartBlockRows; i++) {
+    ws.getRow(row + i).height = 14;
+  }
+  row += chartBlockRows;
 
-  rows.forEach((row, r) => {
-    row.forEach((cell, c) => {
-      ws[XLSX.utils.encode_cell({ r, c })] = cell;
-    });
+  const lineImgId = wb.addImage({
+    base64: uint8ToBase64(linePng),
+    extension: 'png',
+  });
+  const donutImgId = wb.addImage({
+    base64: uint8ToBase64(donutPng),
+    extension: 'png',
   });
 
-  ws['!ref']    = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: numCols - 1 } });
-  ws['!merges'] = merges;
+  // 左：營收折線圖；右：營業總支出甜甜圈圖（同一張工作表）
+  ws.addImage(lineImgId, {
+    tl: { col: 0, row: chartAnchorRow0 },
+    ext: { width: 430, height: 215 },
+    editAs: 'oneCell',
+  });
+  ws.addImage(donutImgId, {
+    tl: { col: Math.min(5, Math.max(3, numCols - 1)), row: chartAnchorRow0 },
+    ext: { width: 340, height: 195 },
+    editAs: 'oneCell',
+  });
 
-  // 欄寬：項目欄 27 · 每月 13 · 合計 15
-  ws['!cols'] = [
-    { wch: 27 },
-    ...sorted.map(() => ({ wch: 13 })),
-    { wch: 15 },
-  ];
+  row += 1;
+  ws.mergeCells(row, 1, row, numCols);
+  const now = new Date();
+  const ts = `報告產生時間：${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const tsCell = ws.getCell(row, 1);
+  tsCell.value = ts;
+  styleLabelCell(tsCell, { italic: true, size: 9 });
 
-  // 列高：大標 30，其餘 18
-  ws['!rows'] = rows.map((_, i) => ({ hpt: i === 0 ? 30 : 18 }));
+  // 保險：只保留單一工作表
+  while (wb.worksheets.length > 1) {
+    wb.removeWorksheet(wb.worksheets[wb.worksheets.length - 1].id);
+  }
 
-  // 列印設定（≤6月直向 / >6月橫向，fit-to-page 自動縮放）
-  ws['!pageSetup'] = {
-    paperSize:   9,
-    orientation: nMonths > 6 ? 'landscape' : 'portrait',
-    fitToPage:   true,
-    fitToWidth:  1,
-    fitToHeight: 0,
-  };
-
-  ws['!margins'] = {
-    left: 0.5, right: 0.5,
-    top:  0.75, bottom: 0.75,
-    header: 0.3, footer: 0.3,
-  };
-
-  // ── 組建 Workbook & 下載 ────────────────────────────────────────────────────
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '股東財務損益報告');
-
-  const fileTs = periodStr.replace(/[\s~\/]/g, '-').replace(/-+/g, '-');
-  XLSX.writeFile(wb, `粵香園_股東損益報告_${fileTs}.xlsx`);
+  const fileTs = periodStr.replace(/[\s~/]/g, '-').replace(/-+/g, '-');
+  const buffer = await wb.xlsx.writeBuffer();
+  downloadBuffer(buffer, `粵香園_股東損益報告_${fileTs}.xlsx`);
 }

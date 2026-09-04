@@ -20,7 +20,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
-import { getReportCategoryLabel, type TranslationKey } from '../../../utils/lang';
+import {
+  formatMonthShortLabel,
+  getReportCategoryLabel,
+  type TranslationKey,
+} from '../../../utils/lang';
 import {
   preloadRestaurantParameters,
   saveRestaurantParameters,
@@ -39,6 +43,8 @@ import {
   type ReportCategoryKey,
 } from '../utils/reportCalc';
 import { exportShareholderExcel } from '../utils/exportShareholderExcel';
+import SvgLineChart from '../charts/SvgLineChart';
+import SvgDonutChart from '../charts/SvgDonutChart';
 
 interface ShareholderTabProps {
   revenues: RevenueItem[];
@@ -53,6 +59,17 @@ const REPORT_CATEGORY_DEF_KEYS: Record<ReportCategoryKey, TranslationKey> = {
   repair: 'catRepairDef',
   operating_misc: 'catOperatingMiscDef',
 };
+
+/** 五大支出科目圖表配色（加深，利於投影／匯出閱讀） */
+const REPORT_CATEGORY_COLORS: Record<ReportCategoryKey, string> = {
+  ingredients: '#92400E',
+  labor: '#7F1D1D',
+  utilities: '#14532D',
+  repair: '#9A3412',
+  operating_misc: '#44403C',
+};
+
+const REVENUE_TREND_COLOR = '#5C1010';
 
 export default function ShareholderTab({ revenues, expenses }: ShareholderTabProps) {
   const { t, lang } = useLanguage();
@@ -190,6 +207,34 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const yearEndBonus      = yearEndMonthly * selectedMonths.length;
   const repairFundReserve = repairFundMonthly * selectedMonths.length;
 
+  const sortedSelectedMonths = useMemo(
+    () => [...selectedMonths].sort(),
+    [selectedMonths],
+  );
+
+  /** 所選月份逐月營收（營收成長趨勢圖） */
+  const revenueTrendValues = useMemo(
+    () =>
+      sortedSelectedMonths.map((month) => {
+        const { revenues: mRev } = filterByMonths(revenues, expenses, [month]);
+        return sumRevenues(mRev);
+      }),
+    [revenues, expenses, sortedSelectedMonths],
+  );
+
+  const expenseShareSegments = useMemo(
+    () =>
+      REPORT_CATEGORY_ORDER
+        .map((key) => ({
+          key,
+          label: getReportCategoryLabel(lang, key),
+          value: catBreakdown[key],
+          color: REPORT_CATEGORY_COLORS[key],
+        }))
+        .filter((seg) => seg.value > 0),
+    [catBreakdown, lang],
+  );
+
   // ── 逐月 PnL → 橫向 reduce 加總（確保虧損月紅利為負值，與 Excel 合計欄精確對齊）──
   const perMonthPnl = useMemo(() =>
     selectedMonths.map((month) => {
@@ -215,17 +260,21 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const reservedSurplus    = perMonthPnl.reduce((s, p) => s + p.reservedSurplus,    0);
   const finalDistributable = perMonthPnl.reduce((s, p) => s + p.finalDistributable, 0);
 
-  function handleExport() {
-    exportShareholderExcel({
-      selectedMonths,
-      revenues,
-      expenses,
-      yearEndMonthly,
-      repairFundMonthly,
-      taxRate,
-      employeeBonusPct,
-      reserveRate,
-    });
+  async function handleExport() {
+    try {
+      await exportShareholderExcel({
+        selectedMonths,
+        revenues,
+        expenses,
+        yearEndMonthly,
+        repairFundMonthly,
+        taxRate,
+        employeeBonusPct,
+        reserveRate,
+      });
+    } catch (err) {
+      console.error('[shareholder-export]', err);
+    }
   }
 
   function toggleMonth(m: string) {
@@ -385,7 +434,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
         )}
       </div>
 
-      {/* ── 財務瀑布流報表 ── */}
+      {/* ── 財務瀑布流報表（數據面在上） ── */}
       {selectedMonths.length === 0 ? (
         <EmptyState message={t('emptyMonths')} />
       ) : (
@@ -574,6 +623,60 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
             <p className="mt-1.5 text-xs text-slate-600">
               {t('statsFooter', { count: selectedMonths.length })}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* ── 視覺化圖表（數據面下方：營收折線 + 營業總支出甜甜圈） ── */}
+      {selectedMonths.length > 0 && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
+            <h3 className="text-base font-bold text-canton-dark">
+              {t('shareholderRevenueTrend')}
+            </h3>
+            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
+              {t('shareholderRevenueTrendDesc')}
+            </p>
+            <SvgLineChart
+              xLabels={sortedSelectedMonths.map((m) => formatMonthShortLabel(lang, m))}
+              series={[
+                {
+                  label: t('grossRevenue'),
+                  color: REVENUE_TREND_COLOR,
+                  values: revenueTrendValues,
+                },
+              ]}
+              height={260}
+              yUnit={t('unitCurrency')}
+              emptyText={t('chartNoData')}
+              emphasis
+            />
+          </div>
+
+          <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
+            <h3 className="text-sm font-semibold text-canton-dark">
+              {t('shareholderExpenseShare')}
+            </h3>
+            <p className="mb-3 mt-0.5 text-xs text-canton-dark/50">
+              {t('shareholderExpenseShareDesc')}
+            </p>
+            {expenseShareSegments.length > 0 ? (
+              <SvgDonutChart
+                segments={expenseShareSegments.map(({ label, value, color }) => ({
+                  label,
+                  value,
+                  color,
+                }))}
+                size={180}
+                emphasis
+                emptyText={t('chartNoData')}
+                totalLabel={t('totalLabel')}
+              />
+            ) : (
+              <div className="flex h-32 items-center justify-center text-sm text-canton-dark/50">
+                {t('chartNoData')}
+              </div>
+            )}
           </div>
         </div>
       )}

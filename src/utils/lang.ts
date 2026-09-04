@@ -193,6 +193,10 @@ const zh = {
   statsFooter: '統計 {count} 個月 · 已扣稅、員工紅利與預留準備金',
   emptyShareholder: '請先新增營收或支出明細，再查看股東報表。',
   emptyMonths: '請至少選取一個月份。',
+  shareholderRevenueTrend: '營收成長趨勢',
+  shareholderRevenueTrendDesc: '依所選月份顯示營業總收入走勢',
+  shareholderExpenseShare: '營業總支出比例',
+  shareholderExpenseShareDesc: '依五大支出科目顯示營業總支出佔比',
 
   // ── 支出科目（報表細項標籤）──
   catIngredients: '食材採購',
@@ -456,6 +460,10 @@ const en: Record<keyof typeof zh, string> = {
   statsFooter: '{count} month(s) · After tax, bonus & reserves',
   emptyShareholder: 'Add revenue or expense records before viewing the shareholder report.',
   emptyMonths: 'Please select at least one month.',
+  shareholderRevenueTrend: 'Revenue Growth Trend',
+  shareholderRevenueTrendDesc: 'Gross revenue by selected months',
+  shareholderExpenseShare: 'Operating Expense Share',
+  shareholderExpenseShareDesc: 'Share of operating expenses by five categories',
 
   catIngredients: 'Food & Ingredients',
   catLabor: 'Labor & Payroll',
