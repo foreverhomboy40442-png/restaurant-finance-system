@@ -15,9 +15,11 @@ import {
   calcPnl,
   filterByMonths,
   getReportCategoryBreakdown,
+  getReportCategoryItemBreakdown,
   monthToLabel,
   sumExpenses,
   sumRevenues,
+  type ReportCategoryKey,
 } from './reportCalc';
 
 // ── 公開介面 ──────────────────────────────────────────────────────────────────
@@ -290,18 +292,38 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     { bold: true, labelBold: true },
   );
 
-  // 五大科目（合計 > 0 才顯示）
-  const catDefs: [string, keyof MonthData][] = [
-    ['  └ 食材採購', 'ingredients'],
-    ['  └ 人事成本', 'labor'],
-    ['  └ 水電瓦斯', 'utilities'],
-    ['  └ 修繕費用', 'repair'],
-    ['  └ 營運雜支', 'operatingMisc'],
+  // 五大科目（合計 > 0 才顯示）＋各科目支出項目組成
+  const catDefs: { label: string; dataKey: keyof MonthData; reportKey: ReportCategoryKey }[] = [
+    { label: '  └ 食材採購', dataKey: 'ingredients',   reportKey: 'ingredients' },
+    { label: '  └ 人事成本', dataKey: 'labor',         reportKey: 'labor' },
+    { label: '  └ 水電瓦斯', dataKey: 'utilities',     reportKey: 'utilities' },
+    { label: '  └ 修繕費用', dataKey: 'repair',        reportKey: 'repair' },
+    { label: '  └ 營運雜支', dataKey: 'operatingMisc', reportKey: 'operating_misc' },
   ];
 
-  for (const [label, key] of catDefs) {
-    if (totals[key] <= 0) continue;
-    dataRow(label, monthly.map((m) => -m[key]), -totals[key]);
+  const { expenses: periodExpenses } = filterByMonths(p.revenues, p.expenses, sorted);
+  const periodItemBreakdown = getReportCategoryItemBreakdown(periodExpenses);
+  const monthlyItemBreakdown = sorted.map((month) => {
+    const { expenses: mExp } = filterByMonths(p.revenues, p.expenses, [month]);
+    return getReportCategoryItemBreakdown(mExp);
+  });
+
+  for (const cat of catDefs) {
+    if (totals[cat.dataKey] <= 0) continue;
+    dataRow(
+      cat.label,
+      monthly.map((m) => -m[cat.dataKey]),
+      -totals[cat.dataKey],
+    );
+
+    const items = periodItemBreakdown[cat.reportKey] ?? [];
+    for (const item of items) {
+      const monthlyVals = monthlyItemBreakdown.map((breakdown) => {
+        const found = breakdown[cat.reportKey].find((row) => row.label === item.label);
+        return found ? -found.amount : 0;
+      });
+      dataRow(`      · ${item.label}`, monthlyVals, -item.amount);
+    }
   }
 
   // ③ 年終獎金攤提（每月固定 −yearEndMonthly）

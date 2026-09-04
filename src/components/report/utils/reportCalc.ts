@@ -246,6 +246,59 @@ export function groupExpensesByReportCategory(
   return map;
 }
 
+/** 報表科目下的支出項目加總（如：菜金、葉俊宏、電費） */
+export interface ReportCategoryItemAmount {
+  label: string;
+  amount: number;
+}
+
+/** 未填寫供應商／備註時的兜底標籤 */
+export const UNLABELED_EXPENSE_ITEM = '未標示項目';
+
+/** 解析單筆支出顯示用的「支出項目」名稱（優先供應商，其次備註） */
+export function resolveExpenseItemLabel(expense: ExpenseItem): string {
+  const merchant = expense.merchant.trim();
+  if (merchant) return merchant;
+  const note = expense.note?.trim() ?? '';
+  if (note) return note;
+  return UNLABELED_EXPENSE_ITEM;
+}
+
+/**
+ * 將支出依財務報表 5 大科目，再往下依支出項目（merchant）加總。
+ * 各科目內依金額由大到小排序，供股東報表「營業總支出」展開明細使用。
+ */
+export function getReportCategoryItemBreakdown(
+  expenses: ExpenseItem[],
+): Record<ReportCategoryKey, ReportCategoryItemAmount[]> {
+  const maps: Record<ReportCategoryKey, Map<string, number>> = {
+    ingredients: new Map(),
+    labor: new Map(),
+    utilities: new Map(),
+    repair: new Map(),
+    operating_misc: new Map(),
+  };
+
+  for (const e of expenses) {
+    const cat = mapExpenseCategoryToReportCategory(e.category);
+    const label = resolveExpenseItemLabel(e);
+    const bucket = maps[cat];
+    bucket.set(label, (bucket.get(label) ?? 0) + e.amount);
+  }
+
+  const result = {} as Record<ReportCategoryKey, ReportCategoryItemAmount[]>;
+  for (const key of REPORT_CATEGORY_ORDER) {
+    result[key] = [...maps[key].entries()]
+      .filter(([, amount]) => amount > 0)
+      .map(([label, amount]) => ({ label, amount }))
+      .sort(
+        (a, b) =>
+          b.amount - a.amount || a.label.localeCompare(b.label, 'zh-Hant'),
+      );
+  }
+  return result;
+}
+
 /** 取得所有已出現月份（排序後），供月選器使用 */
 export function getAllMonths(
   revenues: RevenueItem[],

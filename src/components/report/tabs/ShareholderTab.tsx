@@ -20,7 +20,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
-import { getReportCategoryLabel } from '../../../utils/lang';
+import { getReportCategoryLabel, translateDataLabel } from '../../../utils/lang';
 import {
   preloadRestaurantParameters,
   saveRestaurantParameters,
@@ -32,6 +32,7 @@ import {
   fmtSigned,
   getAllMonths,
   getReportCategoryBreakdown,
+  getReportCategoryItemBreakdown,
   REPORT_CATEGORY_ORDER,
   monthToLabel,
   sumExpenses,
@@ -177,6 +178,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const grossRevenue      = sumRevenues(selRev);
   const operatingExpenses = sumExpenses(selExp);
   const catBreakdown      = useMemo(() => getReportCategoryBreakdown(selExp), [selExp]);
+  const catItemBreakdown  = useMemo(() => getReportCategoryItemBreakdown(selExp), [selExp]);
   const yearEndBonus      = yearEndMonthly * selectedMonths.length;
   const repairFundReserve = repairFundMonthly * selectedMonths.length;
 
@@ -443,16 +445,41 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                 {expenseDetailOpen ? t('collapseDetails') : t('expandDetails')}
               </button>
               {expenseDetailOpen && (
-                <div className="mb-2 ml-8 space-y-1">
+                <div className="mb-2 ml-8 space-y-2">
+                  <p className="text-[10px] uppercase tracking-wider text-canton-dark/30">
+                    {t('expenseItemComposition')}
+                  </p>
                   {REPORT_CATEGORY_ORDER.map((key) => {
                     const val = catBreakdown[key];
                     if (val === 0) return null;
+                    const items = catItemBreakdown[key] ?? [];
                     return (
-                      <div key={key} className="flex items-center justify-between text-xs">
-                        <span className="text-canton-dark/50">└ {getReportCategoryLabel(lang, key)}</span>
-                        <span className="font-mono tabular-nums text-canton-dark/50">
-                          −${fmt(val)}
-                        </span>
+                      <div key={key} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-medium text-canton-dark/60">
+                            └ {getReportCategoryLabel(lang, key)}
+                          </span>
+                          <span className="font-mono tabular-nums text-canton-dark/55">
+                            −${fmt(val)}
+                          </span>
+                        </div>
+                        {items.length > 0 && (
+                          <div className="ml-4 space-y-0.5 border-l border-canton-dark/10 pl-3">
+                            {items.map((item) => (
+                              <div
+                                key={`${key}-${item.label}`}
+                                className="flex items-center justify-between gap-3 text-[11px]"
+                              >
+                                <span className="min-w-0 truncate text-canton-dark/45">
+                                  · {translateDataLabel(lang, item.label)}
+                                </span>
+                                <span className="shrink-0 font-mono tabular-nums text-canton-dark/40">
+                                  −${fmt(item.amount)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
