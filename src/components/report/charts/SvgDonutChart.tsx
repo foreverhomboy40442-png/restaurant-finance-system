@@ -77,9 +77,9 @@ export default function SvgDonutChart({
   const total = nonZero.reduce((s, seg) => s + seg.value, 0);
   const cx = size / 2;
   const cy = size / 2;
-  // 放大環帶占比，減少圓外留白
-  const outerR = size * (emphasis ? 0.48 : 0.45);
-  const innerR = size * (emphasis ? 0.28 : 0.28);
+  // 放大環帶占比，減少圓外與中心留白
+  const outerR = size * (emphasis ? 0.49 : 0.46);
+  const innerR = size * (emphasis ? 0.24 : 0.27);
 
   let currentAngle = 0;
 
