@@ -15,11 +15,9 @@ import {
   calcPnl,
   filterByMonths,
   getReportCategoryBreakdown,
-  getReportCategoryItemBreakdown,
   monthToLabel,
   sumExpenses,
   sumRevenues,
-  type ReportCategoryKey,
 } from './reportCalc';
 
 // ── 公開介面 ──────────────────────────────────────────────────────────────────
@@ -292,38 +290,18 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     { bold: true, labelBold: true },
   );
 
-  // 五大科目（合計 > 0 才顯示）＋各科目支出項目組成
-  const catDefs: { label: string; dataKey: keyof MonthData; reportKey: ReportCategoryKey }[] = [
-    { label: '  └ 食材採購', dataKey: 'ingredients',   reportKey: 'ingredients' },
-    { label: '  └ 人事成本', dataKey: 'labor',         reportKey: 'labor' },
-    { label: '  └ 水電瓦斯', dataKey: 'utilities',     reportKey: 'utilities' },
-    { label: '  └ 修繕費用', dataKey: 'repair',        reportKey: 'repair' },
-    { label: '  └ 營運雜支', dataKey: 'operatingMisc', reportKey: 'operating_misc' },
+  // 五大科目（合計 > 0 才顯示）
+  const catDefs: [string, keyof MonthData][] = [
+    ['  └ 食材採購', 'ingredients'],
+    ['  └ 人事成本', 'labor'],
+    ['  └ 水電瓦斯', 'utilities'],
+    ['  └ 修繕費用', 'repair'],
+    ['  └ 營運雜支', 'operatingMisc'],
   ];
 
-  const { expenses: periodExpenses } = filterByMonths(p.revenues, p.expenses, sorted);
-  const periodItemBreakdown = getReportCategoryItemBreakdown(periodExpenses);
-  const monthlyItemBreakdown = sorted.map((month) => {
-    const { expenses: mExp } = filterByMonths(p.revenues, p.expenses, [month]);
-    return getReportCategoryItemBreakdown(mExp);
-  });
-
-  for (const cat of catDefs) {
-    if (totals[cat.dataKey] <= 0) continue;
-    dataRow(
-      cat.label,
-      monthly.map((m) => -m[cat.dataKey]),
-      -totals[cat.dataKey],
-    );
-
-    const items = periodItemBreakdown[cat.reportKey] ?? [];
-    for (const item of items) {
-      const monthlyVals = monthlyItemBreakdown.map((breakdown) => {
-        const found = breakdown[cat.reportKey].find((row) => row.label === item.label);
-        return found ? -found.amount : 0;
-      });
-      dataRow(`      · ${item.label}`, monthlyVals, -item.amount);
-    }
+  for (const [label, key] of catDefs) {
+    if (totals[key] <= 0) continue;
+    dataRow(label, monthly.map((m) => -m[key]), -totals[key]);
   }
 
   // ③ 年終獎金攤提（每月固定 −yearEndMonthly）
@@ -378,6 +356,21 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
     totals.finalDistributable,
     { bold: true, labelBold: true, border: bdBoth, totalBorder: bdTotalBoth },
   );
+
+  emptyRow();
+
+  // 科目組成說明（固定定義，不含金額；置於損益流下方避免干擾閱讀）
+  mergeRow('科目組成說明（定義）', { bold: true, sz: 10, border: bdAll });
+  const compositionLines = [
+    '食材採購：菜金、油條、雞、乾貨、酒水與供應商貨款（惠通、大友等）',
+    '人事成本：PT 點工薪資、正職薪資',
+    '水電瓦斯：電費、瓦斯',
+    '修繕費用：裝潢、冷氣、燈泡等店內修繕與設備維護',
+    '營運雜支：房租、雜貨、便當盒、檯布、行銷及其他雜支',
+  ];
+  for (const line of compositionLines) {
+    mergeRow(line, { sz: 9, italic: true, border: bdAll });
+  }
 
   emptyRow();
 

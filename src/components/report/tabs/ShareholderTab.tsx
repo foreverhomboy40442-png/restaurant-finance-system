@@ -20,7 +20,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
-import { getReportCategoryLabel, translateDataLabel } from '../../../utils/lang';
+import { getReportCategoryLabel, type TranslationKey } from '../../../utils/lang';
 import {
   preloadRestaurantParameters,
   saveRestaurantParameters,
@@ -32,11 +32,11 @@ import {
   fmtSigned,
   getAllMonths,
   getReportCategoryBreakdown,
-  getReportCategoryItemBreakdown,
   REPORT_CATEGORY_ORDER,
   monthToLabel,
   sumExpenses,
   sumRevenues,
+  type ReportCategoryKey,
 } from '../utils/reportCalc';
 import { exportShareholderExcel } from '../utils/exportShareholderExcel';
 
@@ -44,6 +44,15 @@ interface ShareholderTabProps {
   revenues: RevenueItem[];
   expenses: ExpenseItem[];
 }
+
+/** 五大科目固定組成說明（給股東看的定義，不含金額） */
+const REPORT_CATEGORY_DEF_KEYS: Record<ReportCategoryKey, TranslationKey> = {
+  ingredients: 'catIngredientsDef',
+  labor: 'catLaborDef',
+  utilities: 'catUtilitiesDef',
+  repair: 'catRepairDef',
+  operating_misc: 'catOperatingMiscDef',
+};
 
 export default function ShareholderTab({ revenues, expenses }: ShareholderTabProps) {
   const { t, lang } = useLanguage();
@@ -178,7 +187,6 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const grossRevenue      = sumRevenues(selRev);
   const operatingExpenses = sumExpenses(selExp);
   const catBreakdown      = useMemo(() => getReportCategoryBreakdown(selExp), [selExp]);
-  const catItemBreakdown  = useMemo(() => getReportCategoryItemBreakdown(selExp), [selExp]);
   const yearEndBonus      = yearEndMonthly * selectedMonths.length;
   const repairFundReserve = repairFundMonthly * selectedMonths.length;
 
@@ -445,44 +453,41 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                 {expenseDetailOpen ? t('collapseDetails') : t('expandDetails')}
               </button>
               {expenseDetailOpen && (
-                <div className="mb-2 ml-8 space-y-2">
-                  <p className="text-[10px] uppercase tracking-wider text-canton-dark/30">
-                    {t('expenseItemComposition')}
-                  </p>
-                  {REPORT_CATEGORY_ORDER.map((key) => {
-                    const val = catBreakdown[key];
-                    if (val === 0) return null;
-                    const items = catItemBreakdown[key] ?? [];
-                    return (
-                      <div key={key} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium text-canton-dark/60">
+                <div className="mb-3 ml-8 space-y-3">
+                  <div className="space-y-1">
+                    {REPORT_CATEGORY_ORDER.map((key) => {
+                      const val = catBreakdown[key];
+                      if (val === 0) return null;
+                      return (
+                        <div key={key} className="flex items-center justify-between text-xs">
+                          <span className="text-canton-dark/50">
                             └ {getReportCategoryLabel(lang, key)}
                           </span>
-                          <span className="font-mono tabular-nums text-canton-dark/55">
+                          <span className="font-mono tabular-nums text-canton-dark/50">
                             −${fmt(val)}
                           </span>
                         </div>
-                        {items.length > 0 && (
-                          <div className="ml-4 space-y-0.5 border-l border-canton-dark/10 pl-3">
-                            {items.map((item) => (
-                              <div
-                                key={`${key}-${item.label}`}
-                                className="flex items-center justify-between gap-3 text-[11px]"
-                              >
-                                <span className="min-w-0 truncate text-canton-dark/45">
-                                  · {translateDataLabel(lang, item.label)}
-                                </span>
-                                <span className="shrink-0 font-mono tabular-nums text-canton-dark/40">
-                                  −${fmt(item.amount)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+
+                  {/* 固定科目組成定義（不含金額，供股東理解） */}
+                  <div className="rounded-sm border border-canton-dark/8 bg-canton-bg/60 px-3 py-2.5">
+                    <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-canton-dark/35">
+                      {t('expenseCategoryDefinition')}
+                    </p>
+                    <ul className="space-y-1.5">
+                      {REPORT_CATEGORY_ORDER.map((key) => (
+                        <li key={`def-${key}`} className="text-[11px] leading-relaxed text-canton-dark/50">
+                          <span className="font-medium text-canton-dark/65">
+                            {getReportCategoryLabel(lang, key)}
+                          </span>
+                          <span className="text-canton-dark/35">：</span>
+                          <span>{t(REPORT_CATEGORY_DEF_KEYS[key])}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               )}
             </div>
