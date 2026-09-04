@@ -3,6 +3,7 @@
  *
  * 依傳入的 segments 自動計算弧度與百分比，
  * 圖例附帶數值與百分比，支援最多 8 個色段。
+ * emphasis：股東報表用 — 更大字級、更深圖例文字、更實色區塊。
  */
 
 interface Segment {
@@ -14,6 +15,10 @@ interface Segment {
 interface SvgDonutChartProps {
   segments: Segment[];
   size?: number;
+  /** 加強可讀性（更大字級、更深顏色） */
+  emphasis?: boolean;
+  emptyText?: string;
+  totalLabel?: string;
 }
 
 function polarPoint(cx: number, cy: number, r: number, angle: number): string {
@@ -48,13 +53,23 @@ function formatMoney(v: number): string {
   return v.toLocaleString('zh-TW', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
-export default function SvgDonutChart({ segments, size = 180 }: SvgDonutChartProps) {
+export default function SvgDonutChart({
+  segments,
+  size = 180,
+  emphasis = false,
+  emptyText = '暫無資料',
+  totalLabel = '合計',
+}: SvgDonutChartProps) {
   const nonZero = segments.filter((s) => s.value > 0);
 
   if (nonZero.length === 0) {
     return (
-      <div className="flex h-40 items-center justify-center text-sm text-canton-dark/35">
-        暫無資料
+      <div
+        className={`flex h-40 items-center justify-center ${
+          emphasis ? 'text-base text-canton-dark/55' : 'text-sm text-canton-dark/35'
+        }`}
+      >
+        {emptyText}
       </div>
     );
   }
@@ -62,13 +77,13 @@ export default function SvgDonutChart({ segments, size = 180 }: SvgDonutChartPro
   const total = nonZero.reduce((s, seg) => s + seg.value, 0);
   const cx = size / 2;
   const cy = size / 2;
-  const outerR = size * 0.43;
-  const innerR = size * 0.27;
+  const outerR = size * (emphasis ? 0.45 : 0.43);
+  const innerR = size * (emphasis ? 0.26 : 0.27);
 
   let currentAngle = 0;
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className={`flex flex-col items-center ${emphasis ? 'gap-5' : 'gap-4'}`}>
       {/* SVG 圓環 */}
       <svg
         viewBox={`0 0 ${size} ${size}`}
@@ -88,7 +103,9 @@ export default function SvgDonutChart({ segments, size = 180 }: SvgDonutChartPro
               key={seg.label}
               d={segmentPath(cx, cy, outerR, innerR, startA, endA)}
               fill={seg.color}
-              opacity="0.88"
+              opacity="1"
+              stroke={emphasis ? '#FDFBF7' : undefined}
+              strokeWidth={emphasis ? 1.5 : undefined}
             />
           );
         })}
@@ -96,20 +113,21 @@ export default function SvgDonutChart({ segments, size = 180 }: SvgDonutChartPro
         {/* 中心文字 */}
         <text
           x={cx}
-          y={cy - 5}
+          y={cy - (emphasis ? 8 : 5)}
           textAnchor="middle"
-          fontSize="10"
-          fill="rgb(44 44 44 / 0.40)"
+          fontSize={emphasis ? 13 : 10}
+          fontWeight={emphasis ? 600 : 400}
+          fill={emphasis ? 'rgb(28 25 23 / 0.72)' : 'rgb(44 44 44 / 0.40)'}
         >
-          合計
+          {totalLabel}
         </text>
         <text
           x={cx}
-          y={cy + 9}
+          y={cy + (emphasis ? 12 : 9)}
           textAnchor="middle"
-          fontSize="11"
-          fontWeight="600"
-          fill="rgb(44 44 44 / 0.75)"
+          fontSize={emphasis ? 15 : 11}
+          fontWeight="700"
+          fill={emphasis ? 'rgb(28 25 23 / 0.92)' : 'rgb(44 44 44 / 0.75)'}
           fontFamily="JetBrains Mono, monospace"
         >
           {total >= 1_000_000
@@ -119,22 +137,40 @@ export default function SvgDonutChart({ segments, size = 180 }: SvgDonutChartPro
       </svg>
 
       {/* 圖例 */}
-      <div className="w-full space-y-1.5">
+      <div className={`w-full ${emphasis ? 'space-y-2.5' : 'space-y-1.5'}`}>
         {nonZero.map((seg) => {
           const pct = ((seg.value / total) * 100).toFixed(1);
           return (
-            <div key={seg.label} className="flex items-center gap-2">
+            <div key={seg.label} className="flex items-center gap-2.5">
               <span
-                className="h-2.5 w-2.5 shrink-0 rounded-sm"
-                style={{ backgroundColor: seg.color, opacity: 0.88 }}
+                className={`shrink-0 rounded-sm ${emphasis ? 'h-3.5 w-3.5' : 'h-2.5 w-2.5'}`}
+                style={{ backgroundColor: seg.color }}
               />
-              <span className="min-w-0 flex-1 truncate text-xs text-canton-dark/65">
+              <span
+                className={`min-w-0 flex-1 truncate ${
+                  emphasis
+                    ? 'text-sm font-semibold text-canton-dark'
+                    : 'text-xs text-canton-dark/65'
+                }`}
+              >
                 {seg.label}
               </span>
-              <span className="shrink-0 font-mono tabular-nums text-xs text-canton-dark/50">
+              <span
+                className={`shrink-0 font-mono tabular-nums ${
+                  emphasis
+                    ? 'text-sm font-semibold text-canton-dark'
+                    : 'text-xs text-canton-dark/50'
+                }`}
+              >
                 {pct}%
               </span>
-              <span className="shrink-0 font-mono tabular-nums text-xs text-canton-dark/65">
+              <span
+                className={`shrink-0 font-mono tabular-nums ${
+                  emphasis
+                    ? 'text-sm font-semibold text-canton-dark'
+                    : 'text-xs text-canton-dark/65'
+                }`}
+              >
                 ${formatMoney(seg.value)}
               </span>
             </div>

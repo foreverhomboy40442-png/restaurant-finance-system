@@ -60,16 +60,16 @@ const REPORT_CATEGORY_DEF_KEYS: Record<ReportCategoryKey, TranslationKey> = {
   operating_misc: 'catOperatingMiscDef',
 };
 
-/** 五大支出科目圖表配色（與營運報表一致） */
+/** 五大支出科目圖表配色（加深，利於投影／匯出閱讀） */
 const REPORT_CATEGORY_COLORS: Record<ReportCategoryKey, string> = {
-  ingredients: '#C9882B',
-  labor: '#A62424',
-  utilities: '#2A7A3B',
-  repair: '#E07040',
-  operating_misc: '#888888',
+  ingredients: '#92400E',
+  labor: '#7F1D1D',
+  utilities: '#14532D',
+  repair: '#9A3412',
+  operating_misc: '#44403C',
 };
 
-const REVENUE_TREND_COLOR = '#7F1D1D';
+const REVENUE_TREND_COLOR = '#5C1010';
 
 export default function ShareholderTab({ revenues, expenses }: ShareholderTabProps) {
   const { t, lang } = useLanguage();
@@ -435,10 +435,10 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {/* 營收成長趨勢 */}
           <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
-            <h3 className="text-sm font-semibold text-canton-dark">
+            <h3 className="text-base font-bold text-canton-dark">
               {t('shareholderRevenueTrend')}
             </h3>
-            <p className="mb-4 mt-0.5 text-xs text-canton-dark/40">
+            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
               {t('shareholderRevenueTrendDesc')}
             </p>
             <SvgLineChart
@@ -450,18 +450,19 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                   values: revenueTrendValues,
                 },
               ]}
-              height={240}
+              height={260}
               yUnit={t('unitCurrency')}
               emptyText={t('chartNoData')}
+              emphasis
             />
           </div>
 
           {/* 五大支出比例 */}
           <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
-            <h3 className="text-sm font-semibold text-canton-dark">
+            <h3 className="text-base font-bold text-canton-dark">
               {t('shareholderExpenseShare')}
             </h3>
-            <p className="mb-4 mt-0.5 text-xs text-canton-dark/40">
+            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
               {t('shareholderExpenseShareDesc')}
             </p>
             {expenseShareSegments.length > 0 ? (
@@ -471,10 +472,13 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                   value,
                   color,
                 }))}
-                size={200}
+                size={220}
+                emphasis
+                emptyText={t('chartNoData')}
+                totalLabel={t('totalLabel')}
               />
             ) : (
-              <div className="flex h-40 items-center justify-center text-sm text-canton-dark/35">
+              <div className="flex h-40 items-center justify-center text-base text-canton-dark/55">
                 {t('chartNoData')}
               </div>
             )}

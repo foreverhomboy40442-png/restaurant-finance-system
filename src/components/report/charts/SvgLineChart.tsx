@@ -3,6 +3,7 @@
  *
  * 支援多條系列線、格線、X/Y 軸標籤、資料點。
  * 完全無外部依賴，透過 viewBox 實現 RWD 等比縮放。
+ * emphasis：股東報表用 — 更大字級、更深軸色、更粗線條。
  */
 
 interface DataSeries {
@@ -20,13 +21,15 @@ interface SvgLineChartProps {
   yUnit?: string;
   /** 無資料時顯示文字 */
   emptyText?: string;
+  /** 加強可讀性（更大字級、更深顏色） */
+  emphasis?: boolean;
 }
 
 const W = 620;
-const PAD_L = 74;
+const PAD_L = 80;
 const PAD_R = 20;
-const PAD_T = 20;
-const PAD_B = 44;
+const PAD_T = 24;
+const PAD_B = 48;
 
 function formatAxisVal(v: number): string {
   if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
@@ -40,11 +43,16 @@ export default function SvgLineChart({
   height = 260,
   yUnit,
   emptyText = 'No data',
+  emphasis = false,
 }: SvgLineChartProps) {
   const n = xLabels.length;
   if (n === 0 || series.length === 0) {
     return (
-      <div className="flex h-40 items-center justify-center text-sm text-canton-dark/35">
+      <div
+        className={`flex h-40 items-center justify-center ${
+          emphasis ? 'text-base text-canton-dark/55' : 'text-sm text-canton-dark/35'
+        }`}
+      >
         {emptyText}
       </div>
     );
@@ -72,6 +80,16 @@ export default function SvgLineChart({
     minVal + (i / (Y_TICKS - 1)) * (maxVal - minVal),
   );
 
+  const axisFont = emphasis ? 13 : 10;
+  const unitFont = emphasis ? 12 : 9;
+  const axisFill = emphasis ? 'rgb(28 25 23 / 0.78)' : 'rgb(44 44 44 / 0.38)';
+  const xFill = emphasis ? 'rgb(28 25 23 / 0.82)' : 'rgb(44 44 44 / 0.40)';
+  const unitFill = emphasis ? 'rgb(28 25 23 / 0.65)' : 'rgb(44 44 44 / 0.30)';
+  const gridStroke = emphasis ? 'rgb(28 25 23 / 0.14)' : 'rgb(44 44 44 / 0.06)';
+  const axisStroke = emphasis ? 'rgb(28 25 23 / 0.35)' : 'rgb(44 44 44 / 0.12)';
+  const lineWidth = emphasis ? 3.25 : 2;
+  const pointR = emphasis ? 4.5 : 3;
+
   return (
     <div className="w-full overflow-x-auto">
       <svg
@@ -89,15 +107,16 @@ export default function SvgLineChart({
               y1={yPos(val)}
               x2={W - PAD_R}
               y2={yPos(val)}
-              stroke="rgb(44 44 44 / 0.06)"
+              stroke={gridStroke}
               strokeWidth="1"
             />
             <text
-              x={PAD_L - 6}
+              x={PAD_L - 8}
               y={yPos(val) + 4}
               textAnchor="end"
-              fontSize="10"
-              fill="rgb(44 44 44 / 0.38)"
+              fontSize={axisFont}
+              fontWeight={emphasis ? 600 : 400}
+              fill={axisFill}
               fontFamily="JetBrains Mono, monospace"
             >
               {formatAxisVal(val)}
@@ -111,8 +130,8 @@ export default function SvgLineChart({
           y1={PAD_T + innerH}
           x2={W - PAD_R}
           y2={PAD_T + innerH}
-          stroke="rgb(44 44 44 / 0.12)"
-          strokeWidth="1"
+          stroke={axisStroke}
+          strokeWidth={emphasis ? 1.5 : 1}
         />
 
         {/* X 軸標籤 */}
@@ -120,10 +139,11 @@ export default function SvgLineChart({
           <text
             key={i}
             x={xPos(i)}
-            y={height - 8}
+            y={height - 10}
             textAnchor="middle"
-            fontSize="10"
-            fill="rgb(44 44 44 / 0.40)"
+            fontSize={axisFont}
+            fontWeight={emphasis ? 600 : 400}
+            fill={xFill}
           >
             {label}
           </text>
@@ -134,8 +154,9 @@ export default function SvgLineChart({
           <text
             x={6}
             y={PAD_T + 4}
-            fontSize="9"
-            fill="rgb(44 44 44 / 0.30)"
+            fontSize={unitFont}
+            fontWeight={emphasis ? 600 : 400}
+            fill={unitFill}
           >
             {yUnit}
           </text>
@@ -152,11 +173,11 @@ export default function SvgLineChart({
               points={points}
               fill="none"
               stroke={s.color}
-              strokeWidth="2"
+              strokeWidth={lineWidth}
               strokeLinejoin="round"
               strokeLinecap="round"
               strokeDasharray={s.dashed ? '5 4' : undefined}
-              opacity="0.9"
+              opacity="1"
             />
           );
         })}
@@ -168,26 +189,31 @@ export default function SvgLineChart({
               key={`${s.label}-${i}`}
               cx={xPos(i)}
               cy={yPos(v)}
-              r="3"
+              r={pointR}
               fill={s.color}
               stroke="white"
-              strokeWidth="1.5"
+              strokeWidth={emphasis ? 2 : 1.5}
             />
           )),
         )}
       </svg>
 
       {/* 圖例 */}
-      <div className="mt-2 flex flex-wrap justify-center gap-x-5 gap-y-1">
+      <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-1.5">
         {series.map((s) => (
-          <span key={s.label} className="flex items-center gap-1.5 text-xs text-canton-dark/55">
+          <span
+            key={s.label}
+            className={`flex items-center gap-2 ${
+              emphasis
+                ? 'text-sm font-semibold text-canton-dark'
+                : 'text-xs text-canton-dark/55'
+            }`}
+          >
             <span
-              className="inline-block h-2 w-5 rounded-full"
+              className={`inline-block rounded-full ${emphasis ? 'h-2.5 w-7' : 'h-2 w-5'}`}
               style={{
-                backgroundColor: s.color,
-                opacity: 0.85,
+                backgroundColor: s.dashed ? 'transparent' : s.color,
                 borderBottom: s.dashed ? `2px dashed ${s.color}` : undefined,
-                background: s.dashed ? 'transparent' : s.color,
                 borderTop: s.dashed ? `2px dashed ${s.color}` : undefined,
               }}
             />

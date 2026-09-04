@@ -52,6 +52,41 @@ interface MonthData {
   finalDistributable:number;
 }
 
+/** 視覺化圖表用的加深配色（與畫面股東圖表一致） */
+const CHART_COLORS = {
+  revenue: '5C1010',
+  ingredients: '92400E',
+  labor: '7F1D1D',
+  utilities: '14532D',
+  repair: '9A3412',
+  operating_misc: '44403C',
+  axis: '1C1917',
+} as const;
+
+const EXPENSE_SHARE_DEFS: {
+  label: string;
+  dataKey: keyof MonthData;
+  color: string;
+}[] = [
+  { label: '食材採購', dataKey: 'ingredients',   color: CHART_COLORS.ingredients },
+  { label: '人事成本', dataKey: 'labor',         color: CHART_COLORS.labor },
+  { label: '水電瓦斯', dataKey: 'utilities',     color: CHART_COLORS.utilities },
+  { label: '修繕費用', dataKey: 'repair',        color: CHART_COLORS.repair },
+  { label: '營運雜支', dataKey: 'operatingMisc', color: CHART_COLORS.operating_misc },
+];
+
+function buildTrendBar(value: number, maxValue: number, blocks = 24): string {
+  if (maxValue <= 0 || value <= 0) return '';
+  const filled = Math.max(1, Math.round((value / maxValue) * blocks));
+  return '█'.repeat(filled);
+}
+
+function buildShareBar(pct: number, blocks = 24): string {
+  if (pct <= 0) return '';
+  const filled = Math.max(1, Math.round((pct / 100) * blocks));
+  return '█'.repeat(filled);
+}
+
 // ── 樣式常數 ──────────────────────────────────────────────────────────────────
 
 const WHITE    = 'FFFFFF';
@@ -86,6 +121,7 @@ interface CS {
   fmt?:    string;
   border?: BorderObj;
   fill?:   string;
+  fontColor?: string;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,7 +137,7 @@ function mk(value: string | number, s: CS = {}): Record<string, any> {
         sz:     s.sz   ?? 10,
         bold:   s.bold ?? false,
         italic: s.italic ?? false,
-        color:  { rgb: BLACK },
+        color:  { rgb: s.fontColor ?? BLACK },
       },
       fill:      { fgColor: { rgb: s.fill ?? WHITE } },
       border:    s.border ?? bdAll,
@@ -424,6 +460,176 @@ export function exportShareholderExcel(p: ExportShareholderParams): void {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '股東財務損益報告');
 
+  // 第二頁：視覺化圖表（大字級、深色，方便股東閱讀／列印）
+  const chartWs = buildVisualizationSheet(sorted, monthly, totals);
+  XLSX.utils.book_append_sheet(wb, chartWs, '視覺化圖表');
+
   const fileTs = periodStr.replace(/[\s~\/]/g, '-').replace(/-+/g, '-');
   XLSX.writeFile(wb, `粵香園_股東損益報告_${fileTs}.xlsx`);
+}
+
+/**
+ * 視覺化圖表工作表：
+ * 1) 營收成長趨勢（數值＋長條）
+ * 2) 五大支出結構比例（數值＋占比長條）
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildVisualizationSheet(
+  sorted: string[],
+  monthly: MonthData[],
+  totals: MonthData,
+): Record<string, any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type Row = Record<string, any>[];
+  const rows: Row[] = [];
+  const merges: { s: { r: number; c: number }; e: { r: number; c: number } }[] = [];
+  const COLS = 4;
+
+  const thinLocal: BorderSide = { style: 'thin', color: { rgb: GRAY_BD } };
+  const bd: BorderObj = { top: thinLocal, bottom: thinLocal, left: thinLocal, right: thinLocal };
+
+  function pushMerged(text: string, s: CS) {
+    const r = rows.length;
+    const cells: Row = [mk(text, s)];
+    for (let i = 1; i < COLS; i++) cells.push(mk('', { fill: s.fill, border: s.border ?? bd }));
+    merges.push({ s: { r, c: 0 }, e: { r, c: COLS - 1 } });
+    rows.push(cells);
+  }
+
+  function pushEmpty() {
+    rows.push(Array.from({ length: COLS }, () => empty()));
+  }
+
+  // ── 營收成長趨勢 ──────────────────────────────────────────────────────────
+  pushMerged('營收成長趨勢', {
+    bold: true,
+    sz: 16,
+    align: 'left',
+    border: { ...bd, bottom: med },
+  });
+  pushMerged('依所選月份顯示營業總收入走勢（數值＋相對長條）', {
+    sz: 11,
+    italic: true,
+    border: bd,
+  });
+
+  rows.push([
+    mk('月份', { bold: true, sz: 12, fill: HDR_FILL, border: bd }),
+    mk('營業總收入', { bold: true, sz: 12, align: 'right', fill: HDR_FILL, border: bd }),
+    mk('趨勢長條', { bold: true, sz: 12, fill: HDR_FILL, border: bd }),
+    mk('備註', { bold: true, sz: 12, fill: HDR_FILL, border: bd }),
+  ]);
+
+  const maxRevenue = Math.max(...monthly.map((m) => m.grossRevenue), 0);
+  monthly.forEach((m, i) => {
+    const prev = i > 0 ? monthly[i - 1].grossRevenue : null;
+    let note = '';
+    if (prev !== null && prev > 0) {
+      const growth = ((m.grossRevenue - prev) / prev) * 100;
+      note = `${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`;
+    } else if (prev === 0 && m.grossRevenue > 0) {
+      note = '新增營收';
+    }
+    rows.push([
+      mk(monthToLabel(sorted[i]), { bold: true, sz: 12, border: bd }),
+      mk(m.grossRevenue, { bold: true, sz: 12, fmt: MONEY_FMT, border: bd }),
+      mk(buildTrendBar(m.grossRevenue, maxRevenue), {
+        bold: true,
+        sz: 14,
+        border: bd,
+        fontColor: CHART_COLORS.revenue,
+      }),
+      mk(note, { bold: true, sz: 12, border: bd }),
+    ]);
+  });
+
+  rows.push([
+    mk('合計', { bold: true, sz: 13, border: bd }),
+    mk(totals.grossRevenue, { bold: true, sz: 13, fmt: MONEY_FMT, border: bd }),
+    mk('', { border: bd }),
+    mk('', { border: bd }),
+  ]);
+
+  pushEmpty();
+
+  // ── 支出結構比例 ──────────────────────────────────────────────────────────
+  pushMerged('支出結構比例（五大科目）', {
+    bold: true,
+    sz: 16,
+    align: 'left',
+    border: { ...bd, bottom: med },
+  });
+  pushMerged('依五大支出科目顯示金額與佔比（數值＋比例長條）', {
+    sz: 11,
+    italic: true,
+    border: bd,
+  });
+
+  rows.push([
+    mk('支出科目', { bold: true, sz: 12, fill: HDR_FILL, border: bd }),
+    mk('金額', { bold: true, sz: 12, align: 'right', fill: HDR_FILL, border: bd }),
+    mk('佔比', { bold: true, sz: 12, align: 'right', fill: HDR_FILL, border: bd }),
+    mk('比例長條', { bold: true, sz: 12, fill: HDR_FILL, border: bd }),
+  ]);
+
+  const expenseTotal = Math.max(totals.operatingExpenses, 0);
+  for (const def of EXPENSE_SHARE_DEFS) {
+    const amount = totals[def.dataKey] as number;
+    if (amount <= 0) continue;
+    const pct = expenseTotal > 0 ? (amount / expenseTotal) * 100 : 0;
+    rows.push([
+      mk(def.label, {
+        bold: true,
+        sz: 12,
+        border: bd,
+        fill: def.color,
+        fontColor: WHITE,
+      }),
+      mk(amount, { bold: true, sz: 12, fmt: MONEY_FMT, border: bd }),
+      mk(`${pct.toFixed(1)}%`, { bold: true, sz: 12, align: 'right', border: bd }),
+      mk(buildShareBar(pct), {
+        bold: true,
+        sz: 14,
+        border: bd,
+        fontColor: def.color,
+      }),
+    ]);
+  }
+
+  rows.push([
+    mk('營業總支出合計', { bold: true, sz: 13, border: bd }),
+    mk(totals.operatingExpenses, { bold: true, sz: 13, fmt: MONEY_FMT, border: bd }),
+    mk(expenseTotal > 0 ? '100%' : '0%', { bold: true, sz: 13, align: 'right', border: bd }),
+    mk('', { border: bd }),
+  ]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const out: Record<string, any> = {};
+  rows.forEach((row, r) => {
+    row.forEach((cell, c) => {
+      out[XLSX.utils.encode_cell({ r, c })] = cell;
+    });
+  });
+  out['!ref'] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: rows.length - 1, c: COLS - 1 },
+  });
+  out['!merges'] = merges;
+  out['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 28 }, { wch: 14 }];
+  out['!rows'] = rows.map((row) => {
+    const v = row[0]?.v;
+    if (typeof v === 'string' && (v.includes('趨勢') || v.includes('比例（五大'))) {
+      return { hpt: 30 };
+    }
+    return { hpt: 22 };
+  });
+  out['!pageSetup'] = {
+    paperSize: 9,
+    orientation: 'portrait',
+    fitToPage: true,
+    fitToWidth: 1,
+    fitToHeight: 0,
+  };
+
+  return out;
 }
