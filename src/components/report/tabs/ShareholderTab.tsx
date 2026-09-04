@@ -654,10 +654,10 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
           </div>
 
           <div className="rounded-sm border border-canton-dark/8 bg-white p-5 shadow-canton md:p-6">
-            <h3 className="text-base font-bold text-canton-dark">
+            <h3 className="text-sm font-semibold text-canton-dark">
               {t('shareholderExpenseShare')}
             </h3>
-            <p className="mb-4 mt-1 text-sm text-canton-dark/55">
+            <p className="mb-3 mt-0.5 text-xs text-canton-dark/50">
               {t('shareholderExpenseShareDesc')}
             </p>
             {expenseShareSegments.length > 0 ? (
@@ -667,13 +667,13 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                   value,
                   color,
                 }))}
-                size={200}
+                size={180}
                 emphasis
                 emptyText={t('chartNoData')}
                 totalLabel={t('totalLabel')}
               />
             ) : (
-              <div className="flex h-32 items-center justify-center text-base text-canton-dark/55">
+              <div className="flex h-32 items-center justify-center text-sm text-canton-dark/50">
                 {t('chartNoData')}
               </div>
             )}

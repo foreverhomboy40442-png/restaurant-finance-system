@@ -84,19 +84,19 @@ export default function SvgDonutChart({
   let currentAngle = 0;
 
   const legend = (
-    <div className={`w-full min-w-0 ${emphasis ? 'space-y-1.5' : 'space-y-1.5'}`}>
+    <div className="w-full min-w-0 space-y-1">
       {nonZero.map((seg) => {
         const pct = ((seg.value / total) * 100).toFixed(1);
         return (
-          <div key={seg.label} className={`flex items-center ${emphasis ? 'gap-2' : 'gap-2'}`}>
+          <div key={seg.label} className="flex items-center gap-1.5">
             <span
-              className={`shrink-0 rounded-sm ${emphasis ? 'h-3 w-3' : 'h-2.5 w-2.5'}`}
+              className="h-2.5 w-2.5 shrink-0 rounded-sm"
               style={{ backgroundColor: seg.color }}
             />
             <span
               className={`min-w-0 flex-1 truncate ${
                 emphasis
-                  ? 'text-sm font-semibold text-canton-dark'
+                  ? 'text-xs font-medium text-canton-dark/80'
                   : 'text-xs text-canton-dark/65'
               }`}
             >
@@ -105,7 +105,7 @@ export default function SvgDonutChart({
             <span
               className={`shrink-0 font-mono tabular-nums ${
                 emphasis
-                  ? 'text-sm font-semibold text-canton-dark'
+                  ? 'text-xs font-medium text-canton-dark/70'
                   : 'text-xs text-canton-dark/50'
               }`}
             >
@@ -114,7 +114,7 @@ export default function SvgDonutChart({
             <span
               className={`shrink-0 font-mono tabular-nums ${
                 emphasis
-                  ? 'text-sm font-semibold text-canton-dark'
+                  ? 'text-xs font-medium text-canton-dark/80'
                   : 'text-xs text-canton-dark/65'
               }`}
             >
@@ -130,7 +130,7 @@ export default function SvgDonutChart({
     <div
       className={
         emphasis
-          ? 'flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4'
+          ? 'flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:gap-3'
           : 'flex flex-col items-center gap-3'
       }
     >
@@ -161,21 +161,21 @@ export default function SvgDonutChart({
 
         <text
           x={cx}
-          y={cy - (emphasis ? 7 : 5)}
+          y={cy - 5}
           textAnchor="middle"
-          fontSize={emphasis ? 13 : 10}
+          fontSize={emphasis ? 10 : 10}
           fontWeight={emphasis ? 600 : 400}
-          fill={emphasis ? 'rgb(28 25 23 / 0.72)' : 'rgb(44 44 44 / 0.40)'}
+          fill={emphasis ? 'rgb(28 25 23 / 0.65)' : 'rgb(44 44 44 / 0.40)'}
         >
           {totalLabel}
         </text>
         <text
           x={cx}
-          y={cy + (emphasis ? 11 : 9)}
+          y={cy + 9}
           textAnchor="middle"
-          fontSize={emphasis ? 15 : 11}
+          fontSize={emphasis ? 12 : 11}
           fontWeight="700"
-          fill={emphasis ? 'rgb(28 25 23 / 0.92)' : 'rgb(44 44 44 / 0.75)'}
+          fill={emphasis ? 'rgb(28 25 23 / 0.88)' : 'rgb(44 44 44 / 0.75)'}
           fontFamily="JetBrains Mono, monospace"
         >
           {total >= 1_000_000
