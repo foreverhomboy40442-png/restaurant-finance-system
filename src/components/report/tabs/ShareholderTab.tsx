@@ -260,17 +260,21 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const reservedSurplus    = perMonthPnl.reduce((s, p) => s + p.reservedSurplus,    0);
   const finalDistributable = perMonthPnl.reduce((s, p) => s + p.finalDistributable, 0);
 
-  function handleExport() {
-    exportShareholderExcel({
-      selectedMonths,
-      revenues,
-      expenses,
-      yearEndMonthly,
-      repairFundMonthly,
-      taxRate,
-      employeeBonusPct,
-      reserveRate,
-    });
+  async function handleExport() {
+    try {
+      await exportShareholderExcel({
+        selectedMonths,
+        revenues,
+        expenses,
+        yearEndMonthly,
+        repairFundMonthly,
+        taxRate,
+        employeeBonusPct,
+        reserveRate,
+      });
+    } catch (err) {
+      console.error('[shareholder-export]', err);
+    }
   }
 
   function toggleMonth(m: string) {
