@@ -506,7 +506,7 @@ export async function exportShareholderExcel(
   });
   ws.addImage(donutImgId, {
     tl: { col: Math.min(5, Math.max(3, numCols - 1)), row: chartAnchorRow0 },
-    ext: { width: 390, height: 250 },
+    ext: { width: 360, height: 205 },
     editAs: 'oneCell',
   });
 

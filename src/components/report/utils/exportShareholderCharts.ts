@@ -154,13 +154,14 @@ export function buildRevenueTrendSvg(input: LineChartExportInput): string {
 }
 
 export function buildExpenseDonutSvg(input: DonutChartExportInput): string {
-  const W = 520;
-  const H = 420;
-  const size = 220;
-  const cx = 130;
-  const cy = 200;
-  const outerR = size * 0.45;
-  const innerR = size * 0.26;
+  // 緊湊版面：縮小畫布、放大甜甜圈、圖例貼近，減少四周留白
+  const W = 440;
+  const H = 250;
+  const size = 200;
+  const cx = 108;
+  const cy = 138;
+  const outerR = size * 0.48;
+  const innerR = size * 0.28;
   const nonZero = input.segments.filter((s) => s.value > 0);
   const total = nonZero.reduce((s, seg) => s + seg.value, 0);
 
@@ -205,14 +206,16 @@ export function buildExpenseDonutSvg(input: DonutChartExportInput): string {
       ? `${(total / 1_000_000).toFixed(2)}M`
       : `${Math.round(total / 1000)}K`;
 
+  const legendStartY = 58;
+  const legendRowH = 34;
   const legend = nonZero
     .map((seg, i) => {
       const pct = total > 0 ? ((seg.value / total) * 100).toFixed(1) : '0.0';
-      const y = 88 + i * 36;
+      const y = legendStartY + i * legendRowH;
       return `
-        <rect x="280" y="${y - 12}" width="16" height="16" rx="2" fill="${seg.color}"/>
-        <text x="304" y="${y}" font-size="14" font-weight="700" fill="${AXIS_COLOR}" font-family="Arial, sans-serif">${escapeXml(seg.label)}</text>
-        <text x="304" y="${y + 16}" font-size="13" font-weight="700" fill="${AXIS_COLOR}" fill-opacity="0.75" font-family="Arial, sans-serif">${pct}%　$${formatMoney(seg.value)}</text>
+        <rect x="228" y="${y - 11}" width="14" height="14" rx="2" fill="${seg.color}"/>
+        <text x="250" y="${y}" font-size="14" font-weight="700" fill="${AXIS_COLOR}" font-family="Arial, sans-serif">${escapeXml(seg.label)}</text>
+        <text x="250" y="${y + 15}" font-size="13" font-weight="700" fill="${AXIS_COLOR}" fill-opacity="0.78" font-family="Arial, sans-serif">${pct}%　$${formatMoney(seg.value)}</text>
       `;
     })
     .join('');
@@ -220,10 +223,10 @@ export function buildExpenseDonutSvg(input: DonutChartExportInput): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <rect width="100%" height="100%" fill="#FFFFFF"/>
-  <text x="24" y="30" font-size="18" font-weight="800" fill="${AXIS_COLOR}" font-family="Arial, sans-serif">${escapeXml(input.title)}</text>
+  <text x="16" y="24" font-size="17" font-weight="800" fill="${AXIS_COLOR}" font-family="Arial, sans-serif">${escapeXml(input.title)}</text>
   ${slices}
   <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="${AXIS_COLOR}" fill-opacity="0.72" font-family="Arial, sans-serif">${escapeXml(input.totalLabel)}</text>
-  <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="16" font-weight="800" fill="${AXIS_COLOR}" font-family="Arial, sans-serif">${centerTotal}</text>
+  <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="16" font-weight="800" fill="${AXIS_COLOR}" font-family="Arial, sans-serif">${centerTotal}</text>
   ${legend}
 </svg>`;
 }
@@ -236,7 +239,7 @@ export async function renderShareholderChartPngs(input: {
   const donutSvg = buildExpenseDonutSvg(input.donut);
   const [linePng, donutPng] = await Promise.all([
     svgToPngBytes(lineSvg, 720, 360),
-    svgToPngBytes(donutSvg, 520, 420),
+    svgToPngBytes(donutSvg, 440, 250),
   ]);
   return { linePng, donutPng };
 }

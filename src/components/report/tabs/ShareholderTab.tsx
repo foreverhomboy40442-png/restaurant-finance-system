@@ -667,13 +667,13 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                   value,
                   color,
                 }))}
-                size={220}
+                size={200}
                 emphasis
                 emptyText={t('chartNoData')}
                 totalLabel={t('totalLabel')}
               />
             ) : (
-              <div className="flex h-40 items-center justify-center text-base text-canton-dark/55">
+              <div className="flex h-32 items-center justify-center text-base text-canton-dark/55">
                 {t('chartNoData')}
               </div>
             )}

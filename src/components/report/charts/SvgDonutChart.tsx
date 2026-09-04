@@ -3,7 +3,7 @@
  *
  * 依傳入的 segments 自動計算弧度與百分比，
  * 圖例附帶數值與百分比，支援最多 8 個色段。
- * emphasis：股東報表用 — 更大字級、更深圖例文字、更實色區塊。
+ * emphasis：股東報表用 — 更大字級、更深圖例文字、緊湊排版減少留白。
  */
 
 interface Segment {
@@ -65,7 +65,7 @@ export default function SvgDonutChart({
   if (nonZero.length === 0) {
     return (
       <div
-        className={`flex h-40 items-center justify-center ${
+        className={`flex h-32 items-center justify-center ${
           emphasis ? 'text-base text-canton-dark/55' : 'text-sm text-canton-dark/35'
         }`}
       >
@@ -77,17 +77,66 @@ export default function SvgDonutChart({
   const total = nonZero.reduce((s, seg) => s + seg.value, 0);
   const cx = size / 2;
   const cy = size / 2;
-  const outerR = size * (emphasis ? 0.45 : 0.43);
-  const innerR = size * (emphasis ? 0.26 : 0.27);
+  // 放大環帶占比，減少圓外留白
+  const outerR = size * (emphasis ? 0.48 : 0.45);
+  const innerR = size * (emphasis ? 0.28 : 0.28);
 
   let currentAngle = 0;
 
+  const legend = (
+    <div className={`w-full min-w-0 ${emphasis ? 'space-y-1.5' : 'space-y-1.5'}`}>
+      {nonZero.map((seg) => {
+        const pct = ((seg.value / total) * 100).toFixed(1);
+        return (
+          <div key={seg.label} className={`flex items-center ${emphasis ? 'gap-2' : 'gap-2'}`}>
+            <span
+              className={`shrink-0 rounded-sm ${emphasis ? 'h-3 w-3' : 'h-2.5 w-2.5'}`}
+              style={{ backgroundColor: seg.color }}
+            />
+            <span
+              className={`min-w-0 flex-1 truncate ${
+                emphasis
+                  ? 'text-sm font-semibold text-canton-dark'
+                  : 'text-xs text-canton-dark/65'
+              }`}
+            >
+              {seg.label}
+            </span>
+            <span
+              className={`shrink-0 font-mono tabular-nums ${
+                emphasis
+                  ? 'text-sm font-semibold text-canton-dark'
+                  : 'text-xs text-canton-dark/50'
+              }`}
+            >
+              {pct}%
+            </span>
+            <span
+              className={`shrink-0 font-mono tabular-nums ${
+                emphasis
+                  ? 'text-sm font-semibold text-canton-dark'
+                  : 'text-xs text-canton-dark/65'
+              }`}
+            >
+              ${formatMoney(seg.value)}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div className={`flex flex-col items-center ${emphasis ? 'gap-5' : 'gap-4'}`}>
-      {/* SVG 圓環 */}
+    <div
+      className={
+        emphasis
+          ? 'flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4'
+          : 'flex flex-col items-center gap-3'
+      }
+    >
       <svg
         viewBox={`0 0 ${size} ${size}`}
-        className="w-full"
+        className="mx-auto w-full shrink-0"
         style={{ maxWidth: size }}
         aria-label="甜甜圈圖"
         role="img"
@@ -95,7 +144,7 @@ export default function SvgDonutChart({
         {nonZero.map((seg) => {
           const angle = (seg.value / total) * Math.PI * 2;
           const startA = currentAngle;
-          const endA = currentAngle + angle - 0.01; // tiny gap
+          const endA = currentAngle + angle - 0.01;
           currentAngle += angle;
 
           return (
@@ -110,10 +159,9 @@ export default function SvgDonutChart({
           );
         })}
 
-        {/* 中心文字 */}
         <text
           x={cx}
-          y={cy - (emphasis ? 8 : 5)}
+          y={cy - (emphasis ? 7 : 5)}
           textAnchor="middle"
           fontSize={emphasis ? 13 : 10}
           fontWeight={emphasis ? 600 : 400}
@@ -123,7 +171,7 @@ export default function SvgDonutChart({
         </text>
         <text
           x={cx}
-          y={cy + (emphasis ? 12 : 9)}
+          y={cy + (emphasis ? 11 : 9)}
           textAnchor="middle"
           fontSize={emphasis ? 15 : 11}
           fontWeight="700"
@@ -136,47 +184,7 @@ export default function SvgDonutChart({
         </text>
       </svg>
 
-      {/* 圖例 */}
-      <div className={`w-full ${emphasis ? 'space-y-2.5' : 'space-y-1.5'}`}>
-        {nonZero.map((seg) => {
-          const pct = ((seg.value / total) * 100).toFixed(1);
-          return (
-            <div key={seg.label} className="flex items-center gap-2.5">
-              <span
-                className={`shrink-0 rounded-sm ${emphasis ? 'h-3.5 w-3.5' : 'h-2.5 w-2.5'}`}
-                style={{ backgroundColor: seg.color }}
-              />
-              <span
-                className={`min-w-0 flex-1 truncate ${
-                  emphasis
-                    ? 'text-sm font-semibold text-canton-dark'
-                    : 'text-xs text-canton-dark/65'
-                }`}
-              >
-                {seg.label}
-              </span>
-              <span
-                className={`shrink-0 font-mono tabular-nums ${
-                  emphasis
-                    ? 'text-sm font-semibold text-canton-dark'
-                    : 'text-xs text-canton-dark/50'
-                }`}
-              >
-                {pct}%
-              </span>
-              <span
-                className={`shrink-0 font-mono tabular-nums ${
-                  emphasis
-                    ? 'text-sm font-semibold text-canton-dark'
-                    : 'text-xs text-canton-dark/65'
-                }`}
-              >
-                ${formatMoney(seg.value)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      {legend}
     </div>
   );
 }

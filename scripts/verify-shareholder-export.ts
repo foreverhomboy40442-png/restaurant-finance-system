@@ -85,7 +85,7 @@ async function main() {
   const linePngPath = join(OUT, 'line.png');
   const donutPngPath = join(OUT, 'donut.png');
   svgToPngViaChrome(lineSvg, 720, 360, linePngPath);
-  svgToPngViaChrome(donutSvg, 520, 420, donutPngPath);
+  svgToPngViaChrome(donutSvg, 440, 250, donutPngPath);
 
   const linePng = readFileSync(linePngPath);
   const donutPng = readFileSync(donutPngPath);
