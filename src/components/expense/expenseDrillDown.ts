@@ -122,10 +122,11 @@ export function resolveExpenseSubLabel(item: ExpenseItem, tab: ExpenseTab): stri
     if (fromNote) return fromNote;
   }
 
-  // 3. 水電：依備註或 merchant 關鍵字分到電費 / 瓦斯
+  // 3. 水電：依備註或 merchant 關鍵字分到電費 / 瓦斯 / 水費
   if (tab === 'cash' && item.category === EXPENSE_CATEGORY.UTILITIES) {
     const hint = `${merchant} ${note}`;
     if (hint.includes('瓦斯') && allowed.has('瓦斯')) return '瓦斯';
+    if (hint.includes('水費') && allowed.has('水費')) return '水費';
     if ((hint.includes('電') || hint.includes('電費')) && allowed.has('電費')) return '電費';
   }
 

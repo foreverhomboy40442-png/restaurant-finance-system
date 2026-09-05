@@ -2,7 +2,7 @@
  * 粵香園帳務系統 — 支出管理快捷鍵設定
  *
  * 五分頁結構：
- *   1. 現金支出 (cash)        — 食材、雜支、電費、瓦斯
+ *   1. 現金支出 (cash)        — 食材、雜支、電費、瓦斯、水費
  *   2. PT 薪資 (pt)           — 點工人員
  *   3. 支付貨款 (payment)     — 食材／餐具（供應商下拉）＋ 蘿蔔糕（條數×單價）
  *   4. 修繕費用 (repair)      — 裝潢、冷氣、燈泡等維修
@@ -46,7 +46,7 @@ export const EXPENSE_TAB_LABEL: Record<ExpenseTab, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// 分頁一：現金支出（移入電費 / 瓦斯；菜金改純自填）
+// 分頁一：現金支出（移入電費 / 瓦斯 / 水費；菜金改純自填）
 // ---------------------------------------------------------------------------
 
 export const CASH_QUICK_KEYS: QuickKeyItem[] = [
@@ -103,6 +103,12 @@ export const CASH_QUICK_KEYS: QuickKeyItem[] = [
     key: 'cash-瓦斯',
     label: '瓦斯',
     merchant: '瓦斯',
+    category: EXPENSE_CATEGORY.UTILITIES,
+  },
+  {
+    key: 'cash-水費',
+    label: '水費',
+    merchant: '水費',
     category: EXPENSE_CATEGORY.UTILITIES,
   },
   {
