@@ -6,6 +6,7 @@
  */
 
 import type { ExpenseCategory, ExpenseItem, RevenueItem } from '../../../types';
+import { EXPENSE_CATEGORY } from '../../../types';
 
 // ── 型別定義 ───────────────────────────────────────────────────────────────
 
@@ -41,7 +42,7 @@ export interface CategoryBreakdown {
  *   食材採購 ← ingredients
  *   人事成本 ← labor + fixed_salary（PT 薪資 + 正職薪資）
  *   水電瓦斯 ← utilities
- *   修繕費用 ← repair
+ *   修繕費用 ← repair（僅供「修繕金動支」檢視；不計入營業支出 total）
  *   營運雜支 ← other + rent + marketing（雜支 + 房租 + 行銷）
  */
 export type ReportCategoryKey =
@@ -66,6 +67,14 @@ export const REPORT_CATEGORY_ORDER: ReportCategoryKey[] = [
   'labor',
   'utilities',
   'repair',
+  'operating_misc',
+];
+
+/** 營業支出科目順序（不含修繕：修繕改列修繕金動支） */
+export const OPERATING_REPORT_CATEGORY_ORDER: ReportCategoryKey[] = [
+  'ingredients',
+  'labor',
+  'utilities',
   'operating_misc',
 ];
 
@@ -199,6 +208,34 @@ export function sumExpenses(expenses: ExpenseItem[]): number {
   return expenses.reduce((s, e) => s + e.amount, 0);
 }
 
+/** 是否為修繕實支（由修繕金預扣承擔，不計入營業支出） */
+export function isRepairExpense(expense: ExpenseItem): boolean {
+  return expense.category === EXPENSE_CATEGORY.REPAIR;
+}
+
+/** 排除修繕實支（供月損益／營業支出計算） */
+export function excludeRepairExpenses(expenses: ExpenseItem[]): ExpenseItem[] {
+  return expenses.filter((e) => e.category !== EXPENSE_CATEGORY.REPAIR);
+}
+
+/** 僅取修繕實支（修繕金動支紀錄） */
+export function filterRepairExpenses(expenses: ExpenseItem[]): ExpenseItem[] {
+  return expenses.filter((e) => e.category === EXPENSE_CATEGORY.REPAIR);
+}
+
+/**
+ * 營業支出加總：排除修繕實支。
+ * 修繕已由每月「修繕金」預扣，實際修繕僅作基金動支紀錄，避免雙重扣減。
+ */
+export function sumOperatingExpenses(expenses: ExpenseItem[]): number {
+  return sumExpenses(excludeRepairExpenses(expenses));
+}
+
+/** 修繕金動支加總（不計入營業支出） */
+export function sumRepairExpenses(expenses: ExpenseItem[]): number {
+  return sumExpenses(filterRepairExpenses(expenses));
+}
+
 export function getCategoryBreakdown(expenses: ExpenseItem[]): CategoryBreakdown {
   const b: CategoryBreakdown = {
     ingredients: 0, labor: 0, rent: 0, utilities: 0, marketing: 0, repair: 0, fixed_salary: 0, other: 0, total: 0,
@@ -226,7 +263,8 @@ export function getReportCategoryBreakdown(
     utilities: raw.utilities,
     repair: raw.repair,
     operating_misc: raw.other + raw.rent + raw.marketing,
-    total: raw.total,
+    // total 不含修繕實支（修繕由每月修繕金預扣，實支另計基金動支）
+    total: raw.total - raw.repair,
   };
 }
 
@@ -258,7 +296,7 @@ export function getAllMonths(
   return Array.from(set).sort();
 }
 
-/** 計算月度聚合，包含累計淨利 */
+/** 計算月度聚合，包含累計淨利（支出已排除修繕實支） */
 export function getMonthlyData(
   revenues: RevenueItem[],
   expenses: ExpenseItem[],
@@ -271,7 +309,7 @@ export function getMonthlyData(
     cur.revenue += r.amount;
     map.set(m, cur);
   }
-  for (const e of expenses) {
+  for (const e of excludeRepairExpenses(expenses)) {
     const m = toMonthKey(e.date);
     const cur = map.get(m) ?? { revenue: 0, expenses: 0 };
     cur.expenses += e.amount;

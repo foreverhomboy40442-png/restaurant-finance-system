@@ -21,7 +21,8 @@ import {
   getCurrentMonthPrefix,
   getCurrentWeekRange,
   getTodayISO,
-  sumExpenses,
+  excludeRepairExpenses,
+  sumOperatingExpenses,
   sumRevenues,
 } from '../report/utils/reportCalc';
 
@@ -190,7 +191,8 @@ export default function DashboardHome({
   }, [expenses, period, customStart, customEnd]);
 
   const totalRev  = sumRevenues(filteredRevenues);
-  const totalExp  = sumExpenses(filteredExpenses);
+  const operatingExpenses = excludeRepairExpenses(filteredExpenses);
+  const totalExp  = sumOperatingExpenses(filteredExpenses);
   const netProfit = totalRev - totalExp;
 
   const dateRangeLabel = useMemo(
@@ -306,7 +308,7 @@ export default function DashboardHome({
       {/* ── 支出結構分析（固定顯示，Bento Box 穩定版面） ──────────────── */}
       <div className="rounded-sm border border-slate-100 bg-white p-5 md:p-8 shadow-sm">
         <h3 className="mb-5 text-sm font-semibold text-slate-900">{t('expenseStructure')}</h3>
-        <SvgDrillDownChart expenses={filteredExpenses} />
+        <SvgDrillDownChart expenses={operatingExpenses} />
       </div>
 
       {/* ── 快捷操作 + 待辦事項 ────────────────────────────────────────── */}

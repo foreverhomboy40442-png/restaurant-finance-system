@@ -25,7 +25,8 @@ import {
   getMonthlyData,
   getTodayISO,
   safeDivide,
-  sumExpenses,
+  excludeRepairExpenses,
+  sumOperatingExpenses,
   sumRevenues,
   type PeriodFilter,
 } from '../utils/reportCalc';
@@ -87,10 +88,10 @@ export default function OperationalTab({ revenues, expenses }: OperationalTabPro
   }, [expenses, period, customStart, customEnd]);
 
   const totalRev = sumRevenues(filteredRevenues);
-  const totalExp = sumExpenses(filteredExpenses);
+  const totalExp = sumOperatingExpenses(filteredExpenses);
   const netProfit = totalRev - totalExp;
 
-  const catBreakdown = useMemo(() => getCategoryBreakdown(filteredExpenses), [filteredExpenses]);
+  const catBreakdown = useMemo(() => getCategoryBreakdown(excludeRepairExpenses(filteredExpenses)), [filteredExpenses]);
 
   // 全資料折線圖（不受篩選影響，展示歷史趨勢）
   const monthlyData = useMemo(() => getMonthlyData(revenues, expenses), [revenues, expenses]);

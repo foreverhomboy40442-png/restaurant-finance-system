@@ -14,7 +14,7 @@ import {
   filterByMonths,
   getReportCategoryBreakdown,
   monthToLabel,
-  sumExpenses,
+  sumOperatingExpenses,
   sumRevenues,
 } from './reportCalc';
 import { renderShareholderChartPngs } from './exportShareholderCharts';
@@ -171,7 +171,7 @@ export async function exportShareholderExcel(
       [month],
     );
     const grossRevenue = sumRevenues(mRev);
-    const operatingExpenses = sumExpenses(mExp);
+    const operatingExpenses = sumOperatingExpenses(mExp);
     const cat = getReportCategoryBreakdown(mExp);
     const yearEndBonus = p.yearEndMonthly;
     const repairFund = p.repairFundMonthly;
@@ -240,11 +240,6 @@ export async function exportShareholderExcel(
       label: '水電瓦斯',
       value: totals.utilities,
       color: CHART_CATEGORY_COLORS.utilities,
-    },
-    {
-      label: '修繕費用',
-      value: totals.repair,
-      color: CHART_CATEGORY_COLORS.repair,
     },
     {
       label: '營運雜支',
@@ -391,7 +386,6 @@ export async function exportShareholderExcel(
     ['  └ 食材採購', 'ingredients'],
     ['  └ 人事成本', 'labor'],
     ['  └ 水電瓦斯', 'utilities'],
-    ['  └ 修繕費用', 'repair'],
     ['  └ 營運雜支', 'operatingMisc'],
   ];
   for (const [label, key] of catDefs) {
@@ -413,6 +407,14 @@ export async function exportShareholderExcel(
     monthly.map((m) => -m.repairFund),
     -totals.repairFund,
   );
+  // 修繕實支僅作基金動支紀錄，不計入損益
+  if (totals.repair > 0) {
+    writeDataRow(
+      '修繕金動支（紀錄／不計損益）',
+      monthly.map((m) => m.repair),
+      totals.repair,
+    );
+  }
   writeDataRow(
     '稅前淨利',
     monthly.map((m) => m.netBeforeTax),
@@ -459,7 +461,8 @@ export async function exportShareholderExcel(
     '食材採購：食材、乾貨、酒水與食材貨款',
     '人事成本：PT 薪資、正職薪資',
     '水電瓦斯：電費、瓦斯、水費',
-    '修繕費用：裝潢、整/維修、設備維護',
+    '修繕金預扣：每月預留修繕金（計入損益）',
+    '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
     '營運雜支：房租、雜貨、檯布、行銷及其他雜支',
   ];
   for (const line of compositionLines) {

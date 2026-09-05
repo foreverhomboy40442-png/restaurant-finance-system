@@ -164,6 +164,17 @@ export default function ExpenseManagement({
     [expenses],
   );
 
+  /** 修繕分頁：顯示修繕金動支專區（含已鎖定紀錄；不計入月營業支出） */
+  const isRepairTab = activeTab === 'repair';
+  const ledgerExpenses = useMemo(() => {
+    if (!isRepairTab) return sortedExpenses;
+    return sortedExpenses.filter((item) => item.category === EXPENSE_CATEGORY.REPAIR);
+  }, [isRepairTab, sortedExpenses]);
+  const repairLedgerTotal = useMemo(
+    () => ledgerExpenses.reduce((sum, item) => sum + item.amount, 0),
+    [ledgerExpenses],
+  );
+
   const pendingDeleteItem = pendingDeleteId
     ? expenses.find((item) => item.id === pendingDeleteId)
     : undefined;
@@ -653,6 +664,12 @@ export default function ExpenseManagement({
           ) : (
             /* ── 快捷鍵網格（三分頁共用佈局） ── */
             <div>
+              {isRepairTab && (
+                <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-950/80">
+                  <p className="font-medium">{t('repairFundDrawTitle')}</p>
+                  <p className="mt-1 text-amber-900/70">{t('repairLedgerBanner')}</p>
+                </div>
+              )}
               {/* 快捷鍵按鈕網格 */}
               <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
                 {quickKeys.map((key) => (
@@ -670,16 +687,31 @@ export default function ExpenseManagement({
 
       {/* ── 底部：流水帳列表（三分頁共用） ── */}
       <section className="max-w-full overflow-hidden rounded-sm border border-canton-dark/8 bg-white p-4 shadow-canton sm:p-6 md:p-8">
-        <h2 className="text-base font-semibold text-canton-dark">
-          {t('expenseLedger')}
-        </h2>
+        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <h2 className="text-base font-semibold text-canton-dark">
+            {isRepairTab ? t('repairLedgerTitle') : t('expenseLedger')}
+          </h2>
+          {isRepairTab && (
+            <p className="font-mono text-sm tabular-nums text-canton-dark/70">
+              {t('repairLedgerTotal')}: {formatMoneyDisplay(repairLedgerTotal)}
+            </p>
+          )}
+        </div>
+
+        {isRepairTab && (
+          <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 px-3 py-2.5 text-[13px] leading-relaxed text-amber-950/80">
+            <p className="font-medium">{t('repairFundDrawTitle')}</p>
+            <p className="mt-1 text-amber-900/70">{t('repairLedgerBanner')}</p>
+          </div>
+        )}
 
         <ExpenseTable
-          items={sortedExpenses}
+          items={ledgerExpenses}
           editingId={editingId}
           onEdit={handleStartEdit}
           onDelete={handleRequestDelete}
           onLock={handleLockItem}
+          variant={isRepairTab ? 'ledger' : 'queue'}
         />
       </section>
 

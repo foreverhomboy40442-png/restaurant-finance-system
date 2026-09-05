@@ -21,13 +21,13 @@ import {
   fmtPct,
   getReportCategoryBreakdown,
   groupExpensesByReportCategory,
-  REPORT_CATEGORY_ORDER,
+  OPERATING_REPORT_CATEGORY_ORDER,
   getCurrentMonthPrefix,
   getCurrentYear,
   getMonthlyData,
   getTodayISO,
   safeDivide,
-  sumExpenses,
+  sumOperatingExpenses,
   sumRevenues,
   type PeriodFilter,
 } from '../utils/reportCalc';
@@ -109,7 +109,7 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
   // ── KPI ───────────────────────────────────────────────────────────────────
 
   const totalRev  = sumRevenues(filteredRevenues);
-  const totalExp  = sumExpenses(filteredExpenses);
+  const totalExp  = sumOperatingExpenses(filteredExpenses);
   const netProfit = totalRev - totalExp;
 
   const dateRangeLabel = useMemo(
@@ -126,7 +126,7 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
 
   const catEntries = useMemo(
     () =>
-      REPORT_CATEGORY_ORDER
+      OPERATING_REPORT_CATEGORY_ORDER
         .map((key) => [key, catBreakdown[key]] as const)
         .filter(([, v]) => v > 0),
     [catBreakdown],

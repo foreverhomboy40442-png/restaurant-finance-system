@@ -1,7 +1,7 @@
 /**
  * 支出結構 — 五層下鑽式甜甜圈圖
  *
- * 外圈：現金支出 / PT薪資 / 支付貨款 / 修繕費用 / 固定支出 佔比
+ * 外圈：現金支出 / PT薪資 / 支付貨款 / 固定支出 佔比（修繕實支不列入）
  * 內圈：各分頁底下的實際項目（菜金、油條、雜支…）分別列出金額
  *
  * 分類邏輯與支出入帳分頁一致，見 expenseDrillDown.ts
@@ -52,7 +52,6 @@ const DRILL_TAB_META: {
   { id: 'cash',         labelKey: 'expenseTabCash',    shortKey: 'drillShortCash',    color: '#A84B4B' },
   { id: 'pt',           labelKey: 'expenseTabPt',      shortKey: 'expenseTabPt',      color: '#4A6D95' },
   { id: 'payment',      labelKey: 'expenseTabPayment', shortKey: 'drillShortPayment', color: '#3D7260' },
-  { id: 'repair',       labelKey: 'expenseTabRepair',  shortKey: 'drillShortRepair',  color: '#956F35' },
   { id: 'fixed_salary', labelKey: 'expenseTabFixed',   shortKey: 'drillShortFixed',   color: '#695788' },
 ];
 

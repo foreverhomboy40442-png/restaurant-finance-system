@@ -36,9 +36,11 @@ import {
   fmtSigned,
   getAllMonths,
   getReportCategoryBreakdown,
-  REPORT_CATEGORY_ORDER,
+  OPERATING_REPORT_CATEGORY_ORDER,
   monthToLabel,
-  sumExpenses,
+  filterRepairExpenses,
+  sumOperatingExpenses,
+  sumRepairExpenses,
   sumRevenues,
   type ReportCategoryKey,
 } from '../utils/reportCalc';
@@ -202,8 +204,10 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   );
 
   const grossRevenue      = sumRevenues(selRev);
-  const operatingExpenses = sumExpenses(selExp);
+  const operatingExpenses = sumOperatingExpenses(selExp);
   const catBreakdown      = useMemo(() => getReportCategoryBreakdown(selExp), [selExp]);
+  const repairDraws        = useMemo(() => filterRepairExpenses(selExp), [selExp]);
+  const repairDrawTotal    = sumRepairExpenses(selExp);
   const yearEndBonus      = yearEndMonthly * selectedMonths.length;
   const repairFundReserve = repairFundMonthly * selectedMonths.length;
 
@@ -224,7 +228,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
 
   const expenseShareSegments = useMemo(
     () =>
-      REPORT_CATEGORY_ORDER
+      OPERATING_REPORT_CATEGORY_ORDER
         .map((key) => ({
           key,
           label: getReportCategoryLabel(lang, key),
@@ -241,7 +245,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
       const { revenues: mRev, expenses: mExp } = filterByMonths(revenues, expenses, [month]);
       return calcPnl({
         grossRevenue:      sumRevenues(mRev),
-        operatingExpenses: sumExpenses(mExp),
+        operatingExpenses: sumOperatingExpenses(mExp),
         yearEndBonus:      yearEndMonthly,
         repairFund:        repairFundMonthly,
         taxRate,
@@ -504,7 +508,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
               {expenseDetailOpen && (
                 <div className="mb-3 ml-8 space-y-3">
                   <div className="space-y-1">
-                    {REPORT_CATEGORY_ORDER.map((key) => {
+                    {OPERATING_REPORT_CATEGORY_ORDER.map((key) => {
                       const val = catBreakdown[key];
                       if (val === 0) return null;
                       return (
@@ -526,7 +530,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                       {t('expenseCategoryDefinition')}
                     </p>
                     <ul className="space-y-1.5">
-                      {REPORT_CATEGORY_ORDER.map((key) => (
+                      {OPERATING_REPORT_CATEGORY_ORDER.map((key) => (
                         <li key={`def-${key}`} className="text-[11px] leading-relaxed text-canton-dark/50">
                           <span className="font-medium text-canton-dark/65">
                             {getReportCategoryLabel(lang, key)}
@@ -560,6 +564,44 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
               value={-repairFundReserve}
               sub
             />
+
+            {/* 修繕金動支紀錄（不計入損益，僅供對帳） */}
+            <div className="mb-2 ml-4 rounded-sm border border-dashed border-amber-200/80 bg-amber-50/50 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium text-amber-900/80">
+                    {t('repairFundDrawTitle')}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-amber-900/55">
+                    {t('repairFundDrawHint')}
+                  </p>
+                </div>
+                <p className="shrink-0 font-mono text-sm tabular-nums text-amber-900/80">
+                  {fmt(repairDrawTotal)}
+                </p>
+              </div>
+              {repairDraws.length > 0 && (
+                <ul className="mt-2 max-h-36 space-y-1 overflow-y-auto border-t border-amber-200/60 pt-2">
+                  {repairDraws
+                    .slice()
+                    .sort((a, b) => b.date.localeCompare(a.date))
+                    .map((item) => (
+                      <li
+                        key={item.id}
+                        className="flex items-start justify-between gap-2 text-[11px] text-amber-900/65"
+                      >
+                        <span className="min-w-0 break-words">
+                          {item.date} · {item.merchant || t('expenseCatRepair')}
+                          {item.note ? `（${item.note}）` : ''}
+                        </span>
+                        <span className="shrink-0 font-mono tabular-nums">
+                          {fmt(item.amount)}
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
 
             {/* 稅前淨利 */}
             <WaterfallRow
