@@ -37,6 +37,8 @@ interface DrillTabConfig {
 interface SegmentDetail {
   segment: ChartSegment;
   total: number;
+  /** 手機明細：該類別底下的廠商／子項目（對齊桌面右側下鑽） */
+  breakdown?: ChartSegment[];
 }
 
 // ─── 靜態設定 ─────────────────────────────────────────────────────────────────
@@ -248,6 +250,7 @@ interface SegmentDetailSheetProps {
   shareLabel: string;
   amountLabel: string;
   closeLabel: string;
+  breakdownLabel: string;
 }
 
 function SegmentDetailSheet({
@@ -256,6 +259,7 @@ function SegmentDetailSheet({
   shareLabel,
   amountLabel,
   closeLabel,
+  breakdownLabel,
 }: SegmentDetailSheetProps) {
   useEffect(() => {
     if (!detail) return undefined;
@@ -268,8 +272,9 @@ function SegmentDetailSheet({
 
   if (!detail) return null;
 
-  const { segment, total } = detail;
+  const { segment, total, breakdown = [] } = detail;
   const pct = formatPct(segment.value, total);
+  const breakdownTotal = breakdown.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true">
@@ -279,42 +284,84 @@ function SegmentDetailSheet({
         aria-label={closeLabel}
         onClick={onClose}
       />
-      <div className="absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-slate-100 bg-white px-5 pb-8 pt-4 shadow-2xl">
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
-        <div className="mb-5 flex items-start gap-3">
-          <span
-            className="mt-1 h-4 w-4 shrink-0 rounded-[4px]"
-            style={{ backgroundColor: segment.color, opacity: 0.92 }}
-          />
-          <h4 className="text-base font-semibold leading-snug text-slate-900 break-words">
-            {segment.label}
-          </h4>
-        </div>
-        <div className="mb-6 grid grid-cols-2 gap-4">
-          <div className="rounded-md bg-slate-50 px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-              {shareLabel}
-            </p>
-            <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-slate-800">
-              {pct}%
-            </p>
+      <div className="absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-2xl border-t border-slate-100 bg-white shadow-2xl">
+        <div className="shrink-0 px-5 pt-4">
+          <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-slate-200" />
+          <div className="mb-5 flex items-start gap-3">
+            <span
+              className="mt-1 h-4 w-4 shrink-0 rounded-[4px]"
+              style={{ backgroundColor: segment.color, opacity: 0.92 }}
+            />
+            <h4 className="text-base font-semibold leading-snug text-slate-900 break-words">
+              {segment.label}
+            </h4>
           </div>
-          <div className="rounded-md bg-slate-50 px-4 py-3">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-              {amountLabel}
-            </p>
-            <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-slate-800">
-              ${fmt(segment.value)}
-            </p>
+          <div className="mb-4 grid grid-cols-2 gap-4">
+            <div className="rounded-md bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                {shareLabel}
+              </p>
+              <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-slate-800">
+                {pct}%
+              </p>
+            </div>
+            <div className="rounded-md bg-slate-50 px-4 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                {amountLabel}
+              </p>
+              <p className="mt-1 font-mono text-xl font-semibold tabular-nums text-slate-800">
+                ${fmt(segment.value)}
+              </p>
+            </div>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full rounded-sm bg-slate-900 px-4 py-3 text-sm font-semibold text-white active:opacity-90"
-        >
-          {closeLabel}
-        </button>
+
+        {breakdown.length > 0 && (
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+              {breakdownLabel}
+            </p>
+            <ul className="divide-y divide-slate-100 rounded-md border border-slate-100">
+              {breakdown.map((item) => {
+                const itemPct = formatPct(item.value, breakdownTotal || segment.value);
+                return (
+                  <li
+                    key={item.label}
+                    className="flex items-start gap-2.5 px-3 py-2.5"
+                  >
+                    <span
+                      className="mt-0.5 h-3 w-3 shrink-0 rounded-[3px]"
+                      style={{ backgroundColor: item.color, opacity: 0.92 }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium leading-snug text-slate-800 break-words">
+                        {item.label}
+                      </p>
+                      <div className="mt-1 flex items-center gap-3">
+                        <span className="font-mono text-xs tabular-nums text-slate-500">
+                          {itemPct}%
+                        </span>
+                        <span className="font-mono text-xs font-semibold tabular-nums text-slate-700">
+                          ${fmt(item.value)}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        <div className="shrink-0 px-5 pb-8 pt-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-sm bg-slate-900 px-4 py-3 text-sm font-semibold text-white active:opacity-90"
+          >
+            {closeLabel}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -383,6 +430,20 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
     if (typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches) {
       return;
     }
+
+    // 點外圈大類時，附帶該分頁廠商／子項目明細
+    const matchedTab = drillTabs.find((tab) => tab.topLabel === detail.segment.label);
+    if (matchedTab) {
+      const buckets = buildSubCategoryBuckets(expenses, matchedTab.id);
+      const breakdown = buckets.map((bucket, index) => ({
+        label: translateDataLabel(lang, bucket.label),
+        value: bucket.value,
+        color: MUTED_PALETTE[index % MUTED_PALETTE.length],
+      }));
+      setDetailPopup({ ...detail, breakdown });
+      return;
+    }
+
     setDetailPopup(detail);
   }
 
@@ -491,6 +552,7 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
         shareLabel={t('chartDetailShare')}
         amountLabel={t('chartDetailAmount')}
         closeLabel={t('chartCloseDetail')}
+        breakdownLabel={t('chartDetailBreakdown')}
       />
     </>
   );
