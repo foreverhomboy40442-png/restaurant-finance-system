@@ -329,269 +329,273 @@ export default function AmountInputModal({
       }}
     >
       <div
-        className="mx-auto w-full max-w-md rounded-sm border border-canton-dark/10 bg-white p-5 shadow-canton-md sm:p-6"
+        className="mx-auto flex max-h-[min(92vh,720px)] w-full max-w-md flex-col overflow-hidden rounded-sm border border-canton-dark/10 bg-white shadow-canton-md"
         onKeyDown={handleKeyDown}
       >
-        {/* 標頭：快捷鍵名稱 + 科目徽章 */}
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <div>
-            <p className="mb-0.5 text-xs text-canton-dark/40">{t('quickAddExpense')}</p>
-            <h2
-              id="amount-modal-title"
-              className="text-xl font-semibold text-canton-dark"
-            >
-              {quickKey.label}
-            </h2>
-          </div>
-          <span className="mt-0.5 shrink-0 rounded-sm bg-canton-red/10 px-2.5 py-0.5 text-xs font-medium text-canton-red">
-            {getExpenseCategoryLabel(lang, quickKey.category)}
-          </span>
-        </div>
-
-        {/* 財務歸屬日：預設今天，可自由選取歷史日期補登 */}
-        <div className="mb-4 w-full">
-          <label
-            htmlFor="amount-modal-date"
-            className="mb-1.5 block text-sm text-canton-dark/70"
-          >
-            {t('dateLabel')}
-            <span className="ml-0.5 text-canton-red">*</span>
-          </label>
-          <input
-            id="amount-modal-date"
-            type="date"
-            className="canton-input !w-[80%] max-w-[260px] mx-auto block box-border"
-            value={dateInput}
-            onChange={(e) => setDateInput(e.target.value)}
-          />
-        </div>
-
-        {/* 供應商：下拉選員工 / 自動帶入（唯讀）/ 手動輸入（其他） */}
-        {quickKey.merchantOptions && quickKey.merchantOptions.length > 0 ? (
-          <div className="mb-4">
-            <label className="mb-1.5 block text-sm text-canton-dark/70">
-              {quickKey.category === EXPENSE_CATEGORY.FIXED_SALARY
-                ? '員工姓名'
-                : '供應商'}
-              <span className="ml-0.5 text-canton-red">*</span>
-            </label>
-            <MerchantDropdown
-              options={quickKey.merchantOptions}
-              value={merchant}
-              onChange={setMerchant}
-              placeholder={
-                quickKey.category === EXPENSE_CATEGORY.FIXED_SALARY
-                  ? '請選擇員工姓名'
-                  : '請選擇供應商'
-              }
-            />
-          </div>
-        ) : quickKey.merchant ? (
-          <div className="mb-4 flex items-center gap-2 rounded-sm bg-canton-bg px-3 py-2 text-sm">
-            <span className="text-canton-dark/45">供應商</span>
-            <span className="font-medium text-canton-dark/85">
-              {quickKey.merchant}
-            </span>
-            <span className="ml-auto rounded-sm bg-canton-dark/[0.06] px-1.5 py-0.5 text-xs text-canton-dark/40">
-              自動帶入
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
+          {/* 標頭：快捷鍵名稱 + 科目徽章 */}
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <p className="mb-0.5 text-xs text-canton-dark/40">{t('quickAddExpense')}</p>
+              <h2
+                id="amount-modal-title"
+                className="text-xl font-semibold text-canton-dark"
+              >
+                {quickKey.label}
+              </h2>
+            </div>
+            <span className="mt-0.5 shrink-0 rounded-sm bg-canton-red/10 px-2.5 py-0.5 text-xs font-medium text-canton-red">
+              {getExpenseCategoryLabel(lang, quickKey.category)}
             </span>
           </div>
-        ) : (
-          <div className="mb-4">
+
+          {/* 財務歸屬日：預設今天，可自由選取歷史日期補登 */}
+          <div className="mb-4 w-full">
             <label
-              htmlFor="amount-modal-merchant"
+              htmlFor="amount-modal-date"
               className="mb-1.5 block text-sm text-canton-dark/70"
             >
-              供應商 / 店家
+              {t('dateLabel')}
               <span className="ml-0.5 text-canton-red">*</span>
             </label>
             <input
-              id="amount-modal-merchant"
-              type="text"
-              className="canton-input"
-              placeholder="請輸入供應商名稱"
-              value={merchant}
-              onChange={(e) => setMerchant(e.target.value)}
+              id="amount-modal-date"
+              type="date"
+              className="canton-input !w-[80%] max-w-[260px] mx-auto block box-border"
+              value={dateInput}
+              onChange={(e) => setDateInput(e.target.value)}
             />
           </div>
-        )}
 
-        {isQuantityMode ? (
-          /* 數量計價：輸入條數 → 單價 × 數量 = 總額 */
-          <div className="mb-4 space-y-3">
-            <div className="flex items-center gap-2 rounded-sm bg-canton-bg px-3 py-2 text-sm">
-              <span className="text-canton-dark/45">單價</span>
-              <span className="font-mono font-medium tabular-nums text-canton-dark/85">
-                ${formatMoneyDisplay(unitPrice)} / {quantityUnit}
+          {/* 供應商：下拉選員工 / 自動帶入（唯讀）/ 手動輸入（其他） */}
+          {quickKey.merchantOptions && quickKey.merchantOptions.length > 0 ? (
+            <div className="mb-4">
+              <label className="mb-1.5 block text-sm text-canton-dark/70">
+                {quickKey.category === EXPENSE_CATEGORY.FIXED_SALARY
+                  ? '員工姓名'
+                  : '供應商'}
+                <span className="ml-0.5 text-canton-red">*</span>
+              </label>
+              <MerchantDropdown
+                options={quickKey.merchantOptions}
+                value={merchant}
+                onChange={setMerchant}
+                placeholder={
+                  quickKey.category === EXPENSE_CATEGORY.FIXED_SALARY
+                    ? '請選擇員工姓名'
+                    : '請選擇供應商'
+                }
+              />
+            </div>
+          ) : quickKey.merchant ? (
+            <div className="mb-4 flex items-center gap-2 rounded-sm bg-canton-bg px-3 py-2 text-sm">
+              <span className="text-canton-dark/45">供應商</span>
+              <span className="font-medium text-canton-dark/85">
+                {quickKey.merchant}
               </span>
               <span className="ml-auto rounded-sm bg-canton-dark/[0.06] px-1.5 py-0.5 text-xs text-canton-dark/40">
-                固定
+                自動帶入
               </span>
             </div>
-
-            <div>
+          ) : (
+            <div className="mb-4">
               <label
-                htmlFor="amount-modal-quantity"
+                htmlFor="amount-modal-merchant"
                 className="mb-1.5 block text-sm text-canton-dark/70"
               >
-                {quantityUnit}數
+                供應商 / 店家
                 <span className="ml-0.5 text-canton-red">*</span>
               </label>
               <input
-                id="amount-modal-quantity"
-                ref={quantityInputRef}
+                id="amount-modal-merchant"
+                type="text"
+                className="canton-input"
+                placeholder="請輸入供應商名稱"
+                value={merchant}
+                onChange={(e) => setMerchant(e.target.value)}
+              />
+            </div>
+          )}
+
+          {isQuantityMode ? (
+            /* 數量計價：輸入條數 → 單價 × 數量 = 總額 */
+            <div className="mb-4 space-y-3">
+              <div className="flex items-center gap-2 rounded-sm bg-canton-bg px-3 py-2 text-sm">
+                <span className="text-canton-dark/45">單價</span>
+                <span className="font-mono font-medium tabular-nums text-canton-dark/85">
+                  ${formatMoneyDisplay(unitPrice)} / {quantityUnit}
+                </span>
+                <span className="ml-auto rounded-sm bg-canton-dark/[0.06] px-1.5 py-0.5 text-xs text-canton-dark/40">
+                  固定
+                </span>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="amount-modal-quantity"
+                  className="mb-1.5 block text-sm text-canton-dark/70"
+                >
+                  {quantityUnit}數
+                  <span className="ml-0.5 text-canton-red">*</span>
+                </label>
+                <input
+                  id="amount-modal-quantity"
+                  ref={quantityInputRef}
+                  type="text"
+                  inputMode="numeric"
+                  className="canton-input font-mono text-xl tabular-nums"
+                  placeholder="0"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  autoComplete="off"
+                />
+                {quantityError && (
+                  <p className="mt-1 text-xs text-canton-red" role="alert">
+                    {quantityError}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-sm border border-canton-dark/10 bg-canton-bg/60 px-3 py-3">
+                <p className="mb-1 text-xs text-canton-dark/45">自動計算總額</p>
+                {computedAmount !== null && computedAmount > 0 ? (
+                  <p className="font-mono text-lg font-semibold tabular-nums text-canton-dark">
+                    {quantityValidation?.parsedValue} {quantityUnit} × $
+                    {formatMoneyDisplay(unitPrice)} ＝ $
+                    {formatMoneyDisplay(computedAmount)}
+                  </p>
+                ) : (
+                  <p className="font-mono text-sm tabular-nums text-canton-dark/35">
+                    — {quantityUnit} × ${formatMoneyDisplay(unitPrice)} ＝ —
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* 金額輸入（主要欄位，行動端純數字鍵盤） */
+            <div className="mb-4">
+              <label
+                htmlFor="amount-modal-amount"
+                className="mb-1.5 block text-sm text-canton-dark/70"
+              >
+                {t('amountLabel')}
+                <span className="ml-0.5 text-canton-red">*</span>
+              </label>
+              <input
+                id="amount-modal-amount"
+                ref={amountInputRef}
                 type="text"
                 inputMode="numeric"
                 className="canton-input font-mono text-xl tabular-nums"
                 placeholder="0"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
                 autoComplete="off"
               />
-              {quantityError && (
+              {amountValidation.error && (
                 <p className="mt-1 text-xs text-canton-red" role="alert">
-                  {quantityError}
+                  {amountValidation.error}
                 </p>
               )}
+              {amountValidation.valid &&
+                amountValidation.parsedValue !== null &&
+                amountValidation.parsedValue > 0 && (
+                  <p className="mt-1 font-mono text-xs tabular-nums text-canton-dark/40">
+                    ＝ ${formatMoneyDisplay(amountValidation.parsedValue)} 元
+                  </p>
+                )}
             </div>
+          )}
 
-            <div className="rounded-sm border border-canton-dark/10 bg-canton-bg/60 px-3 py-3">
-              <p className="mb-1 text-xs text-canton-dark/45">自動計算總額</p>
-              {computedAmount !== null && computedAmount > 0 ? (
-                <p className="font-mono text-lg font-semibold tabular-nums text-canton-dark">
-                  {quantityValidation?.parsedValue} {quantityUnit} × $
-                  {formatMoneyDisplay(unitPrice)} ＝ $
-                  {formatMoneyDisplay(computedAmount)}
-                </p>
-              ) : (
-                <p className="font-mono text-sm tabular-nums text-canton-dark/35">
-                  — {quantityUnit} × ${formatMoneyDisplay(unitPrice)} ＝ —
-                </p>
-              )}
-            </div>
-          </div>
-        ) : (
-          /* 金額輸入（主要欄位，行動端純數字鍵盤） */
-          <div className="mb-4">
+          {/* 備註欄（可選）：支援下拉快選 */}
+          <div>
             <label
-              htmlFor="amount-modal-amount"
+              htmlFor="amount-modal-note"
               className="mb-1.5 block text-sm text-canton-dark/70"
             >
-              {t('amountLabel')}
-              <span className="ml-0.5 text-canton-red">*</span>
+              {t('noteLabel')}
             </label>
-            <input
-              id="amount-modal-amount"
-              ref={amountInputRef}
-              type="text"
-              inputMode="numeric"
-              className="canton-input font-mono text-xl tabular-nums"
-              placeholder="0"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              autoComplete="off"
-            />
-            {amountValidation.error && (
-              <p className="mt-1 text-xs text-canton-red" role="alert">
-                {amountValidation.error}
-              </p>
-            )}
-            {amountValidation.valid &&
-              amountValidation.parsedValue !== null &&
-              amountValidation.parsedValue > 0 && (
-                <p className="mt-1 font-mono text-xs tabular-nums text-canton-dark/40">
-                  ＝ ${formatMoneyDisplay(amountValidation.parsedValue)} 元
-                </p>
-              )}
-          </div>
-        )}
-
-        {/* 備註欄（可選）：支援下拉快選 */}
-        <div className="mb-6">
-          <label
-            htmlFor="amount-modal-note"
-            className="mb-1.5 block text-sm text-canton-dark/70"
-          >
-            {t('noteLabel')}
-          </label>
-          {hasSuggestions ? (
-            <div ref={dropdownRef} className="relative">
+            {hasSuggestions ? (
+              <div ref={dropdownRef} className="relative">
+                <input
+                  id="amount-modal-note"
+                  type="text"
+                  className="canton-input pr-8"
+                  placeholder="選擇廠商或自行輸入"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  onFocus={() => setNoteDropdownOpen(true)}
+                />
+                <button
+                  type="button"
+                  tabIndex={-1}
+                  aria-label="展開建議清單"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-canton-dark/35 transition-transform duration-150"
+                  style={{
+                    transform: `translateY(-50%) rotate(${noteDropdownOpen ? 180 : 0}deg)`,
+                  }}
+                  onClick={() => setNoteDropdownOpen((v) => !v)}
+                >
+                  ▾
+                </button>
+                {noteDropdownOpen && (
+                  <ul
+                    className="absolute left-0 right-0 top-full z-20 mt-0.5 overflow-hidden rounded-sm border border-canton-dark/10 bg-white shadow-canton"
+                    role="listbox"
+                  >
+                    {quickKey.suggestedNotes!.map((suggestion) => (
+                      <li key={suggestion} role="option" aria-selected={note === suggestion}>
+                        <button
+                          type="button"
+                          className={`w-full px-3 py-2.5 text-left text-sm transition-colors hover:bg-canton-bg ${
+                            note === suggestion
+                              ? 'font-medium text-canton-red'
+                              : 'text-canton-dark/80'
+                          }`}
+                          onClick={() => {
+                            setNote(suggestion);
+                            setNoteDropdownOpen(false);
+                          }}
+                        >
+                          {suggestion}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : (
               <input
                 id="amount-modal-note"
                 type="text"
-                className="canton-input pr-8"
-                placeholder="選擇廠商或自行輸入"
+                className="canton-input"
+                placeholder={quickKey.defaultNote ?? '特殊說明'}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                onFocus={() => setNoteDropdownOpen(true)}
               />
-              <button
-                type="button"
-                tabIndex={-1}
-                aria-label="展開建議清單"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-canton-dark/35 transition-transform duration-150"
-                style={{
-                  transform: `translateY(-50%) rotate(${noteDropdownOpen ? 180 : 0}deg)`,
-                }}
-                onClick={() => setNoteDropdownOpen((v) => !v)}
-              >
-                ▾
-              </button>
-              {noteDropdownOpen && (
-                <ul
-                  className="absolute left-0 right-0 top-full z-20 mt-0.5 overflow-hidden rounded-sm border border-canton-dark/10 bg-white shadow-canton"
-                  role="listbox"
-                >
-                  {quickKey.suggestedNotes!.map((suggestion) => (
-                    <li key={suggestion} role="option" aria-selected={note === suggestion}>
-                      <button
-                        type="button"
-                        className={`w-full px-3 py-2.5 text-left text-sm transition-colors hover:bg-canton-bg ${
-                          note === suggestion
-                            ? 'font-medium text-canton-red'
-                            : 'text-canton-dark/80'
-                        }`}
-                        onClick={() => {
-                          setNote(suggestion);
-                          setNoteDropdownOpen(false);
-                        }}
-                      >
-                        {suggestion}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : (
-            <input
-              id="amount-modal-note"
-              type="text"
-              className="canton-input"
-              placeholder={quickKey.defaultNote ?? '特殊說明'}
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-            />
-          )}
+            )}
+          </div>
         </div>
 
-        {/* 操作按鈕 */}
-        <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 rounded-sm border border-canton-dark/20 py-3 text-sm text-canton-dark/65 transition-colors hover:bg-canton-bg"
-          >
-            {t('cancel')}
-          </button>
-          <button
-            type="button"
-            disabled={!isConfirmable}
-            onClick={handleConfirm}
-            className="flex-1 rounded-sm bg-canton-red py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {t('confirmAdd')}
-          </button>
+        {/* 操作按鈕：固定於彈窗底部，避免內容過長時被擠出畫面 */}
+        <div className="shrink-0 border-t border-canton-dark/10 bg-white px-5 py-4 sm:px-6">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="flex-1 rounded-sm border border-canton-dark/20 py-3 text-sm text-canton-dark/65 transition-colors hover:bg-canton-bg"
+            >
+              {t('cancel')}
+            </button>
+            <button
+              type="button"
+              disabled={!isConfirmable}
+              onClick={handleConfirm}
+              className="flex-1 rounded-sm bg-canton-red py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {t('confirmAdd')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
