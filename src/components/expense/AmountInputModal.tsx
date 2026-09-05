@@ -24,21 +24,35 @@ function getTodayDateInput(): string {
   return toFinancialDateFromDate(new Date()) as string;
 }
 
-// ── 供應商下拉選單子元件 ──────────────────────────────────────────────────────
+// ── 可搜尋下拉選單（供應商／員工） ────────────────────────────────────────────
 
 interface MerchantDropdownProps {
   options: readonly string[];
   value: string;
   onChange: (v: string) => void;
+  /** 未選取時的提示文字 */
+  placeholder?: string;
+  /** 欄位標籤旁說明（無障礙） */
+  label?: string;
 }
 
-function MerchantDropdown({ options, value, onChange }: MerchantDropdownProps) {
+function MerchantDropdown({
+  options,
+  value,
+  onChange,
+  placeholder = '請選擇供應商',
+}: MerchantDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function handleOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery('');
+      }
     }
     if (open) {
       document.addEventListener('mousedown', handleOutside);
@@ -46,44 +60,105 @@ function MerchantDropdown({ options, value, onChange }: MerchantDropdownProps) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [open]);
+
+  const normalizedQuery = query.trim().toLowerCase();
+  const filtered = normalizedQuery
+    ? options.filter((name) => name.toLowerCase().includes(normalizedQuery))
+    : options;
+
+  function handleSelect(name: string) {
+    onChange(name);
+    setOpen(false);
+    setQuery('');
+  }
+
+  function handleOpen() {
+    setOpen(true);
+    setQuery('');
+  }
+
   return (
     <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="canton-input flex items-center justify-between text-left"
-      >
-        <span className={value ? 'text-canton-dark' : 'text-canton-dark/35'}>
-          {value || '請選擇員工姓名'}
-        </span>
-        <span
-          className="shrink-0 text-xs text-canton-dark/35 transition-transform duration-150"
-          style={{ transform: `rotate(${open ? 180 : 0}deg)` }}
-          aria-hidden="true"
+      {!open ? (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="canton-input flex items-center justify-between text-left"
+          aria-haspopup="listbox"
+          aria-expanded={false}
         >
-          ▾
-        </span>
-      </button>
+          <span className={value ? 'text-canton-dark' : 'text-canton-dark/35'}>
+            {value || placeholder}
+          </span>
+          <span className="shrink-0 text-xs text-canton-dark/35" aria-hidden="true">
+            ▾
+          </span>
+        </button>
+      ) : (
+        <div className="canton-input flex items-center gap-2 !py-0">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setOpen(false);
+                setQuery('');
+              } else if (e.key === 'Enter' && filtered.length === 1) {
+                e.preventDefault();
+                handleSelect(filtered[0]);
+              }
+            }}
+            placeholder={placeholder}
+            className="min-w-0 flex-1 border-0 bg-transparent py-2.5 text-sm text-canton-dark outline-none placeholder:text-canton-dark/35"
+            aria-autocomplete="list"
+            aria-expanded={true}
+            role="combobox"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setQuery('');
+            }}
+            className="shrink-0 px-1 text-xs text-canton-dark/40"
+            aria-label="關閉"
+          >
+            ▴
+          </button>
+        </div>
+      )}
+
       {open && (
         <ul
           className="absolute left-0 right-0 top-full z-20 mt-0.5 max-h-52 overflow-y-auto rounded-sm border border-canton-dark/10 bg-white shadow-canton-md"
           role="listbox"
         >
-          {options.map((name) => (
-            <li key={name} role="option" aria-selected={value === name}>
-              <button
-                type="button"
-                className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-canton-bg ${
-                  value === name
-                    ? 'font-semibold text-canton-red'
-                    : 'text-canton-dark/80'
-                }`}
-                onClick={() => { onChange(name); setOpen(false); }}
-              >
-                {name}
-              </button>
-            </li>
-          ))}
+          {filtered.length === 0 ? (
+            <li className="px-4 py-2.5 text-sm text-canton-dark/40">找不到符合項目</li>
+          ) : (
+            filtered.map((name) => (
+              <li key={name} role="option" aria-selected={value === name}>
+                <button
+                  type="button"
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-canton-bg ${
+                    value === name
+                      ? 'font-semibold text-canton-red'
+                      : 'text-canton-dark/80'
+                  }`}
+                  onClick={() => handleSelect(name)}
+                >
+                  {name}
+                </button>
+              </li>
+            ))
+          )}
         </ul>
       )}
     </div>
@@ -242,6 +317,11 @@ export default function AmountInputModal({
               options={quickKey.merchantOptions}
               value={merchant}
               onChange={setMerchant}
+              placeholder={
+                quickKey.category === EXPENSE_CATEGORY.FIXED_SALARY
+                  ? '請選擇員工姓名'
+                  : '請選擇供應商'
+              }
             />
           </div>
         ) : quickKey.merchant ? (
