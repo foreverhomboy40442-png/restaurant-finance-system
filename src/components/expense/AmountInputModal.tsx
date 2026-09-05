@@ -18,6 +18,7 @@ import {
   validateRevenueAmountInput,
 } from '../../utils/revenue-form';
 import type { QuickKeyItem } from './quick-keys-config';
+import { EXPENSE_CATEGORY } from '../../types';
 
 function getTodayDateInput(): string {
   return toFinancialDateFromDate(new Date()) as string;
@@ -232,7 +233,9 @@ export default function AmountInputModal({
         {quickKey.merchantOptions && quickKey.merchantOptions.length > 0 ? (
           <div className="mb-4">
             <label className="mb-1.5 block text-sm text-canton-dark/70">
-              員工姓名
+              {quickKey.category === EXPENSE_CATEGORY.FIXED_SALARY
+                ? '員工姓名'
+                : '供應商'}
               <span className="ml-0.5 text-canton-red">*</span>
             </label>
             <MerchantDropdown

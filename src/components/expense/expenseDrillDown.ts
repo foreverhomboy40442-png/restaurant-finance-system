@@ -10,8 +10,12 @@ import { EXPENSE_CATEGORY } from '../../types';
 import { QUICK_KEYS_BY_TAB, type ExpenseTab } from './quick-keys-config';
 
 export const PAYMENT_MERCHANT_SET = new Set([
-  '檯布', '惠通', '酒', '大友(二)',
-  '惠通(一)', '惠通(二)',
+  // 現行支付貨款供應商
+  '工廠', '河粉', '牛肉', '阿肥', '麵', '振農',
+  '惠通', '大友', '蛋', '酒', '和昌', '臘味',
+  '三華行',
+  // 舊資料相容
+  '檯布', '大友(二)', '惠通(一)', '惠通(二)',
 ]);
 
 const LEGACY_MERCHANT_ALIASES: Record<string, string> = {

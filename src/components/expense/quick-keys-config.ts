@@ -4,7 +4,7 @@
  * 五分頁結構：
  *   1. 現金支出 (cash)        — 食材、雜支、電費、瓦斯
  *   2. PT 薪資 (pt)           — 點工人員
- *   3. 支付貨款 (payment)     — 供應商貨款
+ *   3. 支付貨款 (payment)     — 食材／餐具兩大項（供應商下拉）
  *   4. 修繕費用 (repair)      — 裝潢、冷氣、燈泡等維修
  *   5. 固定支出 (fixed_salary) — 正職薪資（下拉選員工）＋ 房租
  */
@@ -174,44 +174,34 @@ export const PT_QUICK_KEYS: QuickKeyItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 分頁三：支付貨款
+// 分頁三：支付貨款（食材／餐具兩大項，供應商下拉選擇）
 // ---------------------------------------------------------------------------
+
+const PAYMENT_INGREDIENT_VENDORS = [
+  '工廠', '河粉', '牛肉', '阿肥', '麵', '振農',
+  '惠通', '大友', '蛋', '酒', '和昌', '臘味',
+] as const;
+
+const PAYMENT_TABLEWARE_VENDORS = [
+  '三華行',
+] as const;
 
 export const PAYMENT_QUICK_KEYS: QuickKeyItem[] = [
   {
-    key: 'pay-檯布',
-    label: '檯布',
-    merchant: '檯布',
-    category: EXPENSE_CATEGORY.OTHER,
-    defaultNote: '支付貨款',
-  },
-  {
-    key: 'pay-惠通',
-    label: '惠通',
-    merchant: '惠通',
+    key: 'pay-食材',
+    label: '食材',
+    merchant: '',
     category: EXPENSE_CATEGORY.INGREDIENTS,
     defaultNote: '支付貨款',
+    merchantOptions: PAYMENT_INGREDIENT_VENDORS,
   },
   {
-    key: 'pay-酒',
-    label: '酒',
-    merchant: '酒',
-    category: EXPENSE_CATEGORY.INGREDIENTS,
-    defaultNote: '支付貨款',
-  },
-  {
-    key: 'pay-大友二',
-    label: '大友(二)',
-    merchant: '大友(二)',
-    category: EXPENSE_CATEGORY.INGREDIENTS,
-    defaultNote: '支付貨款',
-  },
-  {
-    key: 'pay-其他',
-    label: '其他',
+    key: 'pay-餐具',
+    label: '餐具',
     merchant: '',
     category: EXPENSE_CATEGORY.OTHER,
     defaultNote: '支付貨款',
+    merchantOptions: PAYMENT_TABLEWARE_VENDORS,
   },
 ];
 
