@@ -12,7 +12,7 @@ import { QUICK_KEYS_BY_TAB, type ExpenseTab } from './quick-keys-config';
 export const PAYMENT_MERCHANT_SET = new Set([
   // 現行支付貨款供應商／項目
   '工廠', '河粉', '牛肉', '豬肉', '阿肥', '麵', '振農',
-  '惠通', '大友', '蛋', '酒', '和昌', '臘味',
+  '惠通', '大友', '蛋', '酒', '和昌', '臘味', '茶葉',
   '三華行',
   '蘿蔔糕',
   // 舊資料相容

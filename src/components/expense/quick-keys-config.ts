@@ -186,7 +186,7 @@ export const PT_QUICK_KEYS: QuickKeyItem[] = [
 
 const PAYMENT_INGREDIENT_VENDORS = [
   '工廠', '河粉', '牛肉', '豬肉', '阿肥', '麵', '振農',
-  '惠通', '大友', '蛋', '酒', '和昌', '臘味',
+  '惠通', '大友', '蛋', '酒', '和昌', '臘味', '茶葉',
 ] as const;
 
 const PAYMENT_TABLEWARE_VENDORS = [
