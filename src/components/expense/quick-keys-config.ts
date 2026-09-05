@@ -4,7 +4,7 @@
  * 五分頁結構：
  *   1. 現金支出 (cash)        — 食材、雜支、電費、瓦斯
  *   2. PT 薪資 (pt)           — 點工人員
- *   3. 支付貨款 (payment)     — 食材／餐具兩大項（供應商下拉）
+ *   3. 支付貨款 (payment)     — 食材／餐具（供應商下拉）＋ 蘿蔔糕（條數×單價）
  *   4. 修繕費用 (repair)      — 裝潢、冷氣、燈泡等維修
  *   5. 固定支出 (fixed_salary) — 正職薪資（下拉選員工）＋ 房租
  */
@@ -26,6 +26,13 @@ export interface QuickKeyItem {
   suggestedNotes?: string[];
   /** 當設定此陣列時，AmountInputModal 的供應商欄位改為下拉選單 */
   merchantOptions?: readonly string[];
+  /**
+   * 固定單價（元，整數）。設定後彈窗改為輸入數量，
+   * 總額 = 數量 × 單價，不可手動改金額。
+   */
+  unitPrice?: number;
+  /** 數量單位（顯示用），預設「條」 */
+  quantityUnit?: string;
 }
 
 export type ExpenseTab = 'cash' | 'pt' | 'payment' | 'repair' | 'fixed_salary';
@@ -174,7 +181,7 @@ export const PT_QUICK_KEYS: QuickKeyItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 分頁三：支付貨款（食材／餐具兩大項，供應商下拉選擇）
+// 分頁三：支付貨款（食材／餐具供應商下拉 ＋ 蘿蔔糕條數計價）
 // ---------------------------------------------------------------------------
 
 const PAYMENT_INGREDIENT_VENDORS = [
@@ -185,6 +192,9 @@ const PAYMENT_INGREDIENT_VENDORS = [
 const PAYMENT_TABLEWARE_VENDORS = [
   '三華行',
 ] as const;
+
+/** 蘿蔔糕固定單價（元／條） */
+export const LUOBOGAO_UNIT_PRICE = 150;
 
 export const PAYMENT_QUICK_KEYS: QuickKeyItem[] = [
   {
@@ -202,6 +212,15 @@ export const PAYMENT_QUICK_KEYS: QuickKeyItem[] = [
     category: EXPENSE_CATEGORY.OTHER,
     defaultNote: '支付貨款',
     merchantOptions: PAYMENT_TABLEWARE_VENDORS,
+  },
+  {
+    key: 'pay-蘿蔔糕',
+    label: '蘿蔔糕',
+    merchant: '蘿蔔糕',
+    category: EXPENSE_CATEGORY.INGREDIENTS,
+    defaultNote: '支付貨款',
+    unitPrice: LUOBOGAO_UNIT_PRICE,
+    quantityUnit: '條',
   },
 ];
 

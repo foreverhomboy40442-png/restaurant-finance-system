@@ -180,26 +180,43 @@ export default function AmountInputModal({
 }: AmountInputModalProps) {
   const { t, lang } = useLanguage();
   const [amount, setAmount] = useState('');
+  const [quantity, setQuantity] = useState('');
   const [dateInput, setDateInput] = useState(getTodayDateInput);
   const [merchant, setMerchant] = useState('');
   const [note, setNote] = useState('');
   const [noteDropdownOpen, setNoteDropdownOpen] = useState(false);
 
   const amountInputRef = useRef<HTMLInputElement>(null);
+  const quantityInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 每次 Modal 開啟，重置欄位並聚焦金額輸入
+  const isQuantityMode =
+    typeof quickKey?.unitPrice === 'number' &&
+    Number.isSafeInteger(quickKey.unitPrice) &&
+    quickKey.unitPrice > 0;
+
+  const quantityUnit = quickKey?.quantityUnit?.trim() || '條';
+  const unitPrice = isQuantityMode ? quickKey!.unitPrice! : 0;
+
+  // 每次 Modal 開啟，重置欄位並聚焦金額／數量輸入
   useEffect(() => {
     if (open && quickKey) {
       setAmount('');
+      setQuantity('');
       setDateInput(getTodayDateInput());
       setMerchant(quickKey.merchant);
       setNote(quickKey.defaultNote ?? '');
       setNoteDropdownOpen(false);
       // 延遲一幀確保 DOM 已渲染
       requestAnimationFrame(() => {
-        amountInputRef.current?.focus();
-        amountInputRef.current?.select();
+        const focusTarget =
+          typeof quickKey.unitPrice === 'number' &&
+          Number.isSafeInteger(quickKey.unitPrice) &&
+          quickKey.unitPrice > 0
+            ? quantityInputRef.current
+            : amountInputRef.current;
+        focusTarget?.focus();
+        focusTarget?.select();
       });
     }
   }, [open, quickKey]);
@@ -224,22 +241,67 @@ export default function AmountInputModal({
     return null;
   }
 
-  const validation = validateRevenueAmountInput(amount);
+  const quantityValidation = isQuantityMode
+    ? validateRevenueAmountInput(quantity)
+    : null;
+
+  let computedAmount: number | null = null;
+  let quantityError: string | null = null;
+  if (isQuantityMode && quantityValidation) {
+    if (quantityValidation.error) {
+      quantityError = quantityValidation.error.replace('金額', '條數');
+    } else if (
+      quantityValidation.valid &&
+      quantityValidation.parsedValue !== null
+    ) {
+      if (quantityValidation.parsedValue <= 0) {
+        quantityError = '條數必須大於 0';
+      } else {
+        const total = quantityValidation.parsedValue * unitPrice;
+        if (!Number.isSafeInteger(total)) {
+          quantityError = '計算後金額超出可接受範圍';
+        } else {
+          computedAmount = total;
+        }
+      }
+    }
+  }
+
+  const amountValidation = isQuantityMode
+    ? {
+        valid: computedAmount !== null && computedAmount > 0,
+        error: null as string | null,
+        parsedValue: computedAmount,
+      }
+    : validateRevenueAmountInput(amount);
+
   const merchantFilled =
     quickKey.merchant !== '' || merchant.trim() !== '';
   const isConfirmable =
     dateInput.trim() !== '' &&
-    validation.valid &&
-    validation.parsedValue !== null &&
-    validation.parsedValue > 0 &&
-    merchantFilled;
+    amountValidation.valid &&
+    amountValidation.parsedValue !== null &&
+    amountValidation.parsedValue > 0 &&
+    merchantFilled &&
+    (!isQuantityMode || quantityError === null);
 
   function handleConfirm() {
-    if (!isConfirmable || !quickKey) return;
+    if (!isConfirmable || !quickKey || amountValidation.parsedValue === null) {
+      return;
+    }
+
+    const finalAmount = String(amountValidation.parsedValue);
+    let finalNote = note.trim();
+
+    if (isQuantityMode && quantityValidation?.parsedValue != null) {
+      const qtyNote = `${quantityValidation.parsedValue}${quantityUnit} × $${unitPrice}`;
+      finalNote = finalNote ? `${finalNote}｜${qtyNote}` : qtyNote;
+    }
+
     onConfirm(
-      amount.trim(),
+      finalAmount,
       quickKey.merchant.trim() || merchant.trim() || quickKey.label,
-      note.trim(),
+      finalNote,
       dateInput,
     );
   }
@@ -354,39 +416,95 @@ export default function AmountInputModal({
           </div>
         )}
 
-        {/* 金額輸入（主要欄位，行動端純數字鍵盤） */}
-        <div className="mb-4">
-          <label
-            htmlFor="amount-modal-amount"
-            className="mb-1.5 block text-sm text-canton-dark/70"
-          >
-            {t('amountLabel')}
-            <span className="ml-0.5 text-canton-red">*</span>
-          </label>
-          <input
-            id="amount-modal-amount"
-            ref={amountInputRef}
-            type="text"
-            inputMode="numeric"
-            className="canton-input font-mono text-xl tabular-nums"
-            placeholder="0"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            autoComplete="off"
-          />
-          {validation.error && (
-            <p className="mt-1 text-xs text-canton-red" role="alert">
-              {validation.error}
-            </p>
-          )}
-          {validation.valid &&
-            validation.parsedValue !== null &&
-            validation.parsedValue > 0 && (
-              <p className="mt-1 font-mono text-xs tabular-nums text-canton-dark/40">
-                ＝ ${formatMoneyDisplay(validation.parsedValue)} 元
+        {isQuantityMode ? (
+          /* 數量計價：輸入條數 → 單價 × 數量 = 總額 */
+          <div className="mb-4 space-y-3">
+            <div className="flex items-center gap-2 rounded-sm bg-canton-bg px-3 py-2 text-sm">
+              <span className="text-canton-dark/45">單價</span>
+              <span className="font-mono font-medium tabular-nums text-canton-dark/85">
+                ${formatMoneyDisplay(unitPrice)} / {quantityUnit}
+              </span>
+              <span className="ml-auto rounded-sm bg-canton-dark/[0.06] px-1.5 py-0.5 text-xs text-canton-dark/40">
+                固定
+              </span>
+            </div>
+
+            <div>
+              <label
+                htmlFor="amount-modal-quantity"
+                className="mb-1.5 block text-sm text-canton-dark/70"
+              >
+                {quantityUnit}數
+                <span className="ml-0.5 text-canton-red">*</span>
+              </label>
+              <input
+                id="amount-modal-quantity"
+                ref={quantityInputRef}
+                type="text"
+                inputMode="numeric"
+                className="canton-input font-mono text-xl tabular-nums"
+                placeholder="0"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                autoComplete="off"
+              />
+              {quantityError && (
+                <p className="mt-1 text-xs text-canton-red" role="alert">
+                  {quantityError}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-sm border border-canton-dark/10 bg-canton-bg/60 px-3 py-3">
+              <p className="mb-1 text-xs text-canton-dark/45">自動計算總額</p>
+              {computedAmount !== null && computedAmount > 0 ? (
+                <p className="font-mono text-lg font-semibold tabular-nums text-canton-dark">
+                  {quantityValidation?.parsedValue} {quantityUnit} × $
+                  {formatMoneyDisplay(unitPrice)} ＝ $
+                  {formatMoneyDisplay(computedAmount)}
+                </p>
+              ) : (
+                <p className="font-mono text-sm tabular-nums text-canton-dark/35">
+                  — {quantityUnit} × ${formatMoneyDisplay(unitPrice)} ＝ —
+                </p>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* 金額輸入（主要欄位，行動端純數字鍵盤） */
+          <div className="mb-4">
+            <label
+              htmlFor="amount-modal-amount"
+              className="mb-1.5 block text-sm text-canton-dark/70"
+            >
+              {t('amountLabel')}
+              <span className="ml-0.5 text-canton-red">*</span>
+            </label>
+            <input
+              id="amount-modal-amount"
+              ref={amountInputRef}
+              type="text"
+              inputMode="numeric"
+              className="canton-input font-mono text-xl tabular-nums"
+              placeholder="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              autoComplete="off"
+            />
+            {amountValidation.error && (
+              <p className="mt-1 text-xs text-canton-red" role="alert">
+                {amountValidation.error}
               </p>
             )}
-        </div>
+            {amountValidation.valid &&
+              amountValidation.parsedValue !== null &&
+              amountValidation.parsedValue > 0 && (
+                <p className="mt-1 font-mono text-xs tabular-nums text-canton-dark/40">
+                  ＝ ${formatMoneyDisplay(amountValidation.parsedValue)} 元
+                </p>
+              )}
+          </div>
+        )}
 
         {/* 備註欄（可選）：支援下拉快選 */}
         <div className="mb-6">
