@@ -415,14 +415,12 @@ export interface PnlCalcResult {
 /**
  * 股東財務 P&L 計算核心（ShareholderTab 畫面與 Excel 匯出共用）。
  *
- * 商業規則（按季 / 全期總額累計發放）：
+ * 商業規則：
  *
  * ① 所得稅：只在稅前淨利 > 0 時課徵（虧損不計負稅）
  *
- * ② 員工紅利：對「稅後淨利」無條件套用比例，虧損月得到負值。
- *    虧損月的負數員工紅利代表「分紅池平抑損失」：
- *      虧損月 finalDistributable = netBeforeTax × (1 − employeeBonusPct%)
- *    此設計確保縱向（Total × rate）與橫向（Σ 各月紅利）絕對一致。
+ * ② 員工紅利：稅前淨利 ≤ 0 時為 0；有盈餘時依稅後淨利 × 比例計算。
+ *    員工紅利不得為負數。
  *
  * ③ 預留盈餘：只在股東盈餘 > 0 時計提（虧損月不扣）
  */
@@ -433,8 +431,9 @@ export function calcPnl(p: PnlCalcParams): PnlCalcResult {
   const taxAmount   = netBeforeTax > 0 ? netBeforeTax * (p.taxRate / 100) : 0;
   const netAfterTax = netBeforeTax - taxAmount;
 
-  // ② 員工紅利：無條件計算，虧損月自動為負（平抑分紅池）
-  const employeeBonus      = netAfterTax * (p.employeeBonusPct / 100);
+  // ② 員工紅利：稅前淨利 ≤ 0 時為 0，且不得為負
+  const employeeBonus =
+    netBeforeTax > 0 ? Math.max(0, netAfterTax * (p.employeeBonusPct / 100)) : 0;
   const shareholderSurplus = netAfterTax - employeeBonus;
 
   // ③ 預留盈餘（股東盈餘 ≤ 0 時跳過）

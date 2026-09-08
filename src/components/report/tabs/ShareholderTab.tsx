@@ -239,7 +239,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
     [catBreakdown, lang],
   );
 
-  // ── 逐月 PnL → 橫向 reduce 加總（確保虧損月紅利為負值，與 Excel 合計欄精確對齊）──
+  // ── 逐月 PnL → 橫向 reduce 加總（與 Excel 合計欄對齊；虧損月員工紅利為 0）──
   const perMonthPnl = useMemo(() =>
     selectedMonths.map((month) => {
       const { revenues: mRev, expenses: mExp } = filterByMonths(revenues, expenses, [month]);
