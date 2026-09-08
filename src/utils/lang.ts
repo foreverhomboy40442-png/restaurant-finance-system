@@ -44,6 +44,8 @@ const zh = {
   logout: '登出',
   openMenu: '開啟選單',
   closeMenu: '關閉選單',
+  permissionDenied:
+    '您尚未擁有權限訪問此頁面，如需訪問請洽管理員:吳大衛',
 
   // ── 首頁儀表板 ──
   periodDay: '當日',
@@ -325,6 +327,8 @@ const en: Record<keyof typeof zh, string> = {
   logout: 'Sign Out',
   openMenu: 'Open menu',
   closeMenu: 'Close menu',
+  permissionDenied:
+    'You do not have permission to access this page. Please contact the administrator: David Wu (吳大衛)',
 
   periodDay: 'Today',
   periodWeek: 'This Week',
