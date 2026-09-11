@@ -20,15 +20,15 @@ const zh = {
 
   // ── 登入 ──
   loginEmailLabel: '帳號',
-  loginEmailPlaceholder: '請輸入完整 Email',
+  loginEmailPlaceholder: '請輸入帳號',
   passwordLabel: '密碼',
   rememberMe: '記住我',
   signIn: '登入',
   signingIn: '登入中…',
-  errInvalidEmail: '請輸入有效的 Email 格式',
+  errInvalidEmail: '請輸入帳號',
   errPasswordRequired: '請輸入密碼',
   errPasswordMin: '密碼長度至少 4 個字元',
-  errLoginFailed: '登入失敗，請確認 Email 與密碼',
+  errLoginFailed: '登入失敗，請確認帳號與密碼',
 
   // ── 側邊欄 / 導覽 ──
   navDashboard: '首頁',
@@ -44,6 +44,8 @@ const zh = {
   logout: '登出',
   openMenu: '開啟選單',
   closeMenu: '關閉選單',
+  permissionDenied:
+    '您尚未擁有權限訪問此頁面，如需訪問請洽管理員:吳大衛',
 
   // ── 首頁儀表板 ──
   periodDay: '當日',
@@ -301,16 +303,16 @@ const en: Record<keyof typeof zh, string> = {
   unitPercent: '%',
   unitCurrency: 'TWD',
 
-  loginEmailLabel: 'Email',
-  loginEmailPlaceholder: 'Enter your full email address',
+  loginEmailLabel: 'Account',
+  loginEmailPlaceholder: 'Enter your account',
   passwordLabel: 'Password',
   rememberMe: 'Remember me',
   signIn: 'Sign In',
   signingIn: 'Signing in…',
-  errInvalidEmail: 'Please enter a valid email address.',
+  errInvalidEmail: 'Please enter your account',
   errPasswordRequired: 'Please enter your password',
   errPasswordMin: 'Password must be at least 4 characters',
-  errLoginFailed: 'Sign-in failed. Check your email and password.',
+  errLoginFailed: 'Sign-in failed. Check your account and password.',
 
   navDashboard: 'Home',
   navRevenue: 'Revenue',
@@ -325,6 +327,8 @@ const en: Record<keyof typeof zh, string> = {
   logout: 'Sign Out',
   openMenu: 'Open menu',
   closeMenu: 'Close menu',
+  permissionDenied:
+    'You do not have permission to access this page. Please contact the administrator: David Wu (吳大衛)',
 
   periodDay: 'Today',
   periodWeek: 'This Week',
