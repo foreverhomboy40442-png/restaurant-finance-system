@@ -463,7 +463,7 @@ export async function exportShareholderExcel(
     '水電瓦斯：電費、瓦斯、水費',
     '修繕金預扣：每月預留修繕金（計入損益）',
     '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
-    '營運雜支：房租、雜貨、檯布、行銷及其他雜支',
+    '營運雜支：房租、雜貨、環衛、行銷及其他雜支',
   ];
   for (const line of compositionLines) {
     ws.mergeCells(row, 1, row, numCols);
