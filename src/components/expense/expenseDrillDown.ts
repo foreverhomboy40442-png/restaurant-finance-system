@@ -59,6 +59,14 @@ export function classifyExpenseTab(item: ExpenseItem): ExpenseTab {
   ) {
     return 'fixed_salary';
   }
+  // 固定支出分頁快捷鍵中已指定 merchant 的項目（如環境衛生）
+  if (
+    QUICK_KEYS_BY_TAB.fixed_salary.some(
+      (k) => k.merchant.trim() !== '' && k.merchant === merchant,
+    )
+  ) {
+    return 'fixed_salary';
+  }
   if (item.category === EXPENSE_CATEGORY.LABOR) return 'pt';
   if (
     PAYMENT_MERCHANT_SET.has(merchant) ||
