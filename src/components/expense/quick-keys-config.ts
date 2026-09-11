@@ -6,7 +6,7 @@
  *   2. PT 薪資 (pt)           — 點工人員
  *   3. 支付貨款 (payment)     — 食材／餐具（供應商下拉）＋ 蘿蔔糕（條數×單價）
  *   4. 修繕費用 (repair)      — 裝潢、冷氣、燈泡等維修
- *   5. 固定支出 (fixed_salary) — 正職薪資（下拉選員工）＋ 房租
+ *   5. 固定支出 (fixed_salary) — 正職薪資（下拉選員工）＋ 房租、環境衛生
  */
 
 import type { ExpenseCategory } from '../../types';
@@ -251,7 +251,7 @@ export const REPAIR_QUICK_KEYS: QuickKeyItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 分頁五：固定支出（正職薪資下拉選員工 ＋ 房租）
+// 分頁五：固定支出（正職薪資下拉選員工 ＋ 房租、環境衛生）
 // ---------------------------------------------------------------------------
 
 const FIXED_SALARY_EMPLOYEES = [
@@ -276,6 +276,12 @@ export const FIXED_SALARY_QUICK_KEYS: QuickKeyItem[] = [
     label: '房租',
     merchant: '房租',
     category: EXPENSE_CATEGORY.RENT,
+  },
+  {
+    key: 'fixed-環境衛生',
+    label: '環境衛生',
+    merchant: '環境衛生',
+    category: EXPENSE_CATEGORY.OTHER,
   },
 ];
 

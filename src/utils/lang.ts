@@ -642,6 +642,7 @@ export const DATA_LABEL_EN: Readonly<Record<string, string>> = {
   '薪資': 'Labor & Payroll',
   '房租': 'Rent',
   '租金': 'Rent',
+  '環境衛生': 'Environmental Hygiene',
   '水電瓦斯': 'Utilities',
   '公用事業': 'Utilities',
   '水電': 'Utilities',
