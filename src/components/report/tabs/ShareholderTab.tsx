@@ -51,6 +51,10 @@ import SvgDonutChart from '../charts/SvgDonutChart';
 interface ShareholderTabProps {
   revenues: RevenueItem[];
   expenses: ExpenseItem[];
+  /** 訪客股東：財務參數僅可檢視，不可解鎖／儲存 */
+  paramsReadOnly?: boolean;
+  /** 訪客股東：隱藏 Excel 匯出 */
+  hideExcelExport?: boolean;
 }
 
 /** 五大科目固定組成說明（給股東看的定義，不含金額） */
@@ -73,7 +77,12 @@ const REPORT_CATEGORY_COLORS: Record<ReportCategoryKey, string> = {
 
 const REVENUE_TREND_COLOR = '#5C1010';
 
-export default function ShareholderTab({ revenues, expenses }: ShareholderTabProps) {
+export default function ShareholderTab({
+  revenues,
+  expenses,
+  paramsReadOnly = false,
+  hideExcelExport = false,
+}: ShareholderTabProps) {
   const { t, lang } = useLanguage();
   const allMonths = useMemo(() => getAllMonths(revenues, expenses), [revenues, expenses]);
 
@@ -87,8 +96,9 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const [reserveRate, setReserveRate] = useState<number>(0);
   const [expenseDetailOpen, setExpenseDetailOpen] = useState(false);
 
-  // ── 全區單一鎖定開關（預設鎖定）────────────────────────────────────────
+  // ── 全區單一鎖定開關（預設鎖定；訪客股東永遠鎖定）────────────────────────
   const [paramsLocked, setParamsLocked] = useState(true);
+  const effectivelyLocked = paramsReadOnly || paramsLocked;
 
   // ── 暫存草稿（解鎖期間編輯，未確認前不影響計算）────────────────────────
   const [draftTax, setDraftTax] = useState(0);
@@ -132,7 +142,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
 
   // 任一草稿與已提交值不同 → dirty
   const isDirty =
-    !paramsLocked && (
+    !effectivelyLocked && (
       draftTax        !== taxRate        ||
       draftYearEnd    !== yearEndMonthly ||
       draftRepairFund !== repairFundMonthly ||
@@ -141,6 +151,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
     );
 
   function handleToggleLock(checked: boolean) {
+    if (paramsReadOnly) return;
     if (checked) {
       // 重新鎖定：放棄草稿，回復已提交值
       setDraftTax(taxRate);
@@ -160,6 +171,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   }
 
   async function handleParamsCommit() {
+    if (paramsReadOnly) return;
     setParamsSaving(true);
     setParamsError('');
 
@@ -265,6 +277,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const finalDistributable = perMonthPnl.reduce((s, p) => s + p.finalDistributable, 0);
 
   async function handleExport() {
+    if (hideExcelExport) return;
     try {
       await exportShareholderExcel({
         selectedMonths,
@@ -354,74 +367,76 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
             {paramsError}
           </p>
         )}
-        {/* 標題列 + 全區紅色鎖定開關 */}
+        {/* 標題列 + 全區紅色鎖定開關（訪客股東隱藏解鎖） */}
         <div className="flex items-center justify-between">
           <span className="text-[11px] font-medium uppercase tracking-wider text-canton-dark/40">
             {t('financialParams')}
           </span>
-          <label className="flex cursor-pointer select-none items-center gap-2 text-xs font-semibold text-canton-dark/60">
-            {t('lockParams')}
-            <input
-              type="checkbox"
-              checked={paramsLocked}
-              onChange={(e) => handleToggleLock(e.target.checked)}
-              className="h-4 w-4 accent-red-600"
-              disabled={paramsLoading || paramsSaving}
-            />
-          </label>
+          {!paramsReadOnly && (
+            <label className="flex cursor-pointer select-none items-center gap-2 text-xs font-semibold text-canton-dark/60">
+              {t('lockParams')}
+              <input
+                type="checkbox"
+                checked={paramsLocked}
+                onChange={(e) => handleToggleLock(e.target.checked)}
+                className="h-4 w-4 accent-red-600"
+                disabled={paramsLoading || paramsSaving}
+              />
+            </label>
+          )}
         </div>
 
         {/* 五張輸入卡片 */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
           <ParamInput
-            key={`tax-${paramsLocked}`}
+            key={`tax-${effectivelyLocked}`}
             label={t('taxRateLabel')}
-            value={paramsLocked ? taxRate : draftTax}
+            value={effectivelyLocked ? taxRate : draftTax}
             onChange={setDraftTax}
             unit="%"
             min={0}
             max={30}
-            disabled={paramsLocked || paramsLoading || paramsSaving}
+            disabled={effectivelyLocked || paramsLoading || paramsSaving}
           />
           <ParamInput
-            key={`bonus-${paramsLocked}`}
+            key={`bonus-${effectivelyLocked}`}
             label={t('employeeBonusRateLabel')}
-            value={paramsLocked ? employeeBonusPct : draftBonus}
+            value={effectivelyLocked ? employeeBonusPct : draftBonus}
             onChange={setDraftBonus}
             unit="%"
             min={0}
             max={50}
-            disabled={paramsLocked || paramsLoading || paramsSaving}
+            disabled={effectivelyLocked || paramsLoading || paramsSaving}
           />
           <ParamInput
-            key={`yearend-${paramsLocked}`}
+            key={`yearend-${effectivelyLocked}`}
             label={t('yearEndReserveLabel')}
-            value={paramsLocked ? yearEndMonthly : draftYearEnd}
+            value={effectivelyLocked ? yearEndMonthly : draftYearEnd}
             onChange={setDraftYearEnd}
             unit={t('unitCurrency')}
             min={0}
             max={500000}
-            disabled={paramsLocked || paramsLoading || paramsSaving}
+            disabled={effectivelyLocked || paramsLoading || paramsSaving}
           />
           <ParamInput
-            key={`repair-${paramsLocked}`}
+            key={`repair-${effectivelyLocked}`}
             label={t('repairFundLabel')}
-            value={paramsLocked ? repairFundMonthly : draftRepairFund}
+            value={effectivelyLocked ? repairFundMonthly : draftRepairFund}
             onChange={setDraftRepairFund}
             unit={t('unitCurrency')}
             min={0}
             max={500000}
-            disabled={paramsLocked || paramsLoading || paramsSaving}
+            disabled={effectivelyLocked || paramsLoading || paramsSaving}
           />
           <ParamInput
-            key={`reserve-${paramsLocked}`}
+            key={`reserve-${effectivelyLocked}`}
             label={t('reserveRateLabel')}
-            value={paramsLocked ? reserveRate : draftReserve}
+            value={effectivelyLocked ? reserveRate : draftReserve}
             onChange={setDraftReserve}
             unit="%"
             min={0}
             max={50}
-            disabled={paramsLocked || paramsLoading || paramsSaving}
+            disabled={effectivelyLocked || paramsLoading || paramsSaving}
           />
         </div>
 
@@ -457,26 +472,28 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                   })}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleExport}
-                className="shrink-0 bg-slate-900 text-white text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-800 transition-colors flex items-center gap-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-4 w-4"
-                  aria-hidden="true"
+              {!hideExcelExport && (
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="shrink-0 bg-slate-900 text-white text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-800 transition-colors flex items-center gap-2"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 3a.75.75 0 0 1 .75.75v7.69l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0L5.72 10.03a.75.75 0 1 1 1.06-1.06l2.47 2.47V3.75A.75.75 0 0 1 10 3ZM3.25 15a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5H4a.75.75 0 0 1-.75-.75Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {t('exportPnl')}
-              </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    className="h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 3a.75.75 0 0 1 .75.75v7.69l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0L5.72 10.03a.75.75 0 1 1 1.06-1.06l2.47 2.47V3.75A.75.75 0 0 1 10 3ZM3.25 15a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5H4a.75.75 0 0 1-.75-.75Z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {t('exportPnl')}
+                </button>
+              )}
             </div>
           </div>
 

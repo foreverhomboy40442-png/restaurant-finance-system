@@ -2,7 +2,9 @@ import { useEffect } from 'react';
 import type { ExpenseItem, RevenueItem } from '../types';
 import type { NavTab } from '../App';
 import { useLanguage } from '../context/LanguageContext';
+import type { TranslationKey } from '../utils/lang';
 import LanguageSwitcher from './common/LanguageSwitcher';
+import PermissionDenied from './common/PermissionDenied';
 import DashboardHome from './dashboard/DashboardHome';
 import ExpenseManagement from './expense/ExpenseManagement';
 import ReportCenter from './report/ReportCenter';
@@ -23,9 +25,9 @@ interface MainDashboardProps {
   isMobileSidebarOpen: boolean;
   onOpenSidebar: () => void;
   onCloseSidebar: () => void;
+  /** 訪客股東：側欄可點，僅股東報表可看內容 */
+  isShareholderGuest?: boolean;
 }
-
-import type { TranslationKey } from '../utils/lang';
 
 const NAV_TAB_KEYS: Record<NavTab, TranslationKey> = {
   dashboard: 'navDashboard',
@@ -44,7 +46,6 @@ const HEADING_TAB_KEYS: Record<NavTab, TranslationKey> = {
 };
 
 const NAV_ORDER: NavTab[] = ['dashboard', 'revenue', 'expense', 'report', 'settings'];
-
 
 function MenuIcon() {
   return (
@@ -174,6 +175,7 @@ export default function MainDashboard({
   isMobileSidebarOpen,
   onOpenSidebar,
   onCloseSidebar,
+  isShareholderGuest = false,
 }: MainDashboardProps) {
   const { t } = useLanguage();
 
@@ -185,6 +187,62 @@ export default function MainDashboard({
       document.body.style.overflow = prev;
     };
   }, [isMobileSidebarOpen]);
+
+  function renderMainContent() {
+    if (isShareholderGuest) {
+      if (activeTab === 'report') {
+        return (
+          <ReportCenter
+            revenues={revenues}
+            expenses={expenses}
+            guestMode
+          />
+        );
+      }
+      return <PermissionDenied />;
+    }
+
+    if (activeTab === 'dashboard') {
+      return (
+        <DashboardHome
+          revenues={revenues}
+          expenses={expenses}
+          onNavigateToRevenue={() => onTabChange('revenue')}
+        />
+      );
+    }
+
+    if (activeTab === 'revenue') {
+      return (
+        <RevenueManagement
+          revenues={revenues}
+          onRevenuesChange={onRevenuesChange}
+          defaultOperatorId="admin"
+        />
+      );
+    }
+
+    if (activeTab === 'expense') {
+      return (
+        <ExpenseManagement
+          expenses={expenses}
+          onExpensesChange={onExpensesChange}
+          defaultOperatorId="admin"
+        />
+      );
+    }
+
+    if (activeTab === 'report') {
+      return (
+        <ReportCenter
+          revenues={revenues}
+          expenses={expenses}
+        />
+      );
+    }
+
+    return <AccountSettings />;
+  }
 
   return (
     <div className="min-h-screen bg-canton-bg">
@@ -289,38 +347,7 @@ export default function MainDashboard({
             </div>
           )}
 
-          {activeTab === 'dashboard' && (
-            <DashboardHome
-              revenues={revenues}
-              expenses={expenses}
-              onNavigateToRevenue={() => onTabChange('revenue')}
-            />
-          )}
-
-          {activeTab === 'revenue' && (
-            <RevenueManagement
-              revenues={revenues}
-              onRevenuesChange={onRevenuesChange}
-              defaultOperatorId="admin"
-            />
-          )}
-
-          {activeTab === 'expense' && (
-            <ExpenseManagement
-              expenses={expenses}
-              onExpensesChange={onExpensesChange}
-              defaultOperatorId="admin"
-            />
-          )}
-
-          {activeTab === 'report' && (
-            <ReportCenter
-              revenues={revenues}
-              expenses={expenses}
-            />
-          )}
-
-          {activeTab === 'settings' && <AccountSettings />}
+          {renderMainContent()}
         </main>
       </div>
     </div>

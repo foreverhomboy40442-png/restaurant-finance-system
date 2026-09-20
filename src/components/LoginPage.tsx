@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { supabase } from '../lib/supabase';
-import { clearRememberedSession } from '../lib/authSession';
+import { clearRememberedSession, resolveLoginEmail } from '../lib/authSession';
 import LanguageSwitcher from './common/LanguageSwitcher';
 
 interface LoginPageProps {
@@ -10,6 +10,7 @@ interface LoginPageProps {
 
 /**
  * 登入牆 — 左側品牌 Logo、右側登入表單。
+ * 支援短帳號（例如 guest888）；介面不要求輸入 Email 網域。
  */
 export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const { t } = useLanguage();
@@ -23,10 +24,15 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     event.preventDefault();
     setError('');
 
-    const trimmedEmail = email.trim().toLowerCase();
+    const loginIdentity = email.trim();
+    const resolvedEmail = resolveLoginEmail(loginIdentity);
     const trimmedPassword = password.trim();
 
-    if (!trimmedEmail || !trimmedEmail.includes('@')) {
+    if (!loginIdentity) {
+      setError(t('errInvalidEmail'));
+      return;
+    }
+    if (!resolvedEmail.includes('@')) {
       setError(t('errInvalidEmail'));
       return;
     }
@@ -39,7 +45,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
+        email: resolvedEmail,
         password: trimmedPassword,
       });
 
@@ -96,17 +102,17 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
           <form className="mt-12 space-y-8" onSubmit={handleSubmit} noValidate>
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm text-canton-dark/70">
+              <label htmlFor="login-account" className="mb-2 block text-sm text-canton-dark/70">
                 {t('loginEmailLabel')}
               </label>
               <input
-                id="email"
-                type="email"
+                id="login-account"
+                type="text"
                 className="canton-input"
                 placeholder={t('loginEmailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
+                autoComplete="username"
                 disabled={loading}
               />
             </div>

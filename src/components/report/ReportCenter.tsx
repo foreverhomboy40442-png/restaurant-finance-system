@@ -1,17 +1,22 @@
 /**
  * 報表中心 — 主容器
+ *
+ * guestMode：訪客股東僅可進入股東報表（營運分析顯示無權限；參數唯讀；隱藏 Excel）
  */
 
 import { useState } from 'react';
 import type { ExpenseItem, RevenueItem } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import type { TranslationKey } from '../../utils/lang';
+import PermissionDenied from '../common/PermissionDenied';
 import ManagementTab from './tabs/ManagementTab';
 import ShareholderTab from './tabs/ShareholderTab';
 
 interface ReportCenterProps {
   revenues: RevenueItem[];
   expenses: ExpenseItem[];
+  /** 訪客股東模式：股東報表可看；營運分析無權限；參數唯讀；隱藏 Excel */
+  guestMode?: boolean;
 }
 
 type ReportTab = 'analysis' | 'shareholder';
@@ -24,9 +29,12 @@ const REPORT_TAB_KEYS: Record<ReportTab, TranslationKey> = {
 export default function ReportCenter({
   revenues,
   expenses,
+  guestMode = false,
 }: ReportCenterProps) {
   const { t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<ReportTab>('analysis');
+  const [activeTab, setActiveTab] = useState<ReportTab>(
+    guestMode ? 'shareholder' : 'analysis',
+  );
 
   return (
     <div className="space-y-5">
@@ -50,10 +58,18 @@ export default function ReportCenter({
       </div>
 
       {activeTab === 'analysis' && (
-        <ManagementTab revenues={revenues} expenses={expenses} />
+        guestMode
+          ? <PermissionDenied />
+          : <ManagementTab revenues={revenues} expenses={expenses} />
       )}
+
       {activeTab === 'shareholder' && (
-        <ShareholderTab revenues={revenues} expenses={expenses} />
+        <ShareholderTab
+          revenues={revenues}
+          expenses={expenses}
+          paramsReadOnly={guestMode}
+          hideExcelExport={guestMode}
+        />
       )}
     </div>
   );
