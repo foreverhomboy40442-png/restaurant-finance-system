@@ -653,6 +653,7 @@ export const DATA_LABEL_EN: Readonly<Record<string, string>> = {
   '固定支出': 'Fixed Costs',
   '固定薪資': 'Fixed Costs',
   '雜支': 'Miscellaneous',
+  '檯布': 'Tablecloth',
   '食材': 'Food & Ingredients',
   'PT 薪資': 'Labor & Payroll',
   '支出': 'Expense',
