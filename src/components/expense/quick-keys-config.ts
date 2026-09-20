@@ -4,7 +4,7 @@
  * 五分頁結構：
  *   1. 現金支出 (cash)        — 食材、雜支、電費、瓦斯、水費
  *   2. PT 薪資 (pt)           — 點工人員
- *   3. 支付貨款 (payment)     — 食材／餐具（供應商下拉）＋ 蘿蔔糕（條數×單價）
+ *   3. 支付貨款 (payment)     — 食材／餐具／雜支（供應商下拉）＋ 蘿蔔糕（條數×單價）
  *   4. 修繕費用 (repair)      — 裝潢、冷氣、燈泡等維修
  *   5. 固定支出 (fixed_salary) — 正職薪資（下拉選員工）＋ 房租、環境衛生
  */
@@ -187,7 +187,7 @@ export const PT_QUICK_KEYS: QuickKeyItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 分頁三：支付貨款（食材／餐具供應商下拉 ＋ 蘿蔔糕條數計價）
+// 分頁三：支付貨款（食材／餐具／雜支供應商下拉 ＋ 蘿蔔糕條數計價）
 // ---------------------------------------------------------------------------
 
 const PAYMENT_INGREDIENT_VENDORS = [
@@ -197,6 +197,10 @@ const PAYMENT_INGREDIENT_VENDORS = [
 
 const PAYMENT_TABLEWARE_VENDORS = [
   '三華行',
+] as const;
+
+const PAYMENT_MISC_VENDORS = [
+  '檯布',
 ] as const;
 
 /** 蘿蔔糕固定單價（元／條） */
@@ -218,6 +222,14 @@ export const PAYMENT_QUICK_KEYS: QuickKeyItem[] = [
     category: EXPENSE_CATEGORY.OTHER,
     defaultNote: '支付貨款',
     merchantOptions: PAYMENT_TABLEWARE_VENDORS,
+  },
+  {
+    key: 'pay-雜支',
+    label: '雜支',
+    merchant: '',
+    category: EXPENSE_CATEGORY.OTHER,
+    defaultNote: '支付貨款',
+    merchantOptions: PAYMENT_MISC_VENDORS,
   },
   {
     key: 'pay-蘿蔔糕',
