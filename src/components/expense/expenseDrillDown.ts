@@ -14,9 +14,10 @@ export const PAYMENT_MERCHANT_SET = new Set([
   '工廠', '河粉', '牛肉', '豬肉', '阿肥', '麵', '振農',
   '惠通', '大友', '蛋', '酒', '和昌', '臘味', '茶葉',
   '三華行',
+  '檯布',
   '蘿蔔糕',
   // 舊資料相容
-  '檯布', '大友(二)', '惠通(一)', '惠通(二)',
+  '大友(二)', '惠通(一)', '惠通(二)',
 ]);
 
 const LEGACY_MERCHANT_ALIASES: Record<string, string> = {
