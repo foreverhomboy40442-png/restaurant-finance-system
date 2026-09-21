@@ -60,9 +60,7 @@ async function main() {
   const segments = [
     { label: '食材採購', value: 420000, color: '#92400E' },
     { label: '人事成本', value: 510000, color: '#7F1D1D' },
-    { label: '水電瓦斯', value: 90000, color: '#14532D' },
-    { label: '修繕費用', value: 60000, color: '#9A3412' },
-    { label: '營運雜支', value: 180000, color: '#44403C' },
+    { label: '營運雜支', value: 270000, color: '#44403C' },
   ];
 
   const lineSvg = buildRevenueTrendSvg({

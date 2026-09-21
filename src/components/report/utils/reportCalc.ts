@@ -36,14 +36,16 @@ export interface CategoryBreakdown {
 }
 
 /**
- * 財務報表用 5 大科目（與首頁儀表板支出總額一致，但依老闆審視習慣合併顯示）。
+ * 財務報表用大科目（股東／管理報表共用）。
  *
  * 對應關係：
- *   食材採購 ← ingredients
- *   人事成本 ← labor + fixed_salary（PT 薪資 + 正職薪資）
- *   水電瓦斯 ← utilities
+ *   食材採購 ← ingredients（子科：貨款／現金支出）
+ *   人事成本 ← labor + fixed_salary（子科：PT／正職）
+ *   營運雜支 ← utilities + rent + other + marketing
+ *              （子科：水電瓦斯／網路費／營業稅／房租／環境衛生／管理費／行銷／雜支）
  *   修繕費用 ← repair（僅供「修繕金動支」檢視；不計入營業支出 total）
- *   營運雜支 ← other + rent + marketing（雜支 + 房租 + 行銷）
+ *
+ * 註：`utilities` 保留於型別僅供舊資料／匯出相容；顯示與加總已併入 `operating_misc`。
  */
 export type ReportCategoryKey =
   | 'ingredients'
@@ -55,30 +57,87 @@ export type ReportCategoryKey =
 export interface ReportCategoryBreakdown {
   ingredients: number;
   labor: number;
+  /** @deprecated 已併入 operating_misc；固定為 0 */
   utilities: number;
   repair: number;
   operating_misc: number;
   total: number;
 }
 
-/** 財務報表科目顯示順序 */
+/** 食材子科目 */
+export type IngredientsSubKey = 'payment' | 'cash';
+
+/** 人事子科目 */
+export type LaborSubKey = 'pt' | 'full_time';
+
+/** 營運雜支子科目 */
+export type OperatingMiscSubKey =
+  | 'utilities'
+  | 'internet'
+  | 'business_tax'
+  | 'rent'
+  | 'sanitation'
+  | 'management_fee'
+  | 'marketing'
+  | 'misc';
+
+export interface IngredientsSubBreakdown {
+  payment: number;
+  cash: number;
+}
+
+export interface LaborSubBreakdown {
+  pt: number;
+  full_time: number;
+}
+
+export interface OperatingMiscSubBreakdown {
+  utilities: number;
+  internet: number;
+  business_tax: number;
+  rent: number;
+  sanitation: number;
+  management_fee: number;
+  marketing: number;
+  misc: number;
+}
+
+/** 財務報表科目顯示順序（含修繕檢視） */
 export const REPORT_CATEGORY_ORDER: ReportCategoryKey[] = [
   'ingredients',
   'labor',
-  'utilities',
-  'repair',
   'operating_misc',
+  'repair',
 ];
 
 /** 營業支出科目順序（不含修繕：修繕改列修繕金動支） */
 export const OPERATING_REPORT_CATEGORY_ORDER: ReportCategoryKey[] = [
   'ingredients',
   'labor',
-  'utilities',
   'operating_misc',
 ];
 
-/** 將 DB 8 科目映射至財務報表 5 大科目 */
+export const INGREDIENTS_SUB_ORDER: IngredientsSubKey[] = ['payment', 'cash'];
+export const LABOR_SUB_ORDER: LaborSubKey[] = ['pt', 'full_time'];
+export const OPERATING_MISC_SUB_ORDER: OperatingMiscSubKey[] = [
+  'utilities',
+  'internet',
+  'business_tax',
+  'rent',
+  'sanitation',
+  'management_fee',
+  'marketing',
+  'misc',
+];
+
+/** 支付貨款常見供應商（與支出鑽取／快捷鍵對齊） */
+const PAYMENT_INGREDIENT_MERCHANTS = new Set([
+  '工廠', '河粉', '牛肉', '豬肉', '阿肥', '麵', '振農',
+  '惠通', '大友', '蛋', '酒', '和昌', '臘味', '茶葉',
+  '蘿蔔糕', '大友(二)', '惠通(一)', '惠通(二)',
+]);
+
+/** 將 DB 8 科目映射至財務報表大科目 */
 export function mapExpenseCategoryToReportCategory(
   category: ExpenseCategory,
 ): ReportCategoryKey {
@@ -88,10 +147,9 @@ export function mapExpenseCategoryToReportCategory(
     case 'labor':
     case 'fixed_salary':
       return 'labor';
-    case 'utilities':
-      return 'utilities';
     case 'repair':
       return 'repair';
+    case 'utilities':
     case 'rent':
     case 'other':
     case 'marketing':
@@ -99,6 +157,35 @@ export function mapExpenseCategoryToReportCategory(
     default:
       return 'operating_misc';
   }
+}
+
+/** 食材：貨款 vs 現金支出 */
+export function mapIngredientsSubKey(item: ExpenseItem): IngredientsSubKey {
+  const merchant = (item.merchant || '').trim();
+  const note = typeof item.note === 'string' ? item.note : '';
+  if (note.includes('支付貨款') || PAYMENT_INGREDIENT_MERCHANTS.has(merchant)) {
+    return 'payment';
+  }
+  return 'cash';
+}
+
+/** 人事：PT vs 正職 */
+export function mapLaborSubKey(item: ExpenseItem): LaborSubKey {
+  return item.category === EXPENSE_CATEGORY.FIXED_SALARY ? 'full_time' : 'pt';
+}
+
+/** 營運雜支子科（先專項、其餘進雜支） */
+export function mapOperatingMiscSubKey(item: ExpenseItem): OperatingMiscSubKey {
+  if (item.category === EXPENSE_CATEGORY.UTILITIES) return 'utilities';
+  if (item.category === EXPENSE_CATEGORY.RENT) return 'rent';
+  if (item.category === EXPENSE_CATEGORY.MARKETING) return 'marketing';
+
+  const merchant = (item.merchant || '').trim();
+  if (merchant.includes('網路')) return 'internet';
+  if (merchant === '營業稅' || merchant.includes('營業稅')) return 'business_tax';
+  if (merchant === '環境衛生' || merchant.includes('環境衛生')) return 'sanitation';
+  if (merchant === '管理費' || merchant.includes('管理費')) return 'management_fee';
+  return 'misc';
 }
 
 // ── 日期工具 ───────────────────────────────────────────────────────────────
@@ -252,7 +339,7 @@ export function getCategoryBreakdown(expenses: ExpenseItem[]): CategoryBreakdown
   return b;
 }
 
-/** 財務報表 5 大科目加總（ManagementTab / ShareholderTab / Excel 共用） */
+/** 財務報表大科目加總（ManagementTab / ShareholderTab / Excel 共用） */
 export function getReportCategoryBreakdown(
   expenses: ExpenseItem[],
 ): ReportCategoryBreakdown {
@@ -260,12 +347,53 @@ export function getReportCategoryBreakdown(
   return {
     ingredients: raw.ingredients,
     labor: raw.labor + raw.fixed_salary,
-    utilities: raw.utilities,
+    utilities: 0,
     repair: raw.repair,
-    operating_misc: raw.other + raw.rent + raw.marketing,
+    // 水電瓦斯併入營運雜支
+    operating_misc: raw.other + raw.rent + raw.marketing + raw.utilities,
     // total 不含修繕實支（修繕由每月修繕金預扣，實支另計基金動支）
     total: raw.total - raw.repair,
   };
+}
+
+export function getIngredientsSubBreakdown(
+  expenses: ExpenseItem[],
+): IngredientsSubBreakdown {
+  const b: IngredientsSubBreakdown = { payment: 0, cash: 0 };
+  for (const e of expenses) {
+    if (e.category !== EXPENSE_CATEGORY.INGREDIENTS) continue;
+    b[mapIngredientsSubKey(e)] += e.amount;
+  }
+  return b;
+}
+
+export function getLaborSubBreakdown(expenses: ExpenseItem[]): LaborSubBreakdown {
+  const b: LaborSubBreakdown = { pt: 0, full_time: 0 };
+  for (const e of expenses) {
+    if (e.category === EXPENSE_CATEGORY.LABOR) b.pt += e.amount;
+    else if (e.category === EXPENSE_CATEGORY.FIXED_SALARY) b.full_time += e.amount;
+  }
+  return b;
+}
+
+export function getOperatingMiscSubBreakdown(
+  expenses: ExpenseItem[],
+): OperatingMiscSubBreakdown {
+  const b: OperatingMiscSubBreakdown = {
+    utilities: 0,
+    internet: 0,
+    business_tax: 0,
+    rent: 0,
+    sanitation: 0,
+    management_fee: 0,
+    marketing: 0,
+    misc: 0,
+  };
+  for (const e of expenses) {
+    if (mapExpenseCategoryToReportCategory(e.category) !== 'operating_misc') continue;
+    b[mapOperatingMiscSubKey(e)] += e.amount;
+  }
+  return b;
 }
 
 /** 依財務報表 5 大科目分組支出明細（供展開列使用） */

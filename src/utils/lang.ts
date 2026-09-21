@@ -177,11 +177,24 @@ const zh = {
   expandDetails: '展開科目明細',
   collapseDetails: '收起明細',
   expenseCategoryDefinition: '科目組成說明（定義）',
-  catIngredientsDef: '食材、乾貨、酒水與食材貨款',
-  catLaborDef: 'PT 薪資、正職薪資',
-  catUtilitiesDef: '電費、瓦斯、水費',
+  catIngredientsDef: '食材採購（含月結貨款與現金支出）',
+  catLaborDef: '人事成本（含 PT 與正職薪資）',
+  catUtilitiesDef: '電費、瓦斯、水費（已併入營運雜支）',
   catRepairDef: '裝潢、整/維修、設備維護（由修繕金預扣承擔；實支不計入月營業支出）',
-  catOperatingMiscDef: '房租、雜貨、環衛、行銷及其他雜支',
+  catOperatingMiscDef: '水電瓦斯、網路費、營業稅、房租、環境衛生、管理費、行銷及其他雜支',
+  // 股東報表子科目
+  subIngredientsPayment: '貨款',
+  subIngredientsCash: '現金支出',
+  subLaborPt: 'PT',
+  subLaborFullTime: '正職',
+  subMiscUtilities: '水電瓦斯',
+  subMiscInternet: '網路費',
+  subMiscBusinessTax: '營業稅',
+  subMiscRent: '房租',
+  subMiscSanitation: '環境衛生',
+  subMiscManagementFee: '管理費',
+  subMiscMarketing: '行銷',
+  subMiscOther: '雜支',
   yearEndBonusReserve: '年終獎金儲備（{monthly}/月 × {months} 月）',
   repairFundReserve: '修繕金儲備（{monthly}/月 × {months} 月）',
   repairFundDrawTitle: '修繕金動支紀錄',
@@ -204,7 +217,7 @@ const zh = {
   shareholderRevenueTrend: '營收成長趨勢',
   shareholderRevenueTrendDesc: '依所選月份顯示營業總收入走勢',
   shareholderExpenseShare: '營業總支出比例',
-  shareholderExpenseShareDesc: '依五大支出科目顯示營業總支出佔比',
+  shareholderExpenseShareDesc: '依食材／人事／營運雜支顯示營業總支出佔比',
 
   // ── 支出科目（報表細項標籤）──
   catIngredients: '食材採購',
@@ -453,11 +466,23 @@ const en: Record<keyof typeof zh, string> = {
   expandDetails: 'Expand breakdown',
   collapseDetails: 'Collapse breakdown',
   expenseCategoryDefinition: 'Category composition (definition)',
-  catIngredientsDef: 'Ingredients, dry goods, alcohol & ingredient vendor payments',
-  catLaborDef: 'PT wages & full-time salaries',
-  catUtilitiesDef: 'Electricity, gas & water',
+  catIngredientsDef: 'Ingredient purchases (vendor settlements & cash buys)',
+  catLaborDef: 'Labor cost (PT wages & full-time salaries)',
+  catUtilitiesDef: 'Electricity, gas & water (rolled into operating misc.)',
   catRepairDef: 'Fit-out, repair/maintenance & equipment upkeep (covered by repair reserve; actual draws excluded from monthly OpEx)',
-  catOperatingMiscDef: 'Rent, groceries, sanitation, marketing & other misc.',
+  catOperatingMiscDef: 'Utilities, internet, business tax, rent, sanitation, management fees, marketing & other misc.',
+  subIngredientsPayment: 'Vendor payment',
+  subIngredientsCash: 'Cash purchase',
+  subLaborPt: 'PT',
+  subLaborFullTime: 'Full-time',
+  subMiscUtilities: 'Utilities',
+  subMiscInternet: 'Internet',
+  subMiscBusinessTax: 'Business tax',
+  subMiscRent: 'Rent',
+  subMiscSanitation: 'Sanitation',
+  subMiscManagementFee: 'Management fee',
+  subMiscMarketing: 'Marketing',
+  subMiscOther: 'Misc.',
   yearEndBonusReserve: 'Year-End Bonus Reserve ({monthly}/mo × {months} mo)',
   repairFundReserve: 'Repair Fund Reserve ({monthly}/mo × {months} mo)',
   repairFundDrawTitle: 'Repair Fund Draws',
@@ -480,7 +505,7 @@ const en: Record<keyof typeof zh, string> = {
   shareholderRevenueTrend: 'Revenue Growth Trend',
   shareholderRevenueTrendDesc: 'Gross revenue by selected months',
   shareholderExpenseShare: 'Operating Expense Share',
-  shareholderExpenseShareDesc: 'Share of operating expenses by five categories',
+  shareholderExpenseShareDesc: 'Share of operating expenses by ingredients / labor / operating misc.',
 
   catIngredients: 'Food & Ingredients',
   catLabor: 'Labor & Payroll',
@@ -611,13 +636,34 @@ const BREAKDOWN_CAT_KEYS: Record<string, TranslationKey> = {
   other: 'catOther',
 };
 
-/** 財務報表 5 大科目標籤（ManagementTab / ShareholderTab / Excel 共用） */
+/** 財務報表大科目標籤（ManagementTab / ShareholderTab / Excel 共用） */
 const REPORT_CAT_KEYS: Record<string, TranslationKey> = {
   ingredients: 'catIngredients',
   labor: 'catLabor',
   utilities: 'catUtilities',
   repair: 'catRepair',
   operating_misc: 'catOperatingMisc',
+};
+
+const INGREDIENTS_SUB_KEYS: Record<string, TranslationKey> = {
+  payment: 'subIngredientsPayment',
+  cash: 'subIngredientsCash',
+};
+
+const LABOR_SUB_KEYS: Record<string, TranslationKey> = {
+  pt: 'subLaborPt',
+  full_time: 'subLaborFullTime',
+};
+
+const OPERATING_MISC_SUB_KEYS: Record<string, TranslationKey> = {
+  utilities: 'subMiscUtilities',
+  internet: 'subMiscInternet',
+  business_tax: 'subMiscBusinessTax',
+  rent: 'subMiscRent',
+  sanitation: 'subMiscSanitation',
+  management_fee: 'subMiscManagementFee',
+  marketing: 'subMiscMarketing',
+  misc: 'subMiscOther',
 };
 
 /** 資料庫／報表可能出現的中文標籤 → 英文顯示（不影響寫入或比對） */
@@ -695,7 +741,7 @@ export function getBreakdownCategoryLabel(
   return translateDataLabel(lang, key);
 }
 
-/** 財務報表 5 大科目顯示標籤 */
+/** 財務報表大科目顯示標籤 */
 export function getReportCategoryLabel(
   lang: Lang,
   key: string,
@@ -703,6 +749,24 @@ export function getReportCategoryLabel(
   const tk = REPORT_CAT_KEYS[key];
   if (tk) return translate(lang, tk);
   return translateDataLabel(lang, key);
+}
+
+export function getIngredientsSubLabel(lang: Lang, key: string): string {
+  const tk = INGREDIENTS_SUB_KEYS[key];
+  if (tk) return translate(lang, tk);
+  return key;
+}
+
+export function getLaborSubLabel(lang: Lang, key: string): string {
+  const tk = LABOR_SUB_KEYS[key];
+  if (tk) return translate(lang, tk);
+  return key;
+}
+
+export function getOperatingMiscSubLabel(lang: Lang, key: string): string {
+  const tk = OPERATING_MISC_SUB_KEYS[key];
+  if (tk) return translate(lang, tk);
+  return key;
 }
 
 export function getExpenseCategoryLabel(
