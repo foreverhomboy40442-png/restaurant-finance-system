@@ -525,7 +525,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                       if (val === 0) return null;
                       return (
                         <div key={key} className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center justify-between text-sm">
                             <span className="font-medium text-canton-dark/60">
                               └ {getReportCategoryLabel(lang, key)}
                             </span>
@@ -540,7 +540,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                               return (
                                 <div
                                   key={`ing-${sub}`}
-                                  className="ml-4 flex items-center justify-between text-[11px]"
+                                  className="ml-4 flex items-center justify-between text-xs"
                                 >
                                   <span className="text-canton-dark/40">
                                     · {getIngredientsSubLabel(lang, sub)}
@@ -558,7 +558,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                               return (
                                 <div
                                   key={`lab-${sub}`}
-                                  className="ml-4 flex items-center justify-between text-[11px]"
+                                  className="ml-4 flex items-center justify-between text-xs"
                                 >
                                   <span className="text-canton-dark/40">
                                     · {getLaborSubLabel(lang, sub)}
@@ -576,7 +576,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                               return (
                                 <div
                                   key={`misc-${sub}`}
-                                  className="ml-4 flex items-center justify-between text-[11px]"
+                                  className="ml-4 flex items-center justify-between text-xs"
                                 >
                                   <span className="text-canton-dark/40">
                                     · {getOperatingMiscSubLabel(lang, sub)}
@@ -814,19 +814,21 @@ function WaterfallRow({ label, value, highlight, bold, sub, divider }: Waterfall
 
   return (
     <div
-      className={`flex items-center justify-between py-3 ${
+      className={`flex items-center justify-between py-3.5 ${
         divider ? 'border-t border-canton-dark/10' : ''
       } ${sub ? 'pl-6' : ''}`}
     >
       <span
-        className={`text-sm ${
-          bold ? 'font-semibold text-canton-dark' : 'text-canton-dark/65'
-        } ${sub ? 'text-xs text-canton-dark/50' : ''}`}
+        className={`${
+          bold ? 'text-base font-semibold text-canton-dark' : 'text-base text-canton-dark/65'
+        } ${sub ? '!text-sm text-canton-dark/50' : ''}`}
       >
         {label}
       </span>
       <span
-        className={`font-mono text-sm tabular-nums ${valueColor} ${bold ? 'text-base' : ''}`}
+        className={`font-mono tabular-nums ${valueColor} ${
+          bold ? 'text-lg' : sub ? 'text-sm' : 'text-base'
+        }`}
       >
         {fmtSigned(value)}
       </span>
