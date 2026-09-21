@@ -277,12 +277,13 @@ export async function exportShareholderExcel(
   const sumKey = (key: keyof MonthData) =>
     monthly.reduce((s, m) => s + m[key], 0);
 
-  const totals = Object.fromEntries(
-    (Object.keys(monthly[0]) as (keyof MonthData)[]).map((key) => [
-      key,
-      sumKey(key),
-    ]),
-  ) as MonthData;
+  const totals = (Object.keys(monthly[0]) as (keyof MonthData)[]).reduce(
+    (acc, key) => {
+      acc[key] = sumKey(key);
+      return acc;
+    },
+    { ...monthly[0] },
+  );
 
   // ── 產生真實折線圖／甜甜圈圖 PNG ──────────────────────────────────────────
   const revenueValues = monthly.map((m) => m.grossRevenue);
