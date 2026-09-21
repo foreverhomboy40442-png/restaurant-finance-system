@@ -12,10 +12,19 @@ import type { ExpenseItem, RevenueItem } from '../../../types';
 import {
   calcPnl,
   filterByMonths,
+  getIngredientsSubBreakdown,
+  getLaborSubBreakdown,
+  getOperatingMiscSubBreakdown,
   getReportCategoryBreakdown,
+  INGREDIENTS_SUB_ORDER,
+  LABOR_SUB_ORDER,
+  OPERATING_MISC_SUB_ORDER,
   monthToLabel,
   sumOperatingExpenses,
   sumRevenues,
+  type IngredientsSubKey,
+  type LaborSubKey,
+  type OperatingMiscSubKey,
 } from './reportCalc';
 import { renderShareholderChartPngs } from './exportShareholderCharts';
 
@@ -35,9 +44,20 @@ interface MonthData {
   operatingExpenses: number;
   ingredients: number;
   labor: number;
-  utilities: number;
   repair: number;
   operatingMisc: number;
+  ingredientsPayment: number;
+  ingredientsCash: number;
+  laborPt: number;
+  laborFullTime: number;
+  miscUtilities: number;
+  miscInternet: number;
+  miscBusinessTax: number;
+  miscRent: number;
+  miscSanitation: number;
+  miscManagementFee: number;
+  miscMarketing: number;
+  miscOther: number;
   yearEndBonus: number;
   repairFund: number;
   netBeforeTax: number;
@@ -54,13 +74,45 @@ const BLACK = 'FF000000';
 const HDR = 'FFEBEBEB';
 const WHITE = 'FFFFFFFF';
 
+/** 損益數據明細：標籤／金額字級（加大利於投影與紙本閱讀） */
+const FONT = {
+  title: 20,
+  section: 18,
+  header: 15,
+  data: 14,
+  dataBold: 15,
+  sub: 13,
+  defTitle: 14,
+  defBody: 12,
+  meta: 12,
+} as const;
+
 const CHART_CATEGORY_COLORS = {
   ingredients: '#92400E',
   labor: '#7F1D1D',
-  utilities: '#14532D',
-  repair: '#9A3412',
   operating_misc: '#44403C',
 } as const;
+
+const INGREDIENTS_SUB_LABEL: Record<IngredientsSubKey, string> = {
+  payment: '貨款',
+  cash: '現金支出',
+};
+
+const LABOR_SUB_LABEL: Record<LaborSubKey, string> = {
+  pt: 'PT',
+  full_time: '正職',
+};
+
+const MISC_SUB_LABEL: Record<OperatingMiscSubKey, string> = {
+  utilities: '水電瓦斯',
+  internet: '網路費',
+  business_tax: '營業稅',
+  rent: '房租',
+  sanitation: '環境衛生',
+  management_fee: '管理費',
+  marketing: '行銷',
+  misc: '雜支',
+};
 
 function thinBorder(): Partial<ExcelJS.Borders> {
   const side: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: THIN } };
@@ -91,7 +143,7 @@ function styleLabelCell(
 ) {
   cell.font = {
     name: 'Arial',
-    size: opts.size ?? 11,
+    size: opts.size ?? FONT.data,
     bold: opts.bold ?? false,
     italic: opts.italic ?? false,
     color: { argb: BLACK },
@@ -107,13 +159,13 @@ function styleLabelCell(
 function styleMoneyCell(
   cell: ExcelJS.Cell,
   value: number,
-  opts: { bold?: boolean; totalCol?: boolean; emphasis?: boolean } = {},
+  opts: { bold?: boolean; totalCol?: boolean; emphasis?: boolean; size?: number } = {},
 ) {
   cell.value = value;
   cell.numFmt = MONEY_FMT;
   cell.font = {
     name: 'Arial',
-    size: 11,
+    size: opts.size ?? (opts.bold ? FONT.dataBold : FONT.data),
     bold: opts.bold ?? false,
     color: { argb: BLACK },
   };
@@ -151,6 +203,62 @@ function uint8ToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+function buildMonthData(
+  month: string,
+  p: ExportShareholderParams,
+): MonthData {
+  const { revenues: mRev, expenses: mExp } = filterByMonths(
+    p.revenues,
+    p.expenses,
+    [month],
+  );
+  const grossRevenue = sumRevenues(mRev);
+  const operatingExpenses = sumOperatingExpenses(mExp);
+  const cat = getReportCategoryBreakdown(mExp);
+  const ing = getIngredientsSubBreakdown(mExp);
+  const lab = getLaborSubBreakdown(mExp);
+  const misc = getOperatingMiscSubBreakdown(mExp);
+  const yearEndBonus = p.yearEndMonthly;
+  const repairFund = p.repairFundMonthly;
+  const pnl = calcPnl({
+    grossRevenue,
+    operatingExpenses,
+    yearEndBonus,
+    repairFund,
+    taxRate: p.taxRate,
+    employeeBonusPct: p.employeeBonusPct,
+    reserveRate: p.reserveRate,
+  });
+
+  return {
+    grossRevenue,
+    operatingExpenses,
+    ingredients: cat.ingredients,
+    labor: cat.labor,
+    repair: cat.repair,
+    operatingMisc: cat.operating_misc,
+    ingredientsPayment: ing.payment,
+    ingredientsCash: ing.cash,
+    laborPt: lab.pt,
+    laborFullTime: lab.full_time,
+    miscUtilities: misc.utilities,
+    miscInternet: misc.internet,
+    miscBusinessTax: misc.business_tax,
+    miscRent: misc.rent,
+    miscSanitation: misc.sanitation,
+    miscManagementFee: misc.management_fee,
+    miscMarketing: misc.marketing,
+    miscOther: misc.misc,
+    yearEndBonus,
+    repairFund,
+    netBeforeTax: pnl.netBeforeTax,
+    taxAmount: pnl.taxAmount,
+    employeeBonus: pnl.employeeBonus,
+    reservedSurplus: pnl.reservedSurplus,
+    finalDistributable: pnl.finalDistributable,
+  };
+}
+
 export async function exportShareholderExcel(
   p: ExportShareholderParams,
 ): Promise<void> {
@@ -164,64 +272,18 @@ export async function exportShareholderExcel(
       ? monthToLabel(sorted[0])
       : `${monthToLabel(sorted[0])} ~ ${monthToLabel(sorted[nMonths - 1])}`;
 
-  const monthly: MonthData[] = sorted.map((month) => {
-    const { revenues: mRev, expenses: mExp } = filterByMonths(
-      p.revenues,
-      p.expenses,
-      [month],
-    );
-    const grossRevenue = sumRevenues(mRev);
-    const operatingExpenses = sumOperatingExpenses(mExp);
-    const cat = getReportCategoryBreakdown(mExp);
-    const yearEndBonus = p.yearEndMonthly;
-    const repairFund = p.repairFundMonthly;
-    const pnl = calcPnl({
-      grossRevenue,
-      operatingExpenses,
-      yearEndBonus,
-      repairFund,
-      taxRate: p.taxRate,
-      employeeBonusPct: p.employeeBonusPct,
-      reserveRate: p.reserveRate,
-    });
-
-    return {
-      grossRevenue,
-      operatingExpenses,
-      ingredients: cat.ingredients,
-      labor: cat.labor,
-      utilities: cat.utilities,
-      repair: cat.repair,
-      operatingMisc: cat.operating_misc,
-      yearEndBonus,
-      repairFund,
-      netBeforeTax: pnl.netBeforeTax,
-      taxAmount: pnl.taxAmount,
-      employeeBonus: pnl.employeeBonus,
-      reservedSurplus: pnl.reservedSurplus,
-      finalDistributable: pnl.finalDistributable,
-    };
-  });
+  const monthly: MonthData[] = sorted.map((month) => buildMonthData(month, p));
 
   const sumKey = (key: keyof MonthData) =>
     monthly.reduce((s, m) => s + m[key], 0);
 
-  const totals: MonthData = {
-    grossRevenue: sumKey('grossRevenue'),
-    operatingExpenses: sumKey('operatingExpenses'),
-    ingredients: sumKey('ingredients'),
-    labor: sumKey('labor'),
-    utilities: sumKey('utilities'),
-    repair: sumKey('repair'),
-    operatingMisc: sumKey('operatingMisc'),
-    yearEndBonus: sumKey('yearEndBonus'),
-    repairFund: sumKey('repairFund'),
-    netBeforeTax: sumKey('netBeforeTax'),
-    taxAmount: sumKey('taxAmount'),
-    employeeBonus: sumKey('employeeBonus'),
-    reservedSurplus: sumKey('reservedSurplus'),
-    finalDistributable: sumKey('finalDistributable'),
-  };
+  const totals = (Object.keys(monthly[0]) as (keyof MonthData)[]).reduce(
+    (acc, key) => {
+      acc[key] = sumKey(key);
+      return acc;
+    },
+    { ...monthly[0] },
+  );
 
   // ── 產生真實折線圖／甜甜圈圖 PNG ──────────────────────────────────────────
   const revenueValues = monthly.map((m) => m.grossRevenue);
@@ -235,11 +297,6 @@ export async function exportShareholderExcel(
       label: '人事成本',
       value: totals.labor,
       color: CHART_CATEGORY_COLORS.labor,
-    },
-    {
-      label: '水電瓦斯',
-      value: totals.utilities,
-      color: CHART_CATEGORY_COLORS.utilities,
     },
     {
       label: '營運雜支',
@@ -260,7 +317,7 @@ export async function exportShareholderExcel(
       yUnit: '元',
     },
     donut: {
-      title: '營業總支出（五大科目比例）',
+      title: '營業總支出（科目比例）',
       segments: expenseSegments,
       totalLabel: '合計',
     },
@@ -274,40 +331,46 @@ export async function exportShareholderExcel(
       orientation: nMonths > 6 ? 'landscape' : 'portrait',
       fitToPage: true,
       fitToWidth: 1,
-      fitToHeight: 1, // 紙本單頁列印
+      fitToHeight: 0, // 允許多頁，避免字放大後被壓扁
       horizontalCentered: true,
     },
-    properties: { defaultRowHeight: 18 },
+    properties: { defaultRowHeight: 26 },
   });
 
   ws.columns = [
-    { width: 34 },
-    ...sorted.map(() => ({ width: 13 })),
-    { width: 15 },
+    { width: 42 },
+    ...sorted.map(() => ({ width: 15 })),
+    { width: 17 },
   ];
 
   // ── 1) 標題區 ─────────────────────────────────────────────────────────────
   ws.mergeCells(1, 1, 1, numCols);
   const titleCell = ws.getCell(1, 1);
   titleCell.value = '粵香園 · 股東財務損益報告';
-  titleCell.font = { name: 'Arial', size: 16, bold: true, color: { argb: BLACK } };
+  titleCell.font = {
+    name: 'Arial',
+    size: FONT.title,
+    bold: true,
+    color: { argb: BLACK },
+  };
   titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
   titleCell.border = {
     ...thinBorder(),
     bottom: { style: 'medium', color: { argb: MED } },
   } as ExcelJS.Borders;
-  ws.getRow(1).height = 28;
+  ws.getRow(1).height = 36;
 
   ws.mergeCells(2, 1, 2, numCols);
   const periodCell = ws.getCell(2, 1);
   periodCell.value = `統計區間：${periodStr}（共 ${nMonths} 個月）`;
   periodCell.font = {
     name: 'Arial',
-    size: 11,
+    size: FONT.meta,
     italic: true,
     color: { argb: BLACK },
   };
   periodCell.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(2).height = 24;
 
   // ── 2) 損益數據表（數據面在上）────────────────────────────────────────────
   let row = 4;
@@ -315,13 +378,19 @@ export async function exportShareholderExcel(
   ws.mergeCells(row, 1, row, numCols);
   const sectionCell = ws.getCell(row, 1);
   sectionCell.value = '損益數據明細';
-  sectionCell.font = { name: 'Arial', size: 13, bold: true, color: { argb: BLACK } };
+  sectionCell.font = {
+    name: 'Arial',
+    size: FONT.section,
+    bold: true,
+    color: { argb: BLACK },
+  };
   sectionCell.alignment = { horizontal: 'left', vertical: 'middle' };
-  ws.getRow(row).height = 22;
+  ws.getRow(row).height = 30;
   row += 1;
 
   // 表頭
   const header = ws.getRow(row);
+  header.height = 28;
   header.getCell(1).value = '項目';
   sorted.forEach((m, i) => {
     header.getCell(i + 2).value = monthToLabel(m);
@@ -329,7 +398,12 @@ export async function exportShareholderExcel(
   header.getCell(numCols).value = '合計';
   for (let c = 1; c <= numCols; c++) {
     const cell = header.getCell(c);
-    cell.font = { name: 'Arial', size: 11, bold: true, color: { argb: BLACK } };
+    cell.font = {
+      name: 'Arial',
+      size: FONT.header,
+      bold: true,
+      color: { argb: BLACK },
+    };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: HDR } };
     cell.alignment = {
       horizontal: c === 1 ? 'left' : 'center',
@@ -346,12 +420,20 @@ export async function exportShareholderExcel(
     label: string,
     vals: number[],
     total: number,
-    opts: { bold?: boolean; emphasis?: boolean } = {},
+    opts: {
+      bold?: boolean;
+      emphasis?: boolean;
+      size?: number;
+      rowHeight?: number;
+    } = {},
   ) => {
     const r = ws.getRow(row);
+    r.height = opts.rowHeight ?? (opts.emphasis ? 30 : 26);
+    const fontSize =
+      opts.size ?? (opts.bold || opts.emphasis ? FONT.dataBold : FONT.data);
     const labelCell = r.getCell(1);
     labelCell.value = label;
-    styleLabelCell(labelCell, { bold: opts.bold ?? false });
+    styleLabelCell(labelCell, { bold: opts.bold ?? false, size: fontSize });
     if (opts.emphasis) {
       labelCell.border = medVBorder() as ExcelJS.Borders;
     }
@@ -359,12 +441,14 @@ export async function exportShareholderExcel(
       styleMoneyCell(r.getCell(i + 2), v, {
         bold: opts.bold,
         emphasis: opts.emphasis,
+        size: fontSize,
       });
     });
     styleMoneyCell(r.getCell(numCols), total, {
       bold: true,
       totalCol: true,
       emphasis: opts.emphasis,
+      size: fontSize,
     });
     row += 1;
   };
@@ -382,19 +466,66 @@ export async function exportShareholderExcel(
     { bold: true },
   );
 
-  const catDefs: [string, keyof MonthData][] = [
-    ['  └ 食材採購', 'ingredients'],
-    ['  └ 人事成本', 'labor'],
-    ['  └ 水電瓦斯', 'utilities'],
-    ['  └ 營運雜支', 'operatingMisc'],
+  // 大科＋子科
+  const majorCats: {
+    label: string;
+    key: keyof MonthData;
+    subs: { label: string; key: keyof MonthData }[];
+  }[] = [
+    {
+      label: '  └ 食材採購',
+      key: 'ingredients',
+      subs: INGREDIENTS_SUB_ORDER.map((k) => ({
+        label: `      · ${INGREDIENTS_SUB_LABEL[k]}`,
+        key: (k === 'payment'
+          ? 'ingredientsPayment'
+          : 'ingredientsCash') as keyof MonthData,
+      })),
+    },
+    {
+      label: '  └ 人事成本',
+      key: 'labor',
+      subs: LABOR_SUB_ORDER.map((k) => ({
+        label: `      · ${LABOR_SUB_LABEL[k]}`,
+        key: (k === 'pt' ? 'laborPt' : 'laborFullTime') as keyof MonthData,
+      })),
+    },
+    {
+      label: '  └ 營運雜支',
+      key: 'operatingMisc',
+      subs: OPERATING_MISC_SUB_ORDER.map((k) => ({
+        label: `      · ${MISC_SUB_LABEL[k]}`,
+        key: ({
+          utilities: 'miscUtilities',
+          internet: 'miscInternet',
+          business_tax: 'miscBusinessTax',
+          rent: 'miscRent',
+          sanitation: 'miscSanitation',
+          management_fee: 'miscManagementFee',
+          marketing: 'miscMarketing',
+          misc: 'miscOther',
+        }[k]) as keyof MonthData,
+      })),
+    },
   ];
-  for (const [label, key] of catDefs) {
-    if (totals[key] <= 0) continue;
+
+  for (const major of majorCats) {
+    if (totals[major.key] <= 0) continue;
     writeDataRow(
-      label,
-      monthly.map((m) => -(m[key] as number)),
-      -(totals[key] as number),
+      major.label,
+      monthly.map((m) => -(m[major.key] as number)),
+      -(totals[major.key] as number),
+      { bold: true, size: FONT.data },
     );
+    for (const sub of major.subs) {
+      if (totals[sub.key] <= 0) continue;
+      writeDataRow(
+        sub.label,
+        monthly.map((m) => -(m[sub.key] as number)),
+        -(totals[sub.key] as number),
+        { size: FONT.sub },
+      );
+    }
   }
 
   writeDataRow(
@@ -427,25 +558,28 @@ export async function exportShareholderExcel(
       `  └ 所得稅（${p.taxRate}%）`,
       monthly.map((m) => -m.taxAmount),
       -totals.taxAmount,
+      { size: FONT.sub },
     );
   }
   writeDataRow(
     `  └ 員工紅利（稅後淨利 × ${p.employeeBonusPct}%）`,
     monthly.map((m) => m.employeeBonus),
     totals.employeeBonus,
+    { size: FONT.sub },
   );
   if (totals.reservedSurplus !== 0) {
     writeDataRow(
       `  └ 預留盈餘（${p.reserveRate}%）`,
       monthly.map((m) => -m.reservedSurplus),
       -totals.reservedSurplus,
+      { size: FONT.sub },
     );
   }
   writeDataRow(
     '★ 最終可分配盈餘',
     monthly.map((m) => m.finalDistributable),
     totals.finalDistributable,
-    { bold: true, emphasis: true },
+    { bold: true, emphasis: true, size: 16, rowHeight: 32 },
   );
 
   row += 1;
@@ -454,22 +588,23 @@ export async function exportShareholderExcel(
   ws.mergeCells(row, 1, row, numCols);
   const defTitle = ws.getCell(row, 1);
   defTitle.value = '科目組成說明（定義）';
-  styleLabelCell(defTitle, { bold: true, size: 11 });
+  styleLabelCell(defTitle, { bold: true, size: FONT.defTitle });
+  ws.getRow(row).height = 24;
   row += 1;
 
   const compositionLines = [
-    '食材採購：食材、乾貨、酒水與食材貨款',
-    '人事成本：PT 薪資、正職薪資',
-    '水電瓦斯：電費、瓦斯、水費',
+    '食材採購：月結貨款與現金支出（子科：貨款／現金支出）',
+    '人事成本：PT 與正職薪資（子科：PT／正職）',
+    '營運雜支：水電瓦斯、網路費、營業稅、房租、環境衛生、管理費、行銷及其他雜支',
     '修繕金預扣：每月預留修繕金（計入損益）',
     '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
-    '營運雜支：房租、雜貨、環衛、行銷及其他雜支',
   ];
   for (const line of compositionLines) {
     ws.mergeCells(row, 1, row, numCols);
     const cell = ws.getCell(row, 1);
     cell.value = line;
-    styleLabelCell(cell, { italic: true, size: 10 });
+    styleLabelCell(cell, { italic: true, size: FONT.defBody });
+    ws.getRow(row).height = 20;
     row += 1;
   }
 
@@ -479,12 +614,17 @@ export async function exportShareholderExcel(
   ws.mergeCells(row, 1, row, numCols);
   const chartSection = ws.getCell(row, 1);
   chartSection.value = '視覺化圖表（營收折線圖／營業總支出甜甜圈圖）';
-  chartSection.font = { name: 'Arial', size: 13, bold: true, color: { argb: BLACK } };
+  chartSection.font = {
+    name: 'Arial',
+    size: FONT.section,
+    bold: true,
+    color: { argb: BLACK },
+  };
   chartSection.alignment = { horizontal: 'left', vertical: 'middle' };
-  ws.getRow(row).height = 22;
+  ws.getRow(row).height = 26;
   row += 1;
 
-  // 預留並排圖表高度（約 12 列），避免另開工作表
+  // 預留並排圖表高度，避免另開工作表
   const chartAnchorRow0 = row - 1; // 0-based for ExcelJS tl.row
   const chartBlockRows = 14;
   for (let i = 0; i < chartBlockRows; i++) {
@@ -519,7 +659,7 @@ export async function exportShareholderExcel(
   const ts = `報告產生時間：${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const tsCell = ws.getCell(row, 1);
   tsCell.value = ts;
-  styleLabelCell(tsCell, { italic: true, size: 9 });
+  styleLabelCell(tsCell, { italic: true, size: 10 });
 
   // 保險：只保留單一工作表
   while (wb.worksheets.length > 1) {
