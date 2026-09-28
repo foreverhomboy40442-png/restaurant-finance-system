@@ -12,6 +12,7 @@ import type { ExpenseItem, RevenueItem } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
 import { formatMonthShortLabel, getReportCategoryLabel } from '../../../utils/lang';
 import SvgLineChart from '../charts/SvgLineChart';
+import { exportManagementExcel } from '../utils/exportManagementExcel';
 import {
   filterExpenses,
   filterExpensesByDateRange,
@@ -190,6 +191,21 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
     [monthlyData, lang],
   );
 
+  async function handleExportDetail() {
+    const months = monthlyData.map((d) => d.month);
+    if (months.length === 0) return;
+    try {
+      await exportManagementExcel({
+        months,
+        revenues: filteredRevenues,
+        expenses: filteredExpenses,
+        periodLabel: dateRangeLabel,
+      });
+    } catch (err) {
+      console.error('[management-export]', err);
+    }
+  }
+
   // ─── 渲染 ────────────────────────────────────────────────────────────────
 
   return (
@@ -197,21 +213,32 @@ export default function ManagementTab({ revenues, expenses }: ManagementTabProps
 
       {/* ── 1. 時間篩選器 + 日期區間標籤 ───────────────────────────────── */}
       <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {periodOptions.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => setPeriod(opt.id)}
-              className={`rounded-sm px-4 py-1.5 text-sm font-medium transition-colors ${
-                period === opt.id
-                  ? 'bg-canton-red text-white'
-                  : 'border border-slate-200 bg-white text-slate-500 hover:border-canton-red/40 hover:text-slate-800'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {periodOptions.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setPeriod(opt.id)}
+                className={`rounded-sm px-4 py-1.5 text-sm font-medium transition-colors ${
+                  period === opt.id
+                    ? 'bg-canton-red text-white'
+                    : 'border border-slate-200 bg-white text-slate-500 hover:border-canton-red/40 hover:text-slate-800'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={handleExportDetail}
+            disabled={monthlyData.length === 0}
+            title={t('exportManagementDetailHint')}
+            className="shrink-0 rounded-md bg-slate-900 px-4 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+          >
+            {t('exportManagementDetail')}
+          </button>
         </div>
 
         <div className="flex items-center gap-1.5">
