@@ -284,7 +284,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const reservedSurplus    = perMonthPnl.reduce((s, p) => s + p.reservedSurplus,    0);
   const finalDistributable = perMonthPnl.reduce((s, p) => s + p.finalDistributable, 0);
 
-  async function handleExport() {
+  async function handleExport(includeSubCategories: boolean) {
     try {
       await exportShareholderExcel({
         selectedMonths,
@@ -295,6 +295,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
         taxRate,
         employeeBonusPct,
         reserveRate,
+        includeSubCategories,
       });
     } catch (err) {
       console.error('[shareholder-export]', err);
@@ -477,26 +478,24 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                   })}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleExport}
-                className="shrink-0 bg-slate-900 text-white text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-800 transition-colors flex items-center gap-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-4 w-4"
-                  aria-hidden="true"
+              <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => handleExport(false)}
+                  title={t('exportPnlHint')}
+                  className="bg-slate-900 text-white text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-800 transition-colors"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 3a.75.75 0 0 1 .75.75v7.69l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0L5.72 10.03a.75.75 0 1 1 1.06-1.06l2.47 2.47V3.75A.75.75 0 0 1 10 3ZM3.25 15a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5H4a.75.75 0 0 1-.75-.75Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {t('exportPnl')}
-              </button>
+                  {t('exportPnl')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport(true)}
+                  title={t('exportOperationsHint')}
+                  className="border border-slate-900 bg-white text-slate-900 text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  {t('exportOperations')}
+                </button>
+              </div>
             </div>
           </div>
 
