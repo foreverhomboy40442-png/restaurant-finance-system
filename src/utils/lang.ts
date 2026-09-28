@@ -179,9 +179,9 @@ const zh = {
   expenseCategoryDefinition: '科目組成說明（定義）',
   catIngredientsDef: '食材、乾貨、酒水與食材貨款',
   catLaborDef: 'PT 薪資、正職薪資',
-  catUtilitiesDef: '電費、瓦斯、水費',
+  catUtilitiesDef: '電費、瓦斯、水費（入帳於固定支出；股東報表併入營運支出）',
   catRepairDef: '裝潢、整/維修、設備維護（由修繕金預扣承擔；實支不計入月營業支出）',
-  catOperatingMiscDef: '房租、雜貨、環衛、行銷及其他雜支',
+  catOperatingMiscDef: '水電瓦斯、營業稅、房租、環境衛生、行銷、雜貨及其他雜支',
   yearEndBonusReserve: '年終獎金儲備（{monthly}/月 × {months} 月）',
   repairFundReserve: '修繕金儲備（{monthly}/月 × {months} 月）',
   repairFundDrawTitle: '修繕金動支紀錄',
@@ -204,7 +204,7 @@ const zh = {
   shareholderRevenueTrend: '營收成長趨勢',
   shareholderRevenueTrendDesc: '依所選月份顯示營業總收入走勢',
   shareholderExpenseShare: '營業總支出比例',
-  shareholderExpenseShareDesc: '依五大支出科目顯示營業總支出佔比',
+  shareholderExpenseShareDesc: '依支出科目顯示營業總支出佔比',
 
   // ── 支出科目（報表細項標籤）──
   catIngredients: '食材採購',
@@ -215,7 +215,7 @@ const zh = {
   catRepair: '修繕費用',
   catFixedSalary: '固定支出',
   catOther: '雜支',
-  catOperatingMisc: '營運雜支',
+  catOperatingMisc: '營運支出',
 
   // ── 支出科目（表單）──
   expenseCatIngredients: '食材',
@@ -455,9 +455,9 @@ const en: Record<keyof typeof zh, string> = {
   expenseCategoryDefinition: 'Category composition (definition)',
   catIngredientsDef: 'Ingredients, dry goods, alcohol & ingredient vendor payments',
   catLaborDef: 'PT wages & full-time salaries',
-  catUtilitiesDef: 'Electricity, gas & water',
+  catUtilitiesDef: 'Electricity, gas & water (entered under Fixed Costs; rolled into OpEx on shareholder report)',
   catRepairDef: 'Fit-out, repair/maintenance & equipment upkeep (covered by repair reserve; actual draws excluded from monthly OpEx)',
-  catOperatingMiscDef: 'Rent, groceries, sanitation, marketing & other misc.',
+  catOperatingMiscDef: 'Utilities, business tax, rent, sanitation, marketing, groceries & other misc.',
   yearEndBonusReserve: 'Year-End Bonus Reserve ({monthly}/mo × {months} mo)',
   repairFundReserve: 'Repair Fund Reserve ({monthly}/mo × {months} mo)',
   repairFundDrawTitle: 'Repair Fund Draws',
@@ -480,7 +480,7 @@ const en: Record<keyof typeof zh, string> = {
   shareholderRevenueTrend: 'Revenue Growth Trend',
   shareholderRevenueTrendDesc: 'Gross revenue by selected months',
   shareholderExpenseShare: 'Operating Expense Share',
-  shareholderExpenseShareDesc: 'Share of operating expenses by five categories',
+  shareholderExpenseShareDesc: 'Share of operating expenses by category',
 
   catIngredients: 'Food & Ingredients',
   catLabor: 'Labor & Payroll',
@@ -490,7 +490,7 @@ const en: Record<keyof typeof zh, string> = {
   catRepair: 'Repairs & Maintenance',
   catFixedSalary: 'Fixed Costs',
   catOther: 'Miscellaneous',
-  catOperatingMisc: 'Operating Misc.',
+  catOperatingMisc: 'Operating Expenses',
 
   expenseCatIngredients: 'Food & Ingredients',
   expenseCatLabor: 'Labor & Payroll',

@@ -2,11 +2,11 @@
  * 粵香園帳務系統 — 支出管理快捷鍵設定
  *
  * 五分頁結構：
- *   1. 現金支出 (cash)        — 食材、雜支、電費、瓦斯、水費
+ *   1. 現金支出 (cash)        — 食材、雜支
  *   2. PT 薪資 (pt)           — 點工人員
  *   3. 支付貨款 (payment)     — 食材／餐具／雜支（供應商下拉）＋ 蘿蔔糕（條數×單價）
  *   4. 修繕費用 (repair)      — 裝潢、冷氣、燈泡等維修
- *   5. 固定支出 (fixed_salary) — 正職薪資（下拉選員工）＋ 房租、環境衛生
+ *   5. 固定支出 (fixed_salary) — 正職薪資、房租、環境衛生、電費／瓦斯／水費、營業稅
  */
 
 import type { ExpenseCategory } from '../../types';
@@ -46,7 +46,7 @@ export const EXPENSE_TAB_LABEL: Record<ExpenseTab, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// 分頁一：現金支出（移入電費 / 瓦斯 / 水費；菜金改純自填）
+// 分頁一：現金支出（食材／雜支；水電瓦斯已移至固定支出）
 // ---------------------------------------------------------------------------
 
 export const CASH_QUICK_KEYS: QuickKeyItem[] = [
@@ -92,24 +92,6 @@ export const CASH_QUICK_KEYS: QuickKeyItem[] = [
     label: '雜貨',
     merchant: '雜貨',
     category: EXPENSE_CATEGORY.OTHER,
-  },
-  {
-    key: 'cash-電費',
-    label: '電費',
-    merchant: '電費',
-    category: EXPENSE_CATEGORY.UTILITIES,
-  },
-  {
-    key: 'cash-瓦斯',
-    label: '瓦斯',
-    merchant: '瓦斯',
-    category: EXPENSE_CATEGORY.UTILITIES,
-  },
-  {
-    key: 'cash-水費',
-    label: '水費',
-    merchant: '水費',
-    category: EXPENSE_CATEGORY.UTILITIES,
   },
   {
     key: 'cash-其他',
@@ -263,7 +245,7 @@ export const REPAIR_QUICK_KEYS: QuickKeyItem[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 分頁五：固定支出（正職薪資下拉選員工 ＋ 房租、環境衛生）
+// 分頁五：固定支出（正職薪資、房租、環衛、水電瓦斯、營業稅）
 // ---------------------------------------------------------------------------
 
 const FIXED_SALARY_EMPLOYEES = [
@@ -293,6 +275,30 @@ export const FIXED_SALARY_QUICK_KEYS: QuickKeyItem[] = [
     key: 'fixed-環境衛生',
     label: '環境衛生',
     merchant: '環境衛生',
+    category: EXPENSE_CATEGORY.OTHER,
+  },
+  {
+    key: 'fixed-電費',
+    label: '電費',
+    merchant: '電費',
+    category: EXPENSE_CATEGORY.UTILITIES,
+  },
+  {
+    key: 'fixed-瓦斯',
+    label: '瓦斯',
+    merchant: '瓦斯',
+    category: EXPENSE_CATEGORY.UTILITIES,
+  },
+  {
+    key: 'fixed-水費',
+    label: '水費',
+    merchant: '水費',
+    category: EXPENSE_CATEGORY.UTILITIES,
+  },
+  {
+    key: 'fixed-營業稅',
+    label: '營業稅',
+    merchant: '營業稅',
     category: EXPENSE_CATEGORY.OTHER,
   },
 ];

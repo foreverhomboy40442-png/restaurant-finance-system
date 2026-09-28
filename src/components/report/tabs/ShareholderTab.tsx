@@ -53,7 +53,7 @@ interface ShareholderTabProps {
   expenses: ExpenseItem[];
 }
 
-/** 五大科目固定組成說明（給股東看的定義，不含金額） */
+/** 科目固定組成說明（給股東看的定義，不含金額） */
 const REPORT_CATEGORY_DEF_KEYS: Record<ReportCategoryKey, TranslationKey> = {
   ingredients: 'catIngredientsDef',
   labor: 'catLaborDef',
@@ -62,7 +62,7 @@ const REPORT_CATEGORY_DEF_KEYS: Record<ReportCategoryKey, TranslationKey> = {
   operating_misc: 'catOperatingMiscDef',
 };
 
-/** 五大支出科目圖表配色（加深，利於投影／匯出閱讀） */
+/** 支出科目圖表配色（加深，利於投影／匯出閱讀） */
 const REPORT_CATEGORY_COLORS: Record<ReportCategoryKey, string> = {
   ingredients: '#92400E',
   labor: '#7F1D1D',

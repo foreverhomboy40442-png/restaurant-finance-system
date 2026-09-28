@@ -36,14 +36,15 @@ export interface CategoryBreakdown {
 }
 
 /**
- * 財務報表用 5 大科目（與首頁儀表板支出總額一致，但依老闆審視習慣合併顯示）。
+ * 財務報表用科目（與首頁儀表板支出總額一致，但依老闆審視習慣合併顯示）。
  *
  * 對應關係：
  *   食材採購 ← ingredients
  *   人事成本 ← labor + fixed_salary（PT 薪資 + 正職薪資）
- *   水電瓦斯 ← utilities
  *   修繕費用 ← repair（僅供「修繕金動支」檢視；不計入營業支出 total）
- *   營運雜支 ← other + rent + marketing（雜支 + 房租 + 行銷）
+ *   營運支出 ← other + rent + marketing + utilities（雜支／房租／行銷／水電瓦斯／營業稅等）
+ *
+ * 註：`utilities` 欄位保留為 0（相容舊呼叫），金額已併入 operating_misc。
  */
 export type ReportCategoryKey =
   | 'ingredients'
@@ -55,30 +56,29 @@ export type ReportCategoryKey =
 export interface ReportCategoryBreakdown {
   ingredients: number;
   labor: number;
+  /** @deprecated 恒為 0；水電瓦斯已併入 operating_misc */
   utilities: number;
   repair: number;
   operating_misc: number;
   total: number;
 }
 
-/** 財務報表科目顯示順序 */
+/** 財務報表科目顯示順序（含水電歷史 key，金額為 0 時 UI 會略過） */
 export const REPORT_CATEGORY_ORDER: ReportCategoryKey[] = [
   'ingredients',
   'labor',
-  'utilities',
   'repair',
   'operating_misc',
 ];
 
-/** 營業支出科目順序（不含修繕：修繕改列修繕金動支） */
+/** 營業支出科目順序（不含修繕：修繕改列修繕金動支；水電／營業稅併入營運支出） */
 export const OPERATING_REPORT_CATEGORY_ORDER: ReportCategoryKey[] = [
   'ingredients',
   'labor',
-  'utilities',
   'operating_misc',
 ];
 
-/** 將 DB 8 科目映射至財務報表 5 大科目 */
+/** 將 DB 8 科目映射至財務報表科目 */
 export function mapExpenseCategoryToReportCategory(
   category: ExpenseCategory,
 ): ReportCategoryKey {
@@ -88,10 +88,9 @@ export function mapExpenseCategoryToReportCategory(
     case 'labor':
     case 'fixed_salary':
       return 'labor';
-    case 'utilities':
-      return 'utilities';
     case 'repair':
       return 'repair';
+    case 'utilities':
     case 'rent':
     case 'other':
     case 'marketing':
@@ -252,7 +251,7 @@ export function getCategoryBreakdown(expenses: ExpenseItem[]): CategoryBreakdown
   return b;
 }
 
-/** 財務報表 5 大科目加總（ManagementTab / ShareholderTab / Excel 共用） */
+/** 財務報表科目加總（ManagementTab / ShareholderTab / Excel 共用） */
 export function getReportCategoryBreakdown(
   expenses: ExpenseItem[],
 ): ReportCategoryBreakdown {
@@ -260,9 +259,10 @@ export function getReportCategoryBreakdown(
   return {
     ingredients: raw.ingredients,
     labor: raw.labor + raw.fixed_salary,
-    utilities: raw.utilities,
+    utilities: 0, // 水電瓦斯併入營運支出
     repair: raw.repair,
-    operating_misc: raw.other + raw.rent + raw.marketing,
+    // 營運支出：雜支（含營業稅）、房租、行銷、水電瓦斯
+    operating_misc: raw.other + raw.rent + raw.marketing + raw.utilities,
     // total 不含修繕實支（修繕由每月修繕金預扣，實支另計基金動支）
     total: raw.total - raw.repair,
   };
