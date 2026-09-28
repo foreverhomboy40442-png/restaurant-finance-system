@@ -56,11 +56,12 @@ export function classifyExpenseTab(item: ExpenseItem): ExpenseTab {
   if (item.category === EXPENSE_CATEGORY.REPAIR) return 'repair';
   if (
     item.category === EXPENSE_CATEGORY.FIXED_SALARY ||
-    item.category === EXPENSE_CATEGORY.RENT
+    item.category === EXPENSE_CATEGORY.RENT ||
+    item.category === EXPENSE_CATEGORY.UTILITIES
   ) {
     return 'fixed_salary';
   }
-  // 固定支出分頁快捷鍵中已指定 merchant 的項目（如環境衛生）
+  // 固定支出分頁快捷鍵中已指定 merchant 的項目（如環境衛生、營業稅）
   if (
     QUICK_KEYS_BY_TAB.fixed_salary.some(
       (k) => k.merchant.trim() !== '' && k.merchant === merchant,
@@ -131,8 +132,8 @@ export function resolveExpenseSubLabel(item: ExpenseItem, tab: ExpenseTab): stri
     if (fromNote) return fromNote;
   }
 
-  // 3. 水電：依備註或 merchant 關鍵字分到電費 / 瓦斯 / 水費
-  if (tab === 'cash' && item.category === EXPENSE_CATEGORY.UTILITIES) {
+  // 3. 水電：依備註或 merchant 關鍵字分到電費 / 瓦斯 / 水費（入帳於固定支出）
+  if (tab === 'fixed_salary' && item.category === EXPENSE_CATEGORY.UTILITIES) {
     const hint = `${merchant} ${note}`;
     if (hint.includes('瓦斯') && allowed.has('瓦斯')) return '瓦斯';
     if (hint.includes('水費') && allowed.has('水費')) return '水費';

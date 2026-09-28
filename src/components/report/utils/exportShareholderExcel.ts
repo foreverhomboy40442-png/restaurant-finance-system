@@ -237,12 +237,7 @@ export async function exportShareholderExcel(
       color: CHART_CATEGORY_COLORS.labor,
     },
     {
-      label: '水電瓦斯',
-      value: totals.utilities,
-      color: CHART_CATEGORY_COLORS.utilities,
-    },
-    {
-      label: '營運雜支',
+      label: '營運支出',
       value: totals.operatingMisc,
       color: CHART_CATEGORY_COLORS.operating_misc,
     },
@@ -260,7 +255,7 @@ export async function exportShareholderExcel(
       yUnit: '元',
     },
     donut: {
-      title: '營業總支出（五大科目比例）',
+      title: '營業總支出（科目比例）',
       segments: expenseSegments,
       totalLabel: '合計',
     },
@@ -385,8 +380,7 @@ export async function exportShareholderExcel(
   const catDefs: [string, keyof MonthData][] = [
     ['  └ 食材採購', 'ingredients'],
     ['  └ 人事成本', 'labor'],
-    ['  └ 水電瓦斯', 'utilities'],
-    ['  └ 營運雜支', 'operatingMisc'],
+    ['  └ 營運支出', 'operatingMisc'],
   ];
   for (const [label, key] of catDefs) {
     if (totals[key] <= 0) continue;
@@ -460,10 +454,9 @@ export async function exportShareholderExcel(
   const compositionLines = [
     '食材採購：食材、乾貨、酒水與食材貨款',
     '人事成本：PT 薪資、正職薪資',
-    '水電瓦斯：電費、瓦斯、水費',
+    '營運支出：水電瓦斯、營業稅、房租、環境衛生、行銷、雜貨及其他雜支',
     '修繕金預扣：每月預留修繕金（計入損益）',
     '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
-    '營運雜支：房租、雜貨、環衛、行銷及其他雜支',
   ];
   for (const line of compositionLines) {
     ws.mergeCells(row, 1, row, numCols);

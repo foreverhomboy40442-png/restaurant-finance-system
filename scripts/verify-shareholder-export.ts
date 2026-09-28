@@ -60,9 +60,7 @@ async function main() {
   const segments = [
     { label: '食材採購', value: 420000, color: '#92400E' },
     { label: '人事成本', value: 510000, color: '#7F1D1D' },
-    { label: '水電瓦斯', value: 90000, color: '#14532D' },
-    { label: '修繕費用', value: 60000, color: '#9A3412' },
-    { label: '營運雜支', value: 180000, color: '#44403C' },
+    { label: '營運支出', value: 270000, color: '#44403C' },
   ];
 
   const lineSvg = buildRevenueTrendSvg({
@@ -73,14 +71,15 @@ async function main() {
     yUnit: '元',
   });
   const donutSvg = buildExpenseDonutSvg({
-    title: '營業總支出（五大科目比例）',
+    title: '營業總支出（科目比例）',
     segments,
     totalLabel: '合計',
   });
 
   assert(lineSvg.includes('營收成長趨勢'), 'line svg title');
-  assert(donutSvg.includes('營業總支出（五大科目比例）'), 'donut svg title');
+  assert(donutSvg.includes('營業總支出（科目比例）'), 'donut svg title');
   assert(donutSvg.includes('食材採購'), 'donut has category');
+  assert(donutSvg.includes('營運支出'), 'donut has operating expenses');
 
   const linePngPath = join(OUT, 'line.png');
   const donutPngPath = join(OUT, 'donut.png');
