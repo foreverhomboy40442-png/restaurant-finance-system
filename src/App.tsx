@@ -14,6 +14,8 @@ import {
   migrateLocalLocksToCloud,
 } from './services/financialRecords';
 import { preloadRestaurantParameters } from './services/restaurantParameters';
+import { fetchUserProfile } from './services/userProfile';
+import { isShareholderGuestRole, normalizeAppRole, type AppRole } from './types/auth';
 import type { ExpenseItem, RevenueItem } from './types';
 import { isLockedAuditStatus } from './types';
 
@@ -28,12 +30,16 @@ type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
 export default function App() {
   const { t } = useLanguage();
   const [authStatus, setAuthStatus] = useState<AuthStatus>('loading');
+  const [appRole, setAppRole] = useState<AppRole>('user');
+  const [roleReady, setRoleReady] = useState(false);
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [revenues, setRevenues] = useState<RevenueItem[]>([]);
   const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [syncWarning, setSyncWarning] = useState<string | null>(null);
+
+  const isShareholderGuest = isShareholderGuestRole(appRole);
 
   const loadRevenuesFromCloud = useCallback(async (): Promise<boolean> => {
     const localLockedIds = loadRevenues()
@@ -192,6 +198,43 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (authStatus !== 'authenticated') {
+      setAppRole('user');
+      setRoleReady(authStatus === 'unauthenticated');
+      return;
+    }
+
+    let mounted = true;
+    setRoleReady(false);
+
+    async function loadRole() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!mounted) return;
+
+      if (!user) {
+        setAppRole('user');
+        setRoleReady(true);
+        return;
+      }
+
+      const profile = await fetchUserProfile(user.id);
+      if (!mounted) return;
+
+      const role = normalizeAppRole(profile?.role);
+      setAppRole(role);
+      if (isShareholderGuestRole(role)) {
+        setActiveTab('report');
+      }
+      setRoleReady(true);
+    }
+
+    void loadRole();
+    return () => {
+      mounted = false;
+    };
+  }, [authStatus]);
+
+  useEffect(() => {
     if (authStatus === 'authenticated') {
       void refreshAllFinancialData();
       preloadRestaurantParameters().catch((err) => {
@@ -221,6 +264,8 @@ export default function App() {
     clearRememberedSession();
     await supabase.auth.signOut();
     setAuthStatus('unauthenticated');
+    setAppRole('user');
+    setRoleReady(false);
     setActiveTab('dashboard');
     setIsMobileSidebarOpen(false);
   }
@@ -238,7 +283,7 @@ export default function App() {
     setIsMobileSidebarOpen(false);
   }, []);
 
-  if (authStatus === 'loading') {
+  if (authStatus === 'loading' || (authStatus === 'authenticated' && !roleReady)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-canton-bg">
         <p className="text-sm text-canton-dark/50">{t('loading')}</p>
@@ -265,6 +310,7 @@ export default function App() {
       isMobileSidebarOpen={isMobileSidebarOpen}
       onOpenSidebar={handleOpenSidebar}
       onCloseSidebar={handleCloseSidebar}
+      isShareholderGuest={isShareholderGuest}
     />
   );
 }

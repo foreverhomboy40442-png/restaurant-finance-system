@@ -44,10 +44,23 @@ export function loadRememberedSession():
   }
 }
 
-/** 老闆習慣輸入 admin，對齊 Supabase Email 格式 */
+/** 登入帳號別名 → Supabase Auth Email（介面只顯示短帳號，不強制加網域） */
+const LOGIN_EMAIL_ALIASES: Record<string, string> = {
+  admin: 'admin@yuexiangyuan.com',
+  // 訪客股東共用帳號（介面輸入 guest888；Auth 仍需合法 Email）
+  guest888: 'guest888@gmail.com',
+};
+
+/**
+ * 將登入輸入解析為 Auth Email。
+ * - 已知短帳號走別名表（例如 guest888）
+ * - 已含 @ 視為完整 Email
+ * - 其餘短帳號不自動加 @yuexiangyuan.com
+ */
 export function resolveLoginEmail(identity: string): string {
   const trimmed = identity.trim().toLowerCase();
-  if (trimmed === 'admin') return 'admin@yuexiangyuan.com';
-  if (!trimmed.includes('@')) return `${trimmed}@yuexiangyuan.com`;
+  if (!trimmed) return '';
+  if (LOGIN_EMAIL_ALIASES[trimmed]) return LOGIN_EMAIL_ALIASES[trimmed];
+  if (trimmed.includes('@')) return trimmed;
   return trimmed;
 }
