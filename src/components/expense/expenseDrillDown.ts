@@ -1,8 +1,9 @@
 /**
- * 支出結構分析 — 五大類別與子科目分組（與支出入帳分頁對齊）
+ * 支出結構分析 — 類別與子科目分組（儀表板下鑽圖用）
  *
- * 外圈：現金支出 / PT薪資 / 支付貨款 / 修繕 / 固定支出
- * 內圈：僅顯示各分頁快捷鍵已定義的項目
+ * 外圈：現金支出 / PT薪資 / 支付貨款 / 正職薪資 / 營運雜支
+ * （修繕實支不列入；原「固定支出」拆為正職薪資＋營運雜支）
+ * 內圈：各類底下快捷鍵項目
  */
 
 import type { ExpenseItem } from '../../types';
@@ -25,13 +26,23 @@ const LEGACY_MERCHANT_ALIASES: Record<string, string> = {
   '惠通(二)': '惠通',
 };
 
-/** 無法對應到快捷鍵項目時，併入各分頁既有的兜底標籤 */
-const TAB_FALLBACK_LABEL: Record<ExpenseTab, string> = {
+/** 儀表板下鑽圖外圈類別（入帳分頁「固定支出」拆為正職／營運雜支） */
+export type DrillCategory =
+  | 'cash'
+  | 'pt'
+  | 'payment'
+  | 'repair'
+  | 'full_time'
+  | 'operating_misc';
+
+/** 無法對應到快捷鍵項目時，併入各類既有的兜底標籤 */
+const DRILL_FALLBACK_LABEL: Record<DrillCategory, string> = {
   cash: '其他',
   pt: 'PT',
   payment: '其他',
   repair: '其他',
-  fixed_salary: '正職薪資',
+  full_time: '正職薪資',
+  operating_misc: '雜支',
 };
 
 /** 僅映射「錯誤/舊格式」名稱，勿將 菜金/油條 等子項目映射到 其他 */
@@ -79,9 +90,52 @@ export function classifyExpenseTab(item: ExpenseItem): ExpenseTab {
   return 'cash';
 }
 
-/** 各分頁快捷鍵允許出現在圖表上的項目集合 */
-export function getAllowedSubLabelSet(tab: ExpenseTab): Set<string> {
+/**
+ * 儀表板下鑽圖類別：
+ * - 原固定支出中，科目為「固定支出／正職薪資」→ 正職薪資
+ * - 原固定支出其餘（房租、水電、營業稅、環衛…）→ 營運雜支
+ */
+export function classifyDrillCategory(item: ExpenseItem): DrillCategory {
+  const tab = classifyExpenseTab(item);
+  if (tab === 'fixed_salary') {
+    return item.category === EXPENSE_CATEGORY.FIXED_SALARY
+      ? 'full_time'
+      : 'operating_misc';
+  }
+  return tab;
+}
+
+/** 下鑽圖各類允許出現的子項目集合 */
+export function getAllowedSubLabelSet(cat: DrillCategory): Set<string> {
   const labels = new Set<string>();
+
+  if (cat === 'full_time') {
+    for (const key of QUICK_KEYS_BY_TAB.fixed_salary) {
+      if (key.category !== EXPENSE_CATEGORY.FIXED_SALARY) continue;
+      labels.add(key.label);
+      if (key.merchant.trim()) labels.add(key.merchant);
+      if (key.merchantOptions) {
+        for (const name of key.merchantOptions) labels.add(name);
+      }
+    }
+    labels.add('正職薪資');
+    return labels;
+  }
+
+  if (cat === 'operating_misc') {
+    for (const key of QUICK_KEYS_BY_TAB.fixed_salary) {
+      if (key.category === EXPENSE_CATEGORY.FIXED_SALARY) continue;
+      labels.add(key.label);
+      if (key.merchant.trim()) labels.add(key.merchant);
+      if (key.merchantOptions) {
+        for (const name of key.merchantOptions) labels.add(name);
+      }
+    }
+    labels.add('雜支');
+    return labels;
+  }
+
+  const tab = cat as ExpenseTab;
   for (const key of QUICK_KEYS_BY_TAB[tab]) {
     labels.add(key.label);
     if (key.merchant.trim()) labels.add(key.merchant);
@@ -113,14 +167,17 @@ function matchAllowedSubLabel(text: string, allowed: Set<string>): string | null
 }
 
 /**
- * 解析一筆支出在指定分頁下應顯示的子科目（必為快捷鍵項目之一）
+ * 解析一筆支出在指定下鑽類別下應顯示的子科目（必為快捷鍵項目之一）
  */
-export function resolveExpenseSubLabel(item: ExpenseItem, tab: ExpenseTab): string {
-  const allowed = getAllowedSubLabelSet(tab);
+export function resolveExpenseSubLabel(
+  item: ExpenseItem,
+  cat: DrillCategory,
+): string {
+  const allowed = getAllowedSubLabelSet(cat);
   const merchant = normalizeMerchant(item.merchant);
   const note = item.note?.trim() ?? '';
 
-  // 1. 快捷鍵允許的子項目（含與大科目同名的「修繕」「房租」等，不可被 isGenericSubLabel 擋掉）
+  // 1. 快捷鍵允許的子項目
   if (merchant) {
     const matched = matchAllowedSubLabel(merchant, allowed);
     if (matched) return matched;
@@ -132,21 +189,21 @@ export function resolveExpenseSubLabel(item: ExpenseItem, tab: ExpenseTab): stri
     if (fromNote) return fromNote;
   }
 
-  // 3. 水電：依備註或 merchant 關鍵字分到電費 / 瓦斯 / 水費（入帳於固定支出）
-  if (tab === 'fixed_salary' && item.category === EXPENSE_CATEGORY.UTILITIES) {
+  // 3. 水電：依備註或 merchant 關鍵字分到電費 / 瓦斯 / 水費
+  if (cat === 'operating_misc' && item.category === EXPENSE_CATEGORY.UTILITIES) {
     const hint = `${merchant} ${note}`;
     if (hint.includes('瓦斯') && allowed.has('瓦斯')) return '瓦斯';
     if (hint.includes('水費') && allowed.has('水費')) return '水費';
     if ((hint.includes('電') || hint.includes('電費')) && allowed.has('電費')) return '電費';
   }
 
-  // 4. 舊格式別名（PT 薪資 → PT）
+  // 4. 舊格式別名
   if (merchant) {
     const aliased = SUB_LABEL_ALIASES[merchant];
     if (aliased && allowed.has(aliased)) return aliased;
   }
 
-  return TAB_FALLBACK_LABEL[tab];
+  return DRILL_FALLBACK_LABEL[cat];
 }
 
 export interface SubCategoryBucket {
@@ -154,16 +211,16 @@ export interface SubCategoryBucket {
   value: number;
 }
 
-/** 依分頁加總各子科目，僅顯示快捷鍵項目，依金額遞減排序 */
+/** 依下鑽類別加總各子科目，僅顯示快捷鍵項目，依金額遞減排序 */
 export function buildSubCategoryBuckets(
   expenses: ExpenseItem[],
-  tab: ExpenseTab,
+  cat: DrillCategory,
 ): SubCategoryBucket[] {
   const buckets = new Map<string, number>();
 
   for (const e of expenses) {
-    if (classifyExpenseTab(e) !== tab) continue;
-    const label = resolveExpenseSubLabel(e, tab);
+    if (classifyDrillCategory(e) !== cat) continue;
+    const label = resolveExpenseSubLabel(e, cat);
     buckets.set(label, (buckets.get(label) ?? 0) + e.amount);
   }
 

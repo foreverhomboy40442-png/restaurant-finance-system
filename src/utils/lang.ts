@@ -303,6 +303,10 @@ const zh = {
   drillShortPayment: '貨款',
   drillShortRepair: '修繕',
   drillShortFixed: '固定',
+  drillTabFullTime: '正職薪資',
+  drillTabOperatingMisc: '營運雜支',
+  drillShortFullTime: '正職',
+  drillShortOperatingMisc: '營運',
 } as const;
 
 const en: Record<keyof typeof zh, string> = {
@@ -572,6 +576,10 @@ const en: Record<keyof typeof zh, string> = {
   drillShortPayment: 'Pay',
   drillShortRepair: 'Repair',
   drillShortFixed: 'Fixed',
+  drillTabFullTime: 'Full-time Salaries',
+  drillTabOperatingMisc: 'Operating Misc.',
+  drillShortFullTime: 'FT',
+  drillShortOperatingMisc: 'OpEx',
 
   accountSettingsTitle: 'Account Settings',
   originalEmail: 'Current Email',
@@ -704,6 +712,8 @@ export const DATA_LABEL_EN: Readonly<Record<string, string>> = {
   '修繕': 'Repairs',
   '固定支出': 'Fixed Costs',
   '固定薪資': 'Fixed Costs',
+  '正職薪資': 'Full-time Salaries',
+  '營運雜支': 'Operating Misc.',
   '雜支': 'Miscellaneous',
   '檯布': 'Tablecloth',
   '食材': 'Food & Ingredients',

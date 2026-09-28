@@ -1,18 +1,18 @@
 /**
- * 支出結構 — 五層下鑽式甜甜圈圖
+ * 支出結構 — 下鑽式甜甜圈圖
  *
- * 外圈：現金支出 / PT薪資 / 支付貨款 / 固定支出 佔比（修繕實支不列入）
- * 內圈：各分頁底下的實際項目（菜金、油條、雜支…）分別列出金額
+ * 外圈：現金支出 / PT薪資 / 支付貨款 / 正職薪資 / 營運雜支（修繕實支不列入）
+ * 內圈：各類底下的實際項目分別列出金額
  *
- * 分類邏輯與支出入帳分頁一致，見 expenseDrillDown.ts
+ * 分類邏輯見 expenseDrillDown.ts（原「固定支出」拆為正職薪資＋營運雜支）
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import {
   buildSubCategoryBuckets,
-  classifyExpenseTab,
+  classifyDrillCategory,
+  type DrillCategory,
 } from '../../expense/expenseDrillDown';
-import type { ExpenseTab } from '../../expense/quick-keys-config';
 import { useLanguage } from '../../../context/LanguageContext';
 import type { ExpenseItem } from '../../../types';
 import { translateDataLabel } from '../../../utils/lang';
@@ -27,7 +27,7 @@ interface ChartSegment {
 }
 
 interface DrillTabConfig {
-  id: ExpenseTab;
+  id: DrillCategory;
   btnLabel: string;
   topLabel: string;
   shortLabel: string;
@@ -44,15 +44,16 @@ interface SegmentDetail {
 // ─── 靜態設定 ─────────────────────────────────────────────────────────────────
 
 const DRILL_TAB_META: {
-  id: ExpenseTab;
+  id: DrillCategory;
   labelKey: TranslationKey;
   shortKey: TranslationKey;
   color: string;
 }[] = [
-  { id: 'cash',         labelKey: 'expenseTabCash',    shortKey: 'drillShortCash',    color: '#A84B4B' },
-  { id: 'pt',           labelKey: 'expenseTabPt',      shortKey: 'expenseTabPt',      color: '#4A6D95' },
-  { id: 'payment',      labelKey: 'expenseTabPayment', shortKey: 'drillShortPayment', color: '#3D7260' },
-  { id: 'fixed_salary', labelKey: 'expenseTabFixed',   shortKey: 'drillShortFixed',   color: '#695788' },
+  { id: 'cash',           labelKey: 'expenseTabCash',         shortKey: 'drillShortCash',           color: '#A84B4B' },
+  { id: 'pt',             labelKey: 'expenseTabPt',           shortKey: 'expenseTabPt',             color: '#4A6D95' },
+  { id: 'payment',        labelKey: 'expenseTabPayment',      shortKey: 'drillShortPayment',        color: '#3D7260' },
+  { id: 'full_time',      labelKey: 'drillTabFullTime',       shortKey: 'drillShortFullTime',       color: '#695788' },
+  { id: 'operating_misc', labelKey: 'drillTabOperatingMisc',  shortKey: 'drillShortOperatingMisc',  color: '#7A6347' },
 ];
 
 const MUTED_PALETTE = [
@@ -374,7 +375,7 @@ export interface SvgDrillDownChartProps {
 
 export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) {
   const { t, lang } = useLanguage();
-  const [activeTab, setActiveTab] = useState<ExpenseTab>('cash');
+  const [activeTab, setActiveTab] = useState<DrillCategory>('cash');
   const [detailPopup, setDetailPopup] = useState<SegmentDetail | null>(null);
 
   const drillTabs = useMemo<DrillTabConfig[]>(
@@ -390,11 +391,16 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
   );
 
   const tabTotals = useMemo(() => {
-    const totals: Record<ExpenseTab, number> = {
-      cash: 0, pt: 0, payment: 0, repair: 0, fixed_salary: 0,
+    const totals: Record<DrillCategory, number> = {
+      cash: 0,
+      pt: 0,
+      payment: 0,
+      repair: 0,
+      full_time: 0,
+      operating_misc: 0,
     };
     for (const e of expenses) {
-      totals[classifyExpenseTab(e)] += e.amount;
+      totals[classifyDrillCategory(e)] += e.amount;
     }
     return totals;
   }, [expenses]);
@@ -497,7 +503,7 @@ export default function SvgDrillDownChart({ expenses }: SvgDrillDownChartProps) 
           </p>
           <p className="text-xs text-slate-400 md:hidden">{t('chartTapCategoryHint')}</p>
 
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-5 md:gap-1 md:overflow-visible md:px-0 md:pb-0">
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:grid md:grid-cols-5 md:gap-1 md:overflow-visible md:px-0 md:pb-0 lg:gap-1.5">
             {drillTabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
