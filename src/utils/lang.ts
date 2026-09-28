@@ -184,7 +184,7 @@ const zh = {
   catLaborDef: '人事成本（含 PT 與正職薪資）',
   catUtilitiesDef: '電費、瓦斯、水費（已併入營運雜支）',
   catRepairDef: '裝潢、整/維修、設備維護（由修繕金預扣承擔；實支不計入月營業支出）',
-  catOperatingMiscDef: '水電瓦斯、營業稅（依入帳日期歸屬）、房租、環境衛生、網路費、管理費、行銷及其他雜支',
+  catOperatingMiscDef: '水電瓦斯、營業稅、房租、環境衛生、網路費、管理費、行銷及其他雜支',
   // 股東報表子科目
   subIngredientsPayment: '貨款',
   subIngredientsCash: '現金支出',
@@ -480,7 +480,7 @@ const en: Record<keyof typeof zh, string> = {
   catLaborDef: 'Labor cost (PT wages & full-time salaries)',
   catUtilitiesDef: 'Electricity, gas & water (rolled into operating misc.)',
   catRepairDef: 'Fit-out, repair/maintenance & equipment upkeep (covered by repair reserve; actual draws excluded from monthly OpEx)',
-  catOperatingMiscDef: 'Utilities, business tax (by record date), rent, sanitation, internet, management fees, marketing & other misc.',
+  catOperatingMiscDef: 'Utilities, business tax, rent, sanitation, internet, management fees, marketing & other misc.',
   subIngredientsPayment: 'Vendor payment',
   subIngredientsCash: 'Cash purchase',
   subLaborPt: 'PT',
