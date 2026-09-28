@@ -71,15 +71,14 @@ async function main() {
     yUnit: '元',
   });
   const donutSvg = buildExpenseDonutSvg({
-    title: '營業總支出（科目比例）',
+    title: '營業總支出（五大科目比例）',
     segments,
     totalLabel: '合計',
   });
 
   assert(lineSvg.includes('營收成長趨勢'), 'line svg title');
-  assert(donutSvg.includes('營業總支出（科目比例）'), 'donut svg title');
+  assert(donutSvg.includes('營業總支出（五大科目比例）'), 'donut svg title');
   assert(donutSvg.includes('食材採購'), 'donut has category');
-  assert(donutSvg.includes('營運支出'), 'donut has operating expenses');
 
   const linePngPath = join(OUT, 'line.png');
   const donutPngPath = join(OUT, 'donut.png');

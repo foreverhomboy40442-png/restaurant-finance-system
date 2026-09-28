@@ -22,6 +22,9 @@ import type { ExpenseItem, RevenueItem } from '../../../types';
 import { useLanguage } from '../../../context/LanguageContext';
 import {
   formatMonthShortLabel,
+  getIngredientsSubLabel,
+  getLaborSubLabel,
+  getOperatingMiscSubLabel,
   getReportCategoryLabel,
   type TranslationKey,
 } from '../../../utils/lang';
@@ -30,12 +33,19 @@ import {
   saveRestaurantParameters,
 } from '../../../services/restaurantParameters';
 import {
+  allocateBusinessTaxToCoverageMonths,
   calcPnl,
   filterByMonths,
   fmt,
   fmtSigned,
   getAllMonths,
+  getIngredientsSubBreakdown,
+  getLaborSubBreakdown,
+  getOperatingMiscSubBreakdown,
   getReportCategoryBreakdown,
+  INGREDIENTS_SUB_ORDER,
+  LABOR_SUB_ORDER,
+  OPERATING_MISC_SUB_ORDER,
   OPERATING_REPORT_CATEGORY_ORDER,
   monthToLabel,
   filterRepairExpenses,
@@ -53,7 +63,7 @@ interface ShareholderTabProps {
   expenses: ExpenseItem[];
 }
 
-/** 科目固定組成說明（給股東看的定義，不含金額） */
+/** 大科目固定組成說明（給股東看的定義，不含金額） */
 const REPORT_CATEGORY_DEF_KEYS: Record<ReportCategoryKey, TranslationKey> = {
   ingredients: 'catIngredientsDef',
   labor: 'catLaborDef',
@@ -62,7 +72,7 @@ const REPORT_CATEGORY_DEF_KEYS: Record<ReportCategoryKey, TranslationKey> = {
   operating_misc: 'catOperatingMiscDef',
 };
 
-/** 支出科目圖表配色（加深，利於投影／匯出閱讀） */
+/** 大科目圖表配色（加深，利於投影／匯出閱讀） */
 const REPORT_CATEGORY_COLORS: Record<ReportCategoryKey, string> = {
   ingredients: '#92400E',
   labor: '#7F1D1D',
@@ -75,7 +85,15 @@ const REVENUE_TREND_COLOR = '#5C1010';
 
 export default function ShareholderTab({ revenues, expenses }: ShareholderTabProps) {
   const { t, lang } = useLanguage();
-  const allMonths = useMemo(() => getAllMonths(revenues, expenses), [revenues, expenses]);
+  /** 營業稅依雙月制攤至涵蓋月（不改原始流水） */
+  const reportExpenses = useMemo(
+    () => allocateBusinessTaxToCoverageMonths(expenses),
+    [expenses],
+  );
+  const allMonths = useMemo(
+    () => getAllMonths(revenues, reportExpenses),
+    [revenues, reportExpenses],
+  );
 
   // 預設選取全部月份
   const [selectedMonths, setSelectedMonths] = useState<string[]>(allMonths);
@@ -199,13 +217,16 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   }, [allMonths.join(',')]);
 
   const { revenues: selRev, expenses: selExp } = useMemo(
-    () => filterByMonths(revenues, expenses, selectedMonths),
-    [revenues, expenses, selectedMonths],
+    () => filterByMonths(revenues, reportExpenses, selectedMonths),
+    [revenues, reportExpenses, selectedMonths],
   );
 
   const grossRevenue      = sumRevenues(selRev);
   const operatingExpenses = sumOperatingExpenses(selExp);
   const catBreakdown      = useMemo(() => getReportCategoryBreakdown(selExp), [selExp]);
+  const ingredientsSub    = useMemo(() => getIngredientsSubBreakdown(selExp), [selExp]);
+  const laborSub          = useMemo(() => getLaborSubBreakdown(selExp), [selExp]);
+  const operatingMiscSub  = useMemo(() => getOperatingMiscSubBreakdown(selExp), [selExp]);
   const repairDraws        = useMemo(() => filterRepairExpenses(selExp), [selExp]);
   const repairDrawTotal    = sumRepairExpenses(selExp);
   const yearEndBonus      = yearEndMonthly * selectedMonths.length;
@@ -220,10 +241,10 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const revenueTrendValues = useMemo(
     () =>
       sortedSelectedMonths.map((month) => {
-        const { revenues: mRev } = filterByMonths(revenues, expenses, [month]);
+        const { revenues: mRev } = filterByMonths(revenues, reportExpenses, [month]);
         return sumRevenues(mRev);
       }),
-    [revenues, expenses, sortedSelectedMonths],
+    [revenues, reportExpenses, sortedSelectedMonths],
   );
 
   const expenseShareSegments = useMemo(
@@ -242,7 +263,11 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   // ── 逐月 PnL → 橫向 reduce 加總（與 Excel 合計欄對齊；虧損月員工紅利為 0）──
   const perMonthPnl = useMemo(() =>
     selectedMonths.map((month) => {
-      const { revenues: mRev, expenses: mExp } = filterByMonths(revenues, expenses, [month]);
+      const { revenues: mRev, expenses: mExp } = filterByMonths(
+        revenues,
+        reportExpenses,
+        [month],
+      );
       return calcPnl({
         grossRevenue:      sumRevenues(mRev),
         operatingExpenses: sumOperatingExpenses(mExp),
@@ -254,7 +279,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
       });
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [revenues, expenses, selectedMonths, yearEndMonthly, repairFundMonthly, taxRate, employeeBonusPct, reserveRate],
+    [revenues, reportExpenses, selectedMonths, yearEndMonthly, repairFundMonthly, taxRate, employeeBonusPct, reserveRate],
   );
 
   const netBeforeTax       = perMonthPnl.reduce((s, p) => s + p.netBeforeTax,       0);
@@ -269,7 +294,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
       await exportShareholderExcel({
         selectedMonths,
         revenues,
-        expenses,
+        expenses: reportExpenses,
         yearEndMonthly,
         repairFundMonthly,
         taxRate,
@@ -507,18 +532,74 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
               </button>
               {expenseDetailOpen && (
                 <div className="mb-3 ml-8 space-y-3">
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {OPERATING_REPORT_CATEGORY_ORDER.map((key) => {
                       const val = catBreakdown[key];
                       if (val === 0) return null;
                       return (
-                        <div key={key} className="flex items-center justify-between text-xs">
-                          <span className="text-canton-dark/50">
-                            └ {getReportCategoryLabel(lang, key)}
-                          </span>
-                          <span className="font-mono tabular-nums text-canton-dark/50">
-                            −${fmt(val)}
-                          </span>
+                        <div key={key} className="space-y-1">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="font-medium text-canton-dark/60">
+                              └ {getReportCategoryLabel(lang, key)}
+                            </span>
+                            <span className="font-mono tabular-nums text-canton-dark/60">
+                              −${fmt(val)}
+                            </span>
+                          </div>
+                          {key === 'ingredients' &&
+                            INGREDIENTS_SUB_ORDER.map((sub) => {
+                              const subVal = ingredientsSub[sub];
+                              if (subVal === 0) return null;
+                              return (
+                                <div
+                                  key={`ing-${sub}`}
+                                  className="ml-4 flex items-center justify-between text-xs"
+                                >
+                                  <span className="text-canton-dark/40">
+                                    · {getIngredientsSubLabel(lang, sub)}
+                                  </span>
+                                  <span className="font-mono tabular-nums text-canton-dark/40">
+                                    −${fmt(subVal)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          {key === 'labor' &&
+                            LABOR_SUB_ORDER.map((sub) => {
+                              const subVal = laborSub[sub];
+                              if (subVal === 0) return null;
+                              return (
+                                <div
+                                  key={`lab-${sub}`}
+                                  className="ml-4 flex items-center justify-between text-xs"
+                                >
+                                  <span className="text-canton-dark/40">
+                                    · {getLaborSubLabel(lang, sub)}
+                                  </span>
+                                  <span className="font-mono tabular-nums text-canton-dark/40">
+                                    −${fmt(subVal)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          {key === 'operating_misc' &&
+                            OPERATING_MISC_SUB_ORDER.map((sub) => {
+                              const subVal = operatingMiscSub[sub];
+                              if (subVal === 0) return null;
+                              return (
+                                <div
+                                  key={`misc-${sub}`}
+                                  className="ml-4 flex items-center justify-between text-xs"
+                                >
+                                  <span className="text-canton-dark/40">
+                                    · {getOperatingMiscSubLabel(lang, sub)}
+                                  </span>
+                                  <span className="font-mono tabular-nums text-canton-dark/40">
+                                    −${fmt(subVal)}
+                                  </span>
+                                </div>
+                              );
+                            })}
                         </div>
                       );
                     })}
@@ -746,19 +827,21 @@ function WaterfallRow({ label, value, highlight, bold, sub, divider }: Waterfall
 
   return (
     <div
-      className={`flex items-center justify-between py-3 ${
+      className={`flex items-center justify-between py-3.5 ${
         divider ? 'border-t border-canton-dark/10' : ''
       } ${sub ? 'pl-6' : ''}`}
     >
       <span
-        className={`text-sm ${
-          bold ? 'font-semibold text-canton-dark' : 'text-canton-dark/65'
-        } ${sub ? 'text-xs text-canton-dark/50' : ''}`}
+        className={`${
+          bold ? 'text-base font-semibold text-canton-dark' : 'text-base text-canton-dark/65'
+        } ${sub ? '!text-sm text-canton-dark/50' : ''}`}
       >
         {label}
       </span>
       <span
-        className={`font-mono text-sm tabular-nums ${valueColor} ${bold ? 'text-base' : ''}`}
+        className={`font-mono tabular-nums ${valueColor} ${
+          bold ? 'text-lg' : sub ? 'text-sm' : 'text-base'
+        }`}
       >
         {fmtSigned(value)}
       </span>
