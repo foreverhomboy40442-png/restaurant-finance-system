@@ -480,7 +480,7 @@ const en: Record<keyof typeof zh, string> = {
   catLaborDef: 'Labor cost (PT wages & full-time salaries)',
   catUtilitiesDef: 'Electricity, gas & water (rolled into operating misc.)',
   catRepairDef: 'Fit-out, repair/maintenance & equipment upkeep (covered by repair reserve; actual draws excluded from monthly OpEx)',
-  catOperatingMiscDef: 'Utilities, business tax (by record date), rent, sanitation, internet, management fees, marketing & other misc.',
+  catOperatingMiscDef: 'Utilities, business tax, rent, sanitation, internet, management fees, marketing & other misc.',
   subIngredientsPayment: 'Vendor payment',
   subIngredientsCash: 'Cash purchase',
   subLaborPt: 'PT',
