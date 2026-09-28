@@ -292,6 +292,22 @@ export async function exportShareholderExcel(
     { ...monthly[0] },
   );
 
+  // 所得稅／員工紅利／預留／可分配：依「合計稅前淨利」一次計算（非逐月加總）
+  // 避免跨月有盈有虧時，紅利被拆成多個月的 0／正值而與合計稅前淨利不一致
+  const periodPnl = calcPnl({
+    grossRevenue: totals.grossRevenue,
+    operatingExpenses: totals.operatingExpenses,
+    yearEndBonus: totals.yearEndBonus,
+    repairFund: totals.repairFund,
+    taxRate: p.taxRate,
+    employeeBonusPct: p.employeeBonusPct,
+    reserveRate: p.reserveRate,
+  });
+  totals.taxAmount = periodPnl.taxAmount;
+  totals.employeeBonus = periodPnl.employeeBonus;
+  totals.reservedSurplus = periodPnl.reservedSurplus;
+  totals.finalDistributable = periodPnl.finalDistributable;
+
   // ── 產生真實折線圖／甜甜圈圖 PNG ──────────────────────────────────────────
   const revenueValues = monthly.map((m) => m.grossRevenue);
   const expenseSegments = [
@@ -592,17 +608,17 @@ export async function exportShareholderExcel(
     { bold: true, emphasis: true },
   );
 
+  // 所得稅／員工紅利／預留／可分配：月份欄留白，合計依「合計稅前淨利」一次計算
   if (totals.taxAmount !== 0) {
     writeDataRow(
       `  └ 所得稅（${p.taxRate}%）`,
       monthly.map((m) => -m.taxAmount),
       -totals.taxAmount,
-      { size: FONT.sub },
+      { size: FONT.sub, blankMonths: true },
     );
   }
-  // 員工紅利／最終可分配：月份欄留白（虧損月不顯示 0／負額），僅合計欄呈現加總
   writeDataRow(
-    `  └ 員工紅利（稅後淨利 × ${p.employeeBonusPct}%）`,
+    `  └ 員工紅利（合計稅後淨利 × ${p.employeeBonusPct}%）`,
     monthly.map((m) => m.employeeBonus),
     totals.employeeBonus,
     { size: FONT.sub, blankMonths: true },
@@ -612,7 +628,7 @@ export async function exportShareholderExcel(
       `  └ 預留盈餘（${p.reserveRate}%）`,
       monthly.map((m) => -m.reservedSurplus),
       -totals.reservedSurplus,
-      { size: FONT.sub },
+      { size: FONT.sub, blankMonths: true },
     );
   }
   writeDataRow(
@@ -643,7 +659,7 @@ export async function exportShareholderExcel(
     '營業稅：依入帳日期歸屬（請自行將日期記在歸屬月，例如 9 月繳可記在 7/15）',
     '修繕金預扣：每月預留修繕金（計入損益）',
     '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
-    '員工紅利、最終可分配盈餘：僅合計欄顯示加總（月份欄留白；虧損月不另列 0／負額）',
+    '所得稅／員工紅利／預留盈餘／最終可分配：依合計稅前淨利一次計算，僅合計欄顯示（月份欄留白）',
     withSubs
       ? '※ 本檔為營運報表（含細項），供老闆對帳'
       : '※ 本檔為損益報表（僅大科目），供股東閱覽；細項請匯出營運報表',

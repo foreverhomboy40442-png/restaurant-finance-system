@@ -549,14 +549,16 @@ export interface PnlCalcResult {
 /**
  * 股東財務 P&L 計算核心（ShareholderTab 畫面與 Excel 匯出共用）。
  *
+ * 呼叫端應傳入「統計區間合計」後的營收／支出／攤提（非逐月再加總紅利）。
+ *
  * 商業規則：
  *
  * ① 所得稅：只在稅前淨利 > 0 時課徵（虧損不計負稅）
  *
- * ② 員工紅利：稅前淨利 ≤ 0 時為 0；有盈餘時依稅後淨利 × 比例計算。
+ * ② 員工紅利：依合計稅前淨利判定；≤ 0 時為 0；有盈餘時依稅後淨利 × 比例。
  *    員工紅利不得為負數。
  *
- * ③ 預留盈餘：只在股東盈餘 > 0 時計提（虧損月不扣）
+ * ③ 預留盈餘：只在股東盈餘 > 0 時計提
  */
 export function calcPnl(p: PnlCalcParams): PnlCalcResult {
   const netBeforeTax = p.grossRevenue - p.operatingExpenses - p.yearEndBonus - p.repairFund;

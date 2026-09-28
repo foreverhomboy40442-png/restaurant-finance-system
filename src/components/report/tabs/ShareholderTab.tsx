@@ -255,34 +255,35 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
     [catBreakdown, lang],
   );
 
-  // ── 逐月 PnL → 橫向 reduce 加總（與 Excel 合計欄對齊；虧損月員工紅利為 0）──
-  const perMonthPnl = useMemo(() =>
-    selectedMonths.map((month) => {
-      const { revenues: mRev, expenses: mExp } = filterByMonths(
-        revenues,
-        expenses,
-        [month],
-      );
-      return calcPnl({
-        grossRevenue:      sumRevenues(mRev),
-        operatingExpenses: sumOperatingExpenses(mExp),
-        yearEndBonus:      yearEndMonthly,
-        repairFund:        repairFundMonthly,
+  // ── 依所選區間合計一次計算 PnL（員工紅利／可分配依合計稅前淨利，非逐月加總）──
+  const {
+    netBeforeTax,
+    taxAmount,
+    employeeBonus,
+    shareholderSurplus,
+    reservedSurplus,
+    finalDistributable,
+  } = useMemo(
+    () =>
+      calcPnl({
+        grossRevenue,
+        operatingExpenses,
+        yearEndBonus,
+        repairFund: repairFundReserve,
         taxRate,
         employeeBonusPct,
         reserveRate,
-      });
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [revenues, expenses, selectedMonths, yearEndMonthly, repairFundMonthly, taxRate, employeeBonusPct, reserveRate],
+      }),
+    [
+      grossRevenue,
+      operatingExpenses,
+      yearEndBonus,
+      repairFundReserve,
+      taxRate,
+      employeeBonusPct,
+      reserveRate,
+    ],
   );
-
-  const netBeforeTax       = perMonthPnl.reduce((s, p) => s + p.netBeforeTax,       0);
-  const taxAmount          = perMonthPnl.reduce((s, p) => s + p.taxAmount,          0);
-  const employeeBonus      = perMonthPnl.reduce((s, p) => s + p.employeeBonus,      0);
-  const shareholderSurplus = perMonthPnl.reduce((s, p) => s + p.shareholderSurplus, 0);
-  const reservedSurplus    = perMonthPnl.reduce((s, p) => s + p.reservedSurplus,    0);
-  const finalDistributable = perMonthPnl.reduce((s, p) => s + p.finalDistributable, 0);
 
   async function handleExport(includeSubCategories: boolean) {
     try {
