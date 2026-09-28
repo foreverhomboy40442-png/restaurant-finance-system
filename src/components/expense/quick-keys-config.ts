@@ -300,7 +300,7 @@ export const FIXED_SALARY_QUICK_KEYS: QuickKeyItem[] = [
     label: '營業稅',
     merchant: '營業稅',
     category: EXPENSE_CATEGORY.OTHER,
-    defaultNote: '雙月制：1/3/5/7/9 月繳前兩個月',
+    defaultNote: '請將日期記在歸屬月（例：9 月繳可記 7/15）',
   },
 ];
 

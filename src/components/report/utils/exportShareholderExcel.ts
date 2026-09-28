@@ -10,7 +10,6 @@
 import ExcelJS from 'exceljs';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import {
-  allocateBusinessTaxToCoverageMonths,
   calcPnl,
   filterByMonths,
   getIngredientsSubBreakdown,
@@ -38,7 +37,33 @@ export interface ExportShareholderParams {
   taxRate: number;
   employeeBonusPct: number;
   reserveRate: number;
+  /**
+   * false（預設）：損益報表 — 僅大科目（股東看）
+   * true：營運報表 — 含細項（老闆看）
+   */
+  includeSubCategories?: boolean;
 }
+
+const INGREDIENTS_SUB_LABEL: Record<IngredientsSubKey, string> = {
+  payment: '貨款',
+  cash: '現金支出',
+};
+
+const LABOR_SUB_LABEL: Record<LaborSubKey, string> = {
+  pt: 'PT',
+  full_time: '正職',
+};
+
+const MISC_SUB_LABEL: Record<OperatingMiscSubKey, string> = {
+  utilities: '水電瓦斯',
+  internet: '網路費',
+  business_tax: '營業稅',
+  rent: '房租',
+  sanitation: '環境衛生',
+  management_fee: '管理費',
+  marketing: '行銷',
+  misc: '雜支',
+};
 
 interface MonthData {
   grossRevenue: number;
@@ -93,27 +118,6 @@ const CHART_CATEGORY_COLORS = {
   labor: '#7F1D1D',
   operating_misc: '#44403C',
 } as const;
-
-const INGREDIENTS_SUB_LABEL: Record<IngredientsSubKey, string> = {
-  payment: '貨款',
-  cash: '現金支出',
-};
-
-const LABOR_SUB_LABEL: Record<LaborSubKey, string> = {
-  pt: 'PT',
-  full_time: '正職',
-};
-
-const MISC_SUB_LABEL: Record<OperatingMiscSubKey, string> = {
-  utilities: '水電瓦斯',
-  internet: '網路費',
-  business_tax: '營業稅',
-  rent: '房租',
-  sanitation: '環境衛生',
-  management_fee: '管理費',
-  marketing: '行銷',
-  misc: '雜支',
-};
 
 function thinBorder(): Partial<ExcelJS.Borders> {
   const side: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: THIN } };
@@ -266,12 +270,7 @@ export async function exportShareholderExcel(
   const sorted = [...p.selectedMonths].sort();
   const nMonths = sorted.length;
   if (nMonths === 0) return;
-
-  // 保險：即使呼叫端未先攤提，匯出端仍依雙月制歸屬營業稅
-  const params: ExportShareholderParams = {
-    ...p,
-    expenses: allocateBusinessTaxToCoverageMonths(p.expenses),
-  };
+  const withSubs = p.includeSubCategories === true;
 
   const numCols = nMonths + 2;
   const periodStr =
@@ -279,9 +278,8 @@ export async function exportShareholderExcel(
       ? monthToLabel(sorted[0])
       : `${monthToLabel(sorted[0])} ~ ${monthToLabel(sorted[nMonths - 1])}`;
 
-  const monthly: MonthData[] = sorted.map((month) =>
-    buildMonthData(month, params),
-  );
+  // 營業稅等一律依入帳日期歸屬（不自動攤提）
+  const monthly: MonthData[] = sorted.map((month) => buildMonthData(month, p));
 
   const sumKey = (key: keyof MonthData) =>
     monthly.reduce((s, m) => s + m[key], 0);
@@ -293,6 +291,22 @@ export async function exportShareholderExcel(
     },
     { ...monthly[0] },
   );
+
+  // 所得稅／員工紅利／預留／可分配：依「合計稅前淨利」一次計算（非逐月加總）
+  // 避免跨月有盈有虧時，紅利被拆成多個月的 0／正值而與合計稅前淨利不一致
+  const periodPnl = calcPnl({
+    grossRevenue: totals.grossRevenue,
+    operatingExpenses: totals.operatingExpenses,
+    yearEndBonus: totals.yearEndBonus,
+    repairFund: totals.repairFund,
+    taxRate: p.taxRate,
+    employeeBonusPct: p.employeeBonusPct,
+    reserveRate: p.reserveRate,
+  });
+  totals.taxAmount = periodPnl.taxAmount;
+  totals.employeeBonus = periodPnl.employeeBonus;
+  totals.reservedSurplus = periodPnl.reservedSurplus;
+  totals.finalDistributable = periodPnl.finalDistributable;
 
   // ── 產生真實折線圖／甜甜圈圖 PNG ──────────────────────────────────────────
   const revenueValues = monthly.map((m) => m.grossRevenue);
@@ -334,7 +348,11 @@ export async function exportShareholderExcel(
 
   const wb = new ExcelJS.Workbook();
   wb.creator = '粵香園財務管理系統';
-  const ws = wb.addWorksheet('股東財務損益報告', {
+  const sheetName = withSubs ? '營運報表（含細項）' : '損益報表（大科目）';
+  const reportTitle = withSubs
+    ? '粵香園 · 營運報表（含細項）'
+    : '粵香園 · 股東財務損益報告';
+  const ws = wb.addWorksheet(sheetName, {
     pageSetup: {
       paperSize: 9, // A4
       orientation: nMonths > 6 ? 'landscape' : 'portrait',
@@ -355,7 +373,7 @@ export async function exportShareholderExcel(
   // ── 1) 標題區 ─────────────────────────────────────────────────────────────
   ws.mergeCells(1, 1, 1, numCols);
   const titleCell = ws.getCell(1, 1);
-  titleCell.value = '粵香園 · 股東財務損益報告';
+  titleCell.value = reportTitle;
   titleCell.font = {
     name: 'Arial',
     size: FONT.title,
@@ -425,6 +443,23 @@ export async function exportShareholderExcel(
   }
   row += 1;
 
+  const writeBlankMoneyCell = (
+    cell: ExcelJS.Cell,
+    opts: { bold?: boolean; emphasis?: boolean; size?: number } = {},
+  ) => {
+    cell.value = null;
+    cell.numFmt = MONEY_FMT;
+    cell.font = {
+      name: 'Arial',
+      size: opts.size ?? (opts.bold ? FONT.dataBold : FONT.data),
+      bold: opts.bold ?? false,
+      color: { argb: BLACK },
+    };
+    cell.alignment = { vertical: 'middle', horizontal: 'right' };
+    cell.border = (opts.emphasis ? medVBorder() : thinBorder()) as ExcelJS.Borders;
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } };
+  };
+
   const writeDataRow = (
     label: string,
     vals: number[],
@@ -434,6 +469,8 @@ export async function exportShareholderExcel(
       emphasis?: boolean;
       size?: number;
       rowHeight?: number;
+      /** 月份欄留空，僅合計欄顯示（員工紅利／最終可分配盈餘） */
+      blankMonths?: boolean;
     } = {},
   ) => {
     const r = ws.getRow(row);
@@ -447,6 +484,14 @@ export async function exportShareholderExcel(
       labelCell.border = medVBorder() as ExcelJS.Borders;
     }
     vals.forEach((v, i) => {
+      if (opts.blankMonths) {
+        writeBlankMoneyCell(r.getCell(i + 2), {
+          bold: opts.bold,
+          emphasis: opts.emphasis,
+          size: fontSize,
+        });
+        return;
+      }
       styleMoneyCell(r.getCell(i + 2), v, {
         bold: opts.bold,
         emphasis: opts.emphasis,
@@ -475,7 +520,7 @@ export async function exportShareholderExcel(
     { bold: true },
   );
 
-  // 大科＋子科
+  // 大科（損益報表）／大科＋細項（營運報表）— 其餘損益線相同
   const majorCats: {
     label: string;
     key: keyof MonthData;
@@ -526,6 +571,7 @@ export async function exportShareholderExcel(
       -(totals[major.key] as number),
       { bold: true, size: FONT.data },
     );
+    if (!withSubs) continue;
     for (const sub of major.subs) {
       if (totals[sub.key] <= 0) continue;
       writeDataRow(
@@ -562,33 +608,34 @@ export async function exportShareholderExcel(
     { bold: true, emphasis: true },
   );
 
+  // 所得稅／員工紅利／預留／可分配：月份欄留白，合計依「合計稅前淨利」一次計算
   if (totals.taxAmount !== 0) {
     writeDataRow(
       `  └ 所得稅（${p.taxRate}%）`,
       monthly.map((m) => -m.taxAmount),
       -totals.taxAmount,
-      { size: FONT.sub },
+      { size: FONT.sub, blankMonths: true },
     );
   }
   writeDataRow(
-    `  └ 員工紅利（稅後淨利 × ${p.employeeBonusPct}%）`,
+    `  └ 員工紅利（合計稅後淨利 × ${p.employeeBonusPct}%）`,
     monthly.map((m) => m.employeeBonus),
     totals.employeeBonus,
-    { size: FONT.sub },
+    { size: FONT.sub, blankMonths: true },
   );
   if (totals.reservedSurplus !== 0) {
     writeDataRow(
       `  └ 預留盈餘（${p.reserveRate}%）`,
       monthly.map((m) => -m.reservedSurplus),
       -totals.reservedSurplus,
-      { size: FONT.sub },
+      { size: FONT.sub, blankMonths: true },
     );
   }
   writeDataRow(
     '★ 最終可分配盈餘',
     monthly.map((m) => m.finalDistributable),
     totals.finalDistributable,
-    { bold: true, emphasis: true, size: 16, rowHeight: 32 },
+    { bold: true, emphasis: true, size: 16, rowHeight: 32, blankMonths: true },
   );
 
   row += 1;
@@ -602,12 +649,20 @@ export async function exportShareholderExcel(
   row += 1;
 
   const compositionLines = [
-    '食材採購：月結貨款與現金支出（子科：貨款／現金支出）',
-    '人事成本：PT 與正職薪資（子科：PT／正職）',
+    withSubs
+      ? '食材採購：月結貨款與現金支出（細項：貨款／現金支出）'
+      : '食材採購：月結貨款與現金支出',
+    withSubs
+      ? '人事成本：PT 與正職薪資（細項：PT／正職）'
+      : '人事成本：PT 與正職薪資',
     '營運支出：水電瓦斯、營業稅、房租、環境衛生、網路費、管理費、行銷及其他雜支',
-    '營業稅：雙月制，於 1／3／5／7／9 月繳納前兩個月，報表平分攤至涵蓋月（例：7 月繳 → 5、6 月）',
+    '營業稅：依入帳日期歸屬（請自行將日期記在歸屬月，例如 9 月繳可記在 7/15）',
     '修繕金預扣：每月預留修繕金（計入損益）',
     '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
+    '所得稅／員工紅利／預留盈餘／最終可分配：依合計稅前淨利一次計算，僅合計欄顯示（月份欄留白）',
+    withSubs
+      ? '※ 本檔為營運報表（含細項），供老闆對帳'
+      : '※ 本檔為損益報表（僅大科目），供股東閱覽；細項請匯出營運報表',
   ];
   for (const line of compositionLines) {
     ws.mergeCells(row, 1, row, numCols);
@@ -678,5 +733,6 @@ export async function exportShareholderExcel(
 
   const fileTs = periodStr.replace(/[\s~/]/g, '-').replace(/-+/g, '-');
   const buffer = await wb.xlsx.writeBuffer();
-  downloadBuffer(buffer, `粵香園_股東損益報告_${fileTs}.xlsx`);
+  const filePrefix = withSubs ? '粵香園_營運報表' : '粵香園_股東損益報告';
+  downloadBuffer(buffer, `${filePrefix}_${fileTs}.xlsx`);
 }

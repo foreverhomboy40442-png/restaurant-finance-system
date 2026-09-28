@@ -7,7 +7,6 @@
 
 import type { ExpenseCategory, ExpenseItem, RevenueItem } from '../../../types';
 import { EXPENSE_CATEGORY } from '../../../types';
-import { createFinancialDate, createMoney } from '../../../types/core';
 
 // ── 型別定義 ───────────────────────────────────────────────────────────────
 
@@ -193,75 +192,6 @@ export function mapOperatingMiscSubKey(item: ExpenseItem): OperatingMiscSubKey {
 /** 是否為營業稅支出（依 merchant／子科判定） */
 export function isBusinessTaxExpense(item: ExpenseItem): boolean {
   return mapOperatingMiscSubKey(item) === 'business_tax';
-}
-
-/**
- * 營業稅雙月制：於 1／3／5／7／9（及常見的 11）月繳納，
- * 歸屬「繳納月的前兩個曆月」（例：7 月繳 → 5、6 月）。
- */
-export function getBusinessTaxCoverageMonths(
-  paymentYm: string,
-): [string, string] {
-  const [ys, ms] = toMonthKey(paymentYm).split('-');
-  let y = parseInt(ys, 10);
-  let m = parseInt(ms, 10);
-  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
-    return [toMonthKey(paymentYm), toMonthKey(paymentYm)];
-  }
-
-  const shift = (month: number, delta: number): string => {
-    let yy = y;
-    let mm = month + delta;
-    while (mm < 1) {
-      mm += 12;
-      yy -= 1;
-    }
-    while (mm > 12) {
-      mm -= 12;
-      yy += 1;
-    }
-    return `${yy}-${String(mm).padStart(2, '0')}`;
-  };
-
-  // 較早月份在前：payment − 2、payment − 1
-  return [shift(m, -2), shift(m, -1)];
-}
-
-/**
- * 股東／管理報表用：將營業稅由「繳納月」平分攤至「涵蓋的前兩個月」。
- * 不改寫原始流水帳；僅回傳報表計算用的展開列。
- */
-export function allocateBusinessTaxToCoverageMonths(
-  expenses: ExpenseItem[],
-): ExpenseItem[] {
-  const out: ExpenseItem[] = [];
-  for (const e of expenses) {
-    // 已攤提過的列（id 含 __bt_）不再重複拆分
-    if (!isBusinessTaxExpense(e) || String(e.id).includes('__bt_')) {
-      out.push(e);
-      continue;
-    }
-    const payYm = toMonthKey(e.date);
-    const [ymA, ymB] = getBusinessTaxCoverageMonths(payYm);
-    const total = e.amount;
-    const first = Math.ceil(total / 2);
-    const second = total - first;
-    out.push({
-      ...e,
-      id: `${e.id}__bt_${ymA}`,
-      date: createFinancialDate(`${ymA}-15`),
-      amount: createMoney(first),
-      note: [e.note, `營業稅歸屬（原繳納 ${payYm}）`].filter(Boolean).join('；'),
-    });
-    out.push({
-      ...e,
-      id: `${e.id}__bt_${ymB}`,
-      date: createFinancialDate(`${ymB}-15`),
-      amount: createMoney(second),
-      note: [e.note, `營業稅歸屬（原繳納 ${payYm}）`].filter(Boolean).join('；'),
-    });
-  }
-  return out;
 }
 
 // ── 日期工具 ───────────────────────────────────────────────────────────────
@@ -619,14 +549,16 @@ export interface PnlCalcResult {
 /**
  * 股東財務 P&L 計算核心（ShareholderTab 畫面與 Excel 匯出共用）。
  *
+ * 呼叫端應傳入「統計區間合計」後的營收／支出／攤提（非逐月再加總紅利）。
+ *
  * 商業規則：
  *
  * ① 所得稅：只在稅前淨利 > 0 時課徵（虧損不計負稅）
  *
- * ② 員工紅利：稅前淨利 ≤ 0 時為 0；有盈餘時依稅後淨利 × 比例計算。
+ * ② 員工紅利：依合計稅前淨利判定；≤ 0 時為 0；有盈餘時依稅後淨利 × 比例。
  *    員工紅利不得為負數。
  *
- * ③ 預留盈餘：只在股東盈餘 > 0 時計提（虧損月不扣）
+ * ③ 預留盈餘：只在股東盈餘 > 0 時計提
  */
 export function calcPnl(p: PnlCalcParams): PnlCalcResult {
   const netBeforeTax = p.grossRevenue - p.operatingExpenses - p.yearEndBonus - p.repairFund;

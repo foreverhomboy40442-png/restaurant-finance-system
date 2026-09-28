@@ -33,7 +33,6 @@ import {
   saveRestaurantParameters,
 } from '../../../services/restaurantParameters';
 import {
-  allocateBusinessTaxToCoverageMonths,
   calcPnl,
   filterByMonths,
   fmt,
@@ -85,14 +84,10 @@ const REVENUE_TREND_COLOR = '#5C1010';
 
 export default function ShareholderTab({ revenues, expenses }: ShareholderTabProps) {
   const { t, lang } = useLanguage();
-  /** 營業稅依雙月制攤至涵蓋月（不改原始流水） */
-  const reportExpenses = useMemo(
-    () => allocateBusinessTaxToCoverageMonths(expenses),
-    [expenses],
-  );
+  /** 營業稅等支出一律依入帳日期歸屬（由使用者自行將日期記在歸屬月） */
   const allMonths = useMemo(
-    () => getAllMonths(revenues, reportExpenses),
-    [revenues, reportExpenses],
+    () => getAllMonths(revenues, expenses),
+    [revenues, expenses],
   );
 
   // 預設選取全部月份
@@ -217,8 +212,8 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   }, [allMonths.join(',')]);
 
   const { revenues: selRev, expenses: selExp } = useMemo(
-    () => filterByMonths(revenues, reportExpenses, selectedMonths),
-    [revenues, reportExpenses, selectedMonths],
+    () => filterByMonths(revenues, expenses, selectedMonths),
+    [revenues, expenses, selectedMonths],
   );
 
   const grossRevenue      = sumRevenues(selRev);
@@ -241,10 +236,10 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const revenueTrendValues = useMemo(
     () =>
       sortedSelectedMonths.map((month) => {
-        const { revenues: mRev } = filterByMonths(revenues, reportExpenses, [month]);
+        const { revenues: mRev } = filterByMonths(revenues, expenses, [month]);
         return sumRevenues(mRev);
       }),
-    [revenues, reportExpenses, sortedSelectedMonths],
+    [revenues, expenses, sortedSelectedMonths],
   );
 
   const expenseShareSegments = useMemo(
@@ -260,46 +255,48 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
     [catBreakdown, lang],
   );
 
-  // ── 逐月 PnL → 橫向 reduce 加總（與 Excel 合計欄對齊；虧損月員工紅利為 0）──
-  const perMonthPnl = useMemo(() =>
-    selectedMonths.map((month) => {
-      const { revenues: mRev, expenses: mExp } = filterByMonths(
-        revenues,
-        reportExpenses,
-        [month],
-      );
-      return calcPnl({
-        grossRevenue:      sumRevenues(mRev),
-        operatingExpenses: sumOperatingExpenses(mExp),
-        yearEndBonus:      yearEndMonthly,
-        repairFund:        repairFundMonthly,
+  // ── 依所選區間合計一次計算 PnL（員工紅利／可分配依合計稅前淨利，非逐月加總）──
+  const {
+    netBeforeTax,
+    taxAmount,
+    employeeBonus,
+    shareholderSurplus,
+    reservedSurplus,
+    finalDistributable,
+  } = useMemo(
+    () =>
+      calcPnl({
+        grossRevenue,
+        operatingExpenses,
+        yearEndBonus,
+        repairFund: repairFundReserve,
         taxRate,
         employeeBonusPct,
         reserveRate,
-      });
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [revenues, reportExpenses, selectedMonths, yearEndMonthly, repairFundMonthly, taxRate, employeeBonusPct, reserveRate],
+      }),
+    [
+      grossRevenue,
+      operatingExpenses,
+      yearEndBonus,
+      repairFundReserve,
+      taxRate,
+      employeeBonusPct,
+      reserveRate,
+    ],
   );
 
-  const netBeforeTax       = perMonthPnl.reduce((s, p) => s + p.netBeforeTax,       0);
-  const taxAmount          = perMonthPnl.reduce((s, p) => s + p.taxAmount,          0);
-  const employeeBonus      = perMonthPnl.reduce((s, p) => s + p.employeeBonus,      0);
-  const shareholderSurplus = perMonthPnl.reduce((s, p) => s + p.shareholderSurplus, 0);
-  const reservedSurplus    = perMonthPnl.reduce((s, p) => s + p.reservedSurplus,    0);
-  const finalDistributable = perMonthPnl.reduce((s, p) => s + p.finalDistributable, 0);
-
-  async function handleExport() {
+  async function handleExport(includeSubCategories: boolean) {
     try {
       await exportShareholderExcel({
         selectedMonths,
         revenues,
-        expenses: reportExpenses,
+        expenses,
         yearEndMonthly,
         repairFundMonthly,
         taxRate,
         employeeBonusPct,
         reserveRate,
+        includeSubCategories,
       });
     } catch (err) {
       console.error('[shareholder-export]', err);
@@ -482,26 +479,24 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
                   })}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleExport}
-                className="shrink-0 bg-slate-900 text-white text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-800 transition-colors flex items-center gap-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-4 w-4"
-                  aria-hidden="true"
+              <div className="flex shrink-0 flex-col items-stretch gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => handleExport(false)}
+                  title={t('exportPnlHint')}
+                  className="bg-slate-900 text-white text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-800 transition-colors"
                 >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 3a.75.75 0 0 1 .75.75v7.69l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0L5.72 10.03a.75.75 0 1 1 1.06-1.06l2.47 2.47V3.75A.75.75 0 0 1 10 3ZM3.25 15a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5H4a.75.75 0 0 1-.75-.75Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                {t('exportPnl')}
-              </button>
+                  {t('exportPnl')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleExport(true)}
+                  title={t('exportOperationsHint')}
+                  className="border border-slate-900 bg-white text-slate-900 text-xs md:text-sm px-4 py-2 rounded-md font-medium shadow-sm hover:bg-slate-50 transition-colors"
+                >
+                  {t('exportOperations')}
+                </button>
+              </div>
             </div>
           </div>
 
