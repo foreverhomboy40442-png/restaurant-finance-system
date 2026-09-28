@@ -197,20 +197,27 @@ export function isBusinessTaxExpense(item: ExpenseItem): boolean {
 
 /**
  * 營業稅雙月制：於 1／3／5／7／9（及常見的 11）月繳納，
- * 歸屬「繳納月的前兩個曆月」（例：7 月繳 → 5、6 月）。
+ * 歸屬「繳納月起算的當期兩個月」（例：7 月繳 → 7、8 月；與備註「7-8」一致）。
+ *
+ * 若備註含「7-8」「5/6」等區間，優先依備註解析涵蓋月。
  */
 export function getBusinessTaxCoverageMonths(
   paymentYm: string,
+  note?: string,
 ): [string, string] {
-  const [ys, ms] = toMonthKey(paymentYm).split('-');
-  let y = parseInt(ys, 10);
-  let m = parseInt(ms, 10);
+  const payKey = toMonthKey(paymentYm);
+  const [ys, ms] = payKey.split('-');
+  const y = parseInt(ys, 10);
+  const m = parseInt(ms, 10);
   if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) {
-    return [toMonthKey(paymentYm), toMonthKey(paymentYm)];
+    return [payKey, payKey];
   }
 
-  const shift = (month: number, delta: number): string => {
-    let yy = y;
+  const fmt = (yy: number, mm: number): string =>
+    `${yy}-${String(mm).padStart(2, '0')}`;
+
+  const shiftFrom = (year: number, month: number, delta: number): string => {
+    let yy = year;
     let mm = month + delta;
     while (mm < 1) {
       mm += 12;
@@ -220,15 +227,31 @@ export function getBusinessTaxCoverageMonths(
       mm -= 12;
       yy += 1;
     }
-    return `${yy}-${String(mm).padStart(2, '0')}`;
+    return fmt(yy, mm);
   };
 
-  // 較早月份在前：payment − 2、payment − 1
-  return [shift(m, -2), shift(m, -1)];
+  // 備註優先：7-8、7～8、5/6、07-08
+  const noteMatch = (note ?? '').trim().match(/(\d{1,2})\s*[-~～/]\s*(\d{1,2})/);
+  if (noteMatch) {
+    const a = parseInt(noteMatch[1], 10);
+    const b = parseInt(noteMatch[2], 10);
+    if (a >= 1 && a <= 12 && b >= 1 && b <= 12) {
+      // 1 月繳納且備註 11-12 → 歸上一年
+      let yA = y;
+      if (m <= 2 && a >= 11) yA = y - 1;
+      const yB = b < a ? yA + 1 : yA;
+      const ymA = fmt(yA, a);
+      const ymB = fmt(yB, b);
+      return ymA <= ymB ? [ymA, ymB] : [ymB, ymA];
+    }
+  }
+
+  // 預設：繳納月＋次月（當期兩個月）
+  return [shiftFrom(y, m, 0), shiftFrom(y, m, 1)];
 }
 
 /**
- * 股東／管理報表用：將營業稅由「繳納月」平分攤至「涵蓋的前兩個月」。
+ * 股東／管理報表用：將營業稅由「繳納月」平分攤至「當期兩個月」。
  * 不改寫原始流水帳；僅回傳報表計算用的展開列。
  */
 export function allocateBusinessTaxToCoverageMonths(
@@ -242,7 +265,7 @@ export function allocateBusinessTaxToCoverageMonths(
       continue;
     }
     const payYm = toMonthKey(e.date);
-    const [ymA, ymB] = getBusinessTaxCoverageMonths(payYm);
+    const [ymA, ymB] = getBusinessTaxCoverageMonths(payYm, e.note);
     const total = e.amount;
     const first = Math.ceil(total / 2);
     const second = total - first;
