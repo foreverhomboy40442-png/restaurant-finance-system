@@ -427,6 +427,23 @@ export async function exportShareholderExcel(
   }
   row += 1;
 
+  const writeBlankMoneyCell = (
+    cell: ExcelJS.Cell,
+    opts: { bold?: boolean; emphasis?: boolean; size?: number } = {},
+  ) => {
+    cell.value = null;
+    cell.numFmt = MONEY_FMT;
+    cell.font = {
+      name: 'Arial',
+      size: opts.size ?? (opts.bold ? FONT.dataBold : FONT.data),
+      bold: opts.bold ?? false,
+      color: { argb: BLACK },
+    };
+    cell.alignment = { vertical: 'middle', horizontal: 'right' };
+    cell.border = (opts.emphasis ? medVBorder() : thinBorder()) as ExcelJS.Borders;
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: WHITE } };
+  };
+
   const writeDataRow = (
     label: string,
     vals: number[],
@@ -436,6 +453,8 @@ export async function exportShareholderExcel(
       emphasis?: boolean;
       size?: number;
       rowHeight?: number;
+      /** 月份欄留空，僅合計欄顯示（員工紅利／最終可分配盈餘） */
+      blankMonths?: boolean;
     } = {},
   ) => {
     const r = ws.getRow(row);
@@ -449,6 +468,14 @@ export async function exportShareholderExcel(
       labelCell.border = medVBorder() as ExcelJS.Borders;
     }
     vals.forEach((v, i) => {
+      if (opts.blankMonths) {
+        writeBlankMoneyCell(r.getCell(i + 2), {
+          bold: opts.bold,
+          emphasis: opts.emphasis,
+          size: fontSize,
+        });
+        return;
+      }
       styleMoneyCell(r.getCell(i + 2), v, {
         bold: opts.bold,
         emphasis: opts.emphasis,
@@ -573,11 +600,12 @@ export async function exportShareholderExcel(
       { size: FONT.sub },
     );
   }
+  // 員工紅利／最終可分配：月份欄留白（虧損月不顯示 0／負額），僅合計欄呈現加總
   writeDataRow(
     `  └ 員工紅利（稅後淨利 × ${p.employeeBonusPct}%）`,
     monthly.map((m) => m.employeeBonus),
     totals.employeeBonus,
-    { size: FONT.sub },
+    { size: FONT.sub, blankMonths: true },
   );
   if (totals.reservedSurplus !== 0) {
     writeDataRow(
@@ -591,7 +619,7 @@ export async function exportShareholderExcel(
     '★ 最終可分配盈餘',
     monthly.map((m) => m.finalDistributable),
     totals.finalDistributable,
-    { bold: true, emphasis: true, size: 16, rowHeight: 32 },
+    { bold: true, emphasis: true, size: 16, rowHeight: 32, blankMonths: true },
   );
 
   row += 1;
@@ -615,6 +643,7 @@ export async function exportShareholderExcel(
     '營業稅：依入帳日期歸屬（請自行將日期記在歸屬月，例如 9 月繳可記在 7/15）',
     '修繕金預扣：每月預留修繕金（計入損益）',
     '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
+    '員工紅利、最終可分配盈餘：僅合計欄顯示加總（月份欄留白；虧損月不另列 0／負額）',
     withSubs
       ? '※ 本檔為營運報表（含細項），供老闆對帳'
       : '※ 本檔為損益報表（僅大科目），供股東閱覽；細項請匯出營運報表',
