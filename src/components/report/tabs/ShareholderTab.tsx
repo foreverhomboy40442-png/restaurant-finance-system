@@ -33,7 +33,6 @@ import {
   saveRestaurantParameters,
 } from '../../../services/restaurantParameters';
 import {
-  allocateBusinessTaxToCoverageMonths,
   calcPnl,
   filterByMonths,
   fmt,
@@ -85,14 +84,10 @@ const REVENUE_TREND_COLOR = '#5C1010';
 
 export default function ShareholderTab({ revenues, expenses }: ShareholderTabProps) {
   const { t, lang } = useLanguage();
-  /** 營業稅依雙月制攤至涵蓋月（不改原始流水） */
-  const reportExpenses = useMemo(
-    () => allocateBusinessTaxToCoverageMonths(expenses),
-    [expenses],
-  );
+  /** 營業稅等支出一律依入帳日期歸屬（由使用者自行將日期記在歸屬月） */
   const allMonths = useMemo(
-    () => getAllMonths(revenues, reportExpenses),
-    [revenues, reportExpenses],
+    () => getAllMonths(revenues, expenses),
+    [revenues, expenses],
   );
 
   // 預設選取全部月份
@@ -217,8 +212,8 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   }, [allMonths.join(',')]);
 
   const { revenues: selRev, expenses: selExp } = useMemo(
-    () => filterByMonths(revenues, reportExpenses, selectedMonths),
-    [revenues, reportExpenses, selectedMonths],
+    () => filterByMonths(revenues, expenses, selectedMonths),
+    [revenues, expenses, selectedMonths],
   );
 
   const grossRevenue      = sumRevenues(selRev);
@@ -241,10 +236,10 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
   const revenueTrendValues = useMemo(
     () =>
       sortedSelectedMonths.map((month) => {
-        const { revenues: mRev } = filterByMonths(revenues, reportExpenses, [month]);
+        const { revenues: mRev } = filterByMonths(revenues, expenses, [month]);
         return sumRevenues(mRev);
       }),
-    [revenues, reportExpenses, sortedSelectedMonths],
+    [revenues, expenses, sortedSelectedMonths],
   );
 
   const expenseShareSegments = useMemo(
@@ -265,7 +260,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
     selectedMonths.map((month) => {
       const { revenues: mRev, expenses: mExp } = filterByMonths(
         revenues,
-        reportExpenses,
+        expenses,
         [month],
       );
       return calcPnl({
@@ -279,7 +274,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
       });
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [revenues, reportExpenses, selectedMonths, yearEndMonthly, repairFundMonthly, taxRate, employeeBonusPct, reserveRate],
+    [revenues, expenses, selectedMonths, yearEndMonthly, repairFundMonthly, taxRate, employeeBonusPct, reserveRate],
   );
 
   const netBeforeTax       = perMonthPnl.reduce((s, p) => s + p.netBeforeTax,       0);
@@ -294,7 +289,7 @@ export default function ShareholderTab({ revenues, expenses }: ShareholderTabPro
       await exportShareholderExcel({
         selectedMonths,
         revenues,
-        expenses: reportExpenses,
+        expenses,
         yearEndMonthly,
         repairFundMonthly,
         taxRate,
