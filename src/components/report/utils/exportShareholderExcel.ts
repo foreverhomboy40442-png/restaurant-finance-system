@@ -10,7 +10,6 @@
 import ExcelJS from 'exceljs';
 import type { ExpenseItem, RevenueItem } from '../../../types';
 import {
-  allocateBusinessTaxToCoverageMonths,
   calcPnl,
   filterByMonths,
   getIngredientsSubBreakdown,
@@ -267,21 +266,14 @@ export async function exportShareholderExcel(
   const nMonths = sorted.length;
   if (nMonths === 0) return;
 
-  // 保險：即使呼叫端未先攤提，匯出端仍依雙月制歸屬營業稅
-  const params: ExportShareholderParams = {
-    ...p,
-    expenses: allocateBusinessTaxToCoverageMonths(p.expenses),
-  };
-
   const numCols = nMonths + 2;
   const periodStr =
     nMonths === 1
       ? monthToLabel(sorted[0])
       : `${monthToLabel(sorted[0])} ~ ${monthToLabel(sorted[nMonths - 1])}`;
 
-  const monthly: MonthData[] = sorted.map((month) =>
-    buildMonthData(month, params),
-  );
+  // 營業稅等一律依入帳日期歸屬（不自動攤提）
+  const monthly: MonthData[] = sorted.map((month) => buildMonthData(month, p));
 
   const sumKey = (key: keyof MonthData) =>
     monthly.reduce((s, m) => s + m[key], 0);
@@ -605,7 +597,7 @@ export async function exportShareholderExcel(
     '食材採購：月結貨款與現金支出（子科：貨款／現金支出）',
     '人事成本：PT 與正職薪資（子科：PT／正職）',
     '營運支出：水電瓦斯、營業稅、房租、環境衛生、網路費、管理費、行銷及其他雜支',
-    '營業稅：雙月制，於 1／3／5／7／9 月繳納前兩個月，報表平分攤至涵蓋月（例：7 月繳 → 5、6 月）',
+    '營業稅：依入帳日期歸屬（請自行將日期記在歸屬月，例如 9 月繳可記在 7/15）',
     '修繕金預扣：每月預留修繕金（計入損益）',
     '修繕金動支：實際修繕支出僅紀錄、不重複計入月損益',
   ];
