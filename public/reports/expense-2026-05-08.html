@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>粵香園 5–8月支出分析報告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --ink: #1a1512;
+    --muted: #6b5e54;
+    --line: #e6ddd4;
+    --bg: #f7f2eb;
+    --card: #fffdf9;
+    --red: #A62424;
+    --gold: #C9882B;
+    --green: #2A7A3B;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif TC", Georgia, serif;
+    color: var(--ink); background:
+      radial-gradient(1200px 600px at 10% -10%, #f0e2d2 0%, transparent 55%),
+      radial-gradient(900px 500px at 100% 0%, #e8d5c4 0%, transparent 50%),
+      var(--bg);
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 40px 20px 80px; }
+  header.hero {
+    padding: 36px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 28px;
+  }
+  .brand { font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; letter-spacing: 0.04em; margin: 0; color: var(--red); }
+  .subtitle { margin: 8px 0 0; color: var(--muted); font-size: 1.05rem; }
+  .meta { margin-top: 12px; font-size: 0.85rem; color: var(--muted); }
+  h2 { font-size: 1.35rem; margin: 36px 0 12px; border-left: 4px solid var(--red); padding-left: 12px; }
+  h3 { font-size: 1.05rem; margin: 22px 0 10px; color: var(--muted); }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0 8px; }
+  @media (max-width: 800px) { .kpis { grid-template-columns: repeat(2,1fr); } }
+  .kpi { background: var(--card); border: 1px solid var(--line); padding: 16px 14px; }
+  .kpi .label { font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+  .kpi .value { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 4px; font-family: ui-monospace, Menlo, monospace; }
+  .kpi .sub { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+  .grid2 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; }
+  @media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); padding: 16px 18px 20px; margin: 12px 0; }
+  canvas { max-height: 340px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th, td { padding: 8px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { font-size: 0.75rem; color: var(--muted); font-weight: 600; letter-spacing: 0.03em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; }
+  tr:hover td { background: #faf6f0; }
+  .neg { color: var(--red); }
+  ul.exec { margin: 8px 0 0; padding-left: 1.2em; }
+  ul.exec li { margin: 6px 0; }
+  .rec { border: 1px solid var(--line); background: var(--card); padding: 14px 16px; margin: 10px 0; }
+  .rec-high { border-left: 4px solid var(--red); }
+  .rec-mid { border-left: 4px solid var(--gold); }
+  .rec-low { border-left: 4px solid var(--green); }
+  .rec-head { margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
+  .rec p { margin: 6px 0; }
+  .rec ul { margin: 6px 0 0; padding-left: 1.2em; color: #333; }
+  .note { font-size: 0.82rem; color: var(--muted); margin-top: 8px; }
+  footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <p class="brand">粵香園</p>
+    <p class="subtitle">2026年 5–8 月支出綜合分析報告</p>
+    <p class="meta">資料來源：financial_records　｜　統計區間：2026-05-01 ~ 2026-08-31　｜　產出目的：揪出占比偏高支出並提出優化方向</p>
+  </header>
+
+  <section>
+    <h2>一、執行摘要</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="label">總營收</div><div class="value">$12,766,959</div><div class="sub">4 個月合計</div></div>
+      <div class="kpi"><div class="label">總支出</div><div class="value">$12,083,848</div><div class="sub">支出／營收 94.6%</div></div>
+      <div class="kpi"><div class="label">粗利（營收−支出）</div><div class="value">$683,111</div><div class="sub">粗利率 5.4%</div></div>
+      <div class="kpi"><div class="label">食材＋人事</div><div class="value">76.5%</div><div class="sub">佔營收（兩大變動成本）</div></div>
+    </div>
+    <div class="card">
+      <ul class="exec">
+<li><strong>總營收</strong> $12,766,959　｜　<strong>總支出</strong> $12,083,848　｜　<strong>粗利</strong> $683,111（5.4%）</li>
+<li><strong>支出／營收比</strong> 94.6%　｜　食材佔營收 <strong>44.4%</strong>　｜　人事佔營收 <strong>32.1%</strong></li>
+<li>支出結構前三：食材採購（貨款）（38%）、人事成本（正職）（28%）、食材採購（現金）（9%）</li>
+<li>供應商集中風險：阿肥 13.1% 總支出、工廠 11.4%；兩者合計佔食材貨款 65%</li>
+<li>最需優化月份：<strong>7月</strong>毛利僅 $56,161（支出率 98.1%）；6月次之</li>
+</ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>二、月度趨勢</h2>
+    <div class="card">
+      <canvas id="chartTrend"></canvas>
+      <p class="note">6、7 月毛利明顯偏薄：支出率升高（食材貨款＋人事＋固定成本疊加）。8 月營收回升，但仍須盯食材與人事占比。</p>
+    </div>
+    <div class="card scroll">
+      <table>
+        <thead><tr>
+          <th>月份</th><th class="num">營收</th><th class="num">支出</th><th class="num">粗利</th>
+          <th class="num">支出率</th><th class="num">食材／營收</th><th class="num">人事／營收</th>
+        </tr></thead>
+        <tbody><tr>
+      <td>5月</td>
+      <td class="num">$3,550,197</td>
+      <td class="num">$3,138,905</td>
+      <td class="num ">$411,292</td>
+      <td class="num">88.4%</td>
+      <td class="num">40.6%</td>
+      <td class="num">29.8%</td>
+    </tr><tr>
+      <td>6月</td>
+      <td class="num">$2,842,557</td>
+      <td class="num">$2,736,425</td>
+      <td class="num ">$106,132</td>
+      <td class="num">96.3%</td>
+      <td class="num">44.8%</td>
+      <td class="num">33.1%</td>
+    </tr><tr>
+      <td>7月</td>
+      <td class="num">$3,027,865</td>
+      <td class="num">$2,971,704</td>
+      <td class="num ">$56,161</td>
+      <td class="num">98.1%</td>
+      <td class="num">45.7%</td>
+      <td class="num">33.1%</td>
+    </tr><tr>
+      <td>8月</td>
+      <td class="num">$3,346,340</td>
+      <td class="num">$3,236,814</td>
+      <td class="num ">$109,526</td>
+      <td class="num">96.7%</td>
+      <td class="num">47.2%</td>
+      <td class="num">32.8%</td>
+    </tr></tbody>
+      </table>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>食材 vs 人事（月）</h3><canvas id="chartFoodLabor"></canvas></div>
+      <div class="card"><h3>水電瓦斯拆解（月）</h3><canvas id="chartUtil"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>三、支出結構佔比</h2>
+    <div class="grid2">
+      <div class="card"><canvas id="chartBucket"></canvas></div>
+      <div class="card">
+        <h3>解讀</h3>
+        <ul class="exec">
+          <li>食材貨款 $4,577,792（37.9% 支出）＋現金食材 $1,095,205（9.1%）→ 食材合計佔支出 <strong>46.9%</strong></li>
+          <li>正職 $3,421,950、PT $677,502 → 人事合計佔支出 <strong>33.9%</strong></li>
+          <li>房租屬固定槓桿：每月 26 萬，淡季（6–7月）壓力最大</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card scroll">
+      <table>
+        <thead><tr>
+          <th>支出分類</th><th class="num">合計</th><th class="num">佔支出</th><th class="num">佔營收</th>
+          <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th>
+        </tr></thead>
+        <tbody><tr>
+      <td>食材採購（貨款）</td>
+      <td class="num">$4,577,792</td>
+      <td class="num">37.9%</td>
+      <td class="num">35.9%</td>
+      <td class="num">$1,194,232</td>
+      <td class="num">$1,021,972</td>
+      <td class="num">$1,109,779</td>
+      <td class="num">$1,251,809</td>
+    </tr><tr>
+      <td>人事成本（正職）</td>
+      <td class="num">$3,421,950</td>
+      <td class="num">28.3%</td>
+      <td class="num">26.8%</td>
+      <td class="num">$848,800</td>
+      <td class="num">$777,550</td>
+      <td class="num">$862,900</td>
+      <td class="num">$932,700</td>
+    </tr><tr>
+      <td>食材採購（現金）</td>
+      <td class="num">$1,095,205</td>
+      <td class="num">9.1%</td>
+      <td class="num">8.6%</td>
+      <td class="num">$245,545</td>
+      <td class="num">$250,129</td>
+      <td class="num">$272,652</td>
+      <td class="num">$326,879</td>
+    </tr><tr>
+      <td>房租</td>
+      <td class="num">$1,040,000</td>
+      <td class="num">8.6%</td>
+      <td class="num">8.1%</td>
+      <td class="num">$260,000</td>
+      <td class="num">$260,000</td>
+      <td class="num">$260,000</td>
+      <td class="num">$260,000</td>
+    </tr><tr>
+      <td>人事成本（PT）</td>
+      <td class="num">$677,502</td>
+      <td class="num">5.6%</td>
+      <td class="num">5.3%</td>
+      <td class="num">$210,099</td>
+      <td class="num">$162,503</td>
+      <td class="num">$138,900</td>
+      <td class="num">$166,000</td>
+    </tr><tr>
+      <td>水電瓦斯</td>
+      <td class="num">$550,746</td>
+      <td class="num">4.6%</td>
+      <td class="num">4.3%</td>
+      <td class="num">$122,158</td>
+      <td class="num">$136,542</td>
+      <td class="num">$142,792</td>
+      <td class="num">$149,254</td>
+    </tr><tr>
+      <td>營運雜支（其他）</td>
+      <td class="num">$284,213</td>
+      <td class="num">2.4%</td>
+      <td class="num">2.2%</td>
+      <td class="num">$83,867</td>
+      <td class="num">$98,697</td>
+      <td class="num">$49,782</td>
+      <td class="num">$51,867</td>
+    </tr><tr>
+      <td>營業稅</td>
+      <td class="num">$189,150</td>
+      <td class="num">1.6%</td>
+      <td class="num">1.5%</td>
+      <td class="num">$95,411</td>
+      <td class="num">$0</td>
+      <td class="num">$93,739</td>
+      <td class="num">$0</td>
+    </tr><tr>
+      <td>修繕動支</td>
+      <td class="num">$119,348</td>
+      <td class="num">1.0%</td>
+      <td class="num">0.9%</td>
+      <td class="num">$49,248</td>
+      <td class="num">$500</td>
+      <td class="num">$0</td>
+      <td class="num">$69,600</td>
+    </tr><tr>
+      <td>雜支／餐具（貨款）</td>
+      <td class="num">$59,242</td>
+      <td class="num">0.5%</td>
+      <td class="num">0.5%</td>
+      <td class="num">$15,370</td>
+      <td class="num">$14,357</td>
+      <td class="num">$14,985</td>
+      <td class="num">$14,530</td>
+    </tr><tr>
+      <td>環境衛生</td>
+      <td class="num">$56,700</td>
+      <td class="num">0.5%</td>
+      <td class="num">0.4%</td>
+      <td class="num">$14,175</td>
+      <td class="num">$14,175</td>
+      <td class="num">$14,175</td>
+      <td class="num">$14,175</td>
+    </tr><tr>
+      <td>管理費</td>
+      <td class="num">$12,000</td>
+      <td class="num">0.1%</td>
+      <td class="num">0.1%</td>
+      <td class="num">$0</td>
+      <td class="num">$0</td>
+      <td class="num">$12,000</td>
+      <td class="num">$0</td>
+    </tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>四、供應商／項目分析</h2>
+    <div class="card">
+      <h3>食材貨款供應商趨勢（前六大）</h3>
+      <canvas id="chartVendors"></canvas>
+    </div>
+    <div class="card scroll">
+      <h3>食材貨款供應商明細</h3>
+      <table>
+        <thead><tr>
+          <th>供應商</th><th class="num">合計</th><th class="num">佔貨款</th><th class="num">佔營收</th>
+          <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th>
+        </tr></thead>
+        <tbody><tr>
+      <td>阿肥</td>
+      <td class="num">$1,581,276</td>
+      <td class="num">34.5%</td>
+      <td class="num">12.4%</td>
+      <td class="num">$428,682</td>
+      <td class="num">$331,370</td>
+      <td class="num">$400,189</td>
+      <td class="num">$421,035</td>
+    </tr><tr>
+      <td>工廠</td>
+      <td class="num">$1,373,954</td>
+      <td class="num">30.0%</td>
+      <td class="num">10.8%</td>
+      <td class="num">$360,560</td>
+      <td class="num">$327,839</td>
+      <td class="num">$321,550</td>
+      <td class="num">$364,005</td>
+    </tr><tr>
+      <td>牛肉</td>
+      <td class="num">$564,327</td>
+      <td class="num">12.3%</td>
+      <td class="num">4.4%</td>
+      <td class="num">$154,685</td>
+      <td class="num">$125,216</td>
+      <td class="num">$137,895</td>
+      <td class="num">$146,531</td>
+    </tr><tr>
+      <td>臘味</td>
+      <td class="num">$311,550</td>
+      <td class="num">6.8%</td>
+      <td class="num">2.4%</td>
+      <td class="num">$91,450</td>
+      <td class="num">$66,650</td>
+      <td class="num">$65,100</td>
+      <td class="num">$88,350</td>
+    </tr><tr>
+      <td>振農</td>
+      <td class="num">$291,995</td>
+      <td class="num">6.4%</td>
+      <td class="num">2.3%</td>
+      <td class="num">$61,060</td>
+      <td class="num">$79,986</td>
+      <td class="num">$67,825</td>
+      <td class="num">$83,124</td>
+    </tr><tr>
+      <td>惠通</td>
+      <td class="num">$193,045</td>
+      <td class="num">4.2%</td>
+      <td class="num">1.5%</td>
+      <td class="num">$45,770</td>
+      <td class="num">$44,710</td>
+      <td class="num">$47,500</td>
+      <td class="num">$55,065</td>
+    </tr><tr>
+      <td>酒</td>
+      <td class="num">$87,194</td>
+      <td class="num">1.9%</td>
+      <td class="num">0.7%</td>
+      <td class="num">$23,490</td>
+      <td class="num">$21,796</td>
+      <td class="num">$21,484</td>
+      <td class="num">$20,424</td>
+    </tr><tr>
+      <td>蛋</td>
+      <td class="num">$49,400</td>
+      <td class="num">1.1%</td>
+      <td class="num">0.4%</td>
+      <td class="num">$10,125</td>
+      <td class="num">$9,675</td>
+      <td class="num">$8,955</td>
+      <td class="num">$20,645</td>
+    </tr><tr>
+      <td>河粉</td>
+      <td class="num">$33,750</td>
+      <td class="num">0.7%</td>
+      <td class="num">0.3%</td>
+      <td class="num">$9,000</td>
+      <td class="num">$8,550</td>
+      <td class="num">$7,650</td>
+      <td class="num">$8,550</td>
+    </tr><tr>
+      <td>白米</td>
+      <td class="num">$31,200</td>
+      <td class="num">0.7%</td>
+      <td class="num">0.2%</td>
+      <td class="num">$0</td>
+      <td class="num">$0</td>
+      <td class="num">$12,000</td>
+      <td class="num">$19,200</td>
+    </tr><tr>
+      <td>大友</td>
+      <td class="num">$29,900</td>
+      <td class="num">0.7%</td>
+      <td class="num">0.2%</td>
+      <td class="num">$8,160</td>
+      <td class="num">$5,780</td>
+      <td class="num">$8,880</td>
+      <td class="num">$7,080</td>
+    </tr><tr>
+      <td>蘿蔔糕</td>
+      <td class="num">$17,250</td>
+      <td class="num">0.4%</td>
+      <td class="num">0.1%</td>
+      <td class="num">$0</td>
+      <td class="num">$0</td>
+      <td class="num">$4,500</td>
+      <td class="num">$12,750</td>
+    </tr><tr>
+      <td>麵</td>
+      <td class="num">$8,200</td>
+      <td class="num">0.2%</td>
+      <td class="num">0.1%</td>
+      <td class="num">$0</td>
+      <td class="num">$0</td>
+      <td class="num">$3,550</td>
+      <td class="num">$4,650</td>
+    </tr><tr>
+      <td>和昌</td>
+      <td class="num">$2,050</td>
+      <td class="num">0.0%</td>
+      <td class="num">0.0%</td>
+      <td class="num">$1,250</td>
+      <td class="num">$400</td>
+      <td class="num">$400</td>
+      <td class="num">$0</td>
+    </tr><tr>
+      <td>豬肉</td>
+      <td class="num">$1,901</td>
+      <td class="num">0.0%</td>
+      <td class="num">0.0%</td>
+      <td class="num">$0</td>
+      <td class="num">$0</td>
+      <td class="num">$1,901</td>
+      <td class="num">$0</td>
+    </tr><tr>
+      <td>茶葉</td>
+      <td class="num">$800</td>
+      <td class="num">0.0%</td>
+      <td class="num">0.0%</td>
+      <td class="num">$0</td>
+      <td class="num">$0</td>
+      <td class="num">$400</td>
+      <td class="num">$400</td>
+    </tr></tbody>
+      </table>
+    </div>
+    <div class="card scroll">
+      <h3>全體供應商／項目 Top 25</h3>
+      <table>
+        <thead><tr>
+          <th>名稱</th><th>入帳科目</th><th class="num">合計</th><th class="num">佔支出</th>
+          <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th>
+        </tr></thead>
+        <tbody><tr>
+      <td>阿肥</td>
+      <td>食材</td>
+      <td class="num">$1,581,276</td>
+      <td class="num">13.1%</td>
+      <td class="num">$428,682</td>
+      <td class="num">$331,370</td>
+      <td class="num">$400,189</td>
+      <td class="num">$421,035</td>
+    </tr><tr>
+      <td>工廠</td>
+      <td>食材</td>
+      <td class="num">$1,373,954</td>
+      <td class="num">11.4%</td>
+      <td class="num">$360,560</td>
+      <td class="num">$327,839</td>
+      <td class="num">$321,550</td>
+      <td class="num">$364,005</td>
+    </tr><tr>
+      <td>房租</td>
+      <td>房租</td>
+      <td class="num">$1,040,000</td>
+      <td class="num">8.6%</td>
+      <td class="num">$260,000</td>
+      <td class="num">$260,000</td>
+      <td class="num">$260,000</td>
+      <td class="num">$260,000</td>
+    </tr><tr>
+      <td>菜金</td>
+      <td>食材</td>
+      <td class="num">$949,442</td>
+      <td class="num">7.9%</td>
+      <td class="num">$213,055</td>
+      <td class="num">$223,089</td>
+      <td class="num">$231,500</td>
+      <td class="num">$281,798</td>
+    </tr><tr>
+      <td>牛肉</td>
+      <td>食材</td>
+      <td class="num">$564,327</td>
+      <td class="num">4.7%</td>
+      <td class="num">$154,685</td>
+      <td class="num">$125,216</td>
+      <td class="num">$137,895</td>
+      <td class="num">$146,531</td>
+    </tr><tr>
+      <td>臘味</td>
+      <td>食材</td>
+      <td class="num">$311,550</td>
+      <td class="num">2.6%</td>
+      <td class="num">$91,450</td>
+      <td class="num">$66,650</td>
+      <td class="num">$65,100</td>
+      <td class="num">$88,350</td>
+    </tr><tr>
+      <td>電費</td>
+      <td>水電</td>
+      <td class="num">$310,396</td>
+      <td class="num">2.6%</td>
+      <td class="num">$61,471</td>
+      <td class="num">$74,457</td>
+      <td class="num">$83,014</td>
+      <td class="num">$91,454</td>
+    </tr><tr>
+      <td>振農</td>
+      <td>食材</td>
+      <td class="num">$291,995</td>
+      <td class="num">2.4%</td>
+      <td class="num">$61,060</td>
+      <td class="num">$79,986</td>
+      <td class="num">$67,825</td>
+      <td class="num">$83,124</td>
+    </tr><tr>
+      <td>吳啟德</td>
+      <td>固定支出</td>
+      <td class="num">$275,000</td>
+      <td class="num">2.3%</td>
+      <td class="num">$60,000</td>
+      <td class="num">$65,000</td>
+      <td class="num">$70,000</td>
+      <td class="num">$80,000</td>
+    </tr><tr>
+      <td>PT</td>
+      <td>PT 薪資</td>
+      <td class="num">$255,046</td>
+      <td class="num">2.1%</td>
+      <td class="num">$95,046</td>
+      <td class="num">$92,500</td>
+      <td class="num">$30,000</td>
+      <td class="num">$37,500</td>
+    </tr><tr>
+      <td>李偉文</td>
+      <td>固定支出</td>
+      <td class="num">$252,700</td>
+      <td class="num">2.1%</td>
+      <td class="num">$65,100</td>
+      <td class="num">$65,100</td>
+      <td class="num">$59,500</td>
+      <td class="num">$63,000</td>
+    </tr><tr>
+      <td>吳大衛</td>
+      <td>固定支出</td>
+      <td class="num">$250,000</td>
+      <td class="num">2.1%</td>
+      <td class="num">$60,000</td>
+      <td class="num">$65,000</td>
+      <td class="num">$65,000</td>
+      <td class="num">$60,000</td>
+    </tr><tr>
+      <td>陳棋瑞</td>
+      <td>固定支出</td>
+      <td class="num">$244,900</td>
+      <td class="num">2.0%</td>
+      <td class="num">$64,900</td>
+      <td class="num">$60,000</td>
+      <td class="num">$60,000</td>
+      <td class="num">$60,000</td>
+    </tr><tr>
+      <td>吳慧芬</td>
+      <td>固定支出</td>
+      <td class="num">$243,300</td>
+      <td class="num">2.0%</td>
+      <td class="num">$63,300</td>
+      <td class="num">$60,000</td>
+      <td class="num">$60,000</td>
+      <td class="num">$60,000</td>
+    </tr><tr>
+      <td>陳速華</td>
+      <td>固定支出</td>
+      <td class="num">$240,000</td>
+      <td class="num">2.0%</td>
+      <td class="num">$60,000</td>
+      <td class="num">$60,000</td>
+      <td class="num">$60,000</td>
+      <td class="num">$60,000</td>
+    </tr><tr>
+      <td>黃楚平</td>
+      <td>固定支出</td>
+      <td class="num">$238,450</td>
+      <td class="num">2.0%</td>
+      <td class="num">$69,700</td>
+      <td class="num">$31,250</td>
+      <td class="num">$70,000</td>
+      <td class="num">$67,500</td>
+    </tr><tr>
+      <td>高雲鵬</td>
+      <td>固定支出</td>
+      <td class="num">$205,500</td>
+      <td class="num">1.7%</td>
+      <td class="num">$52,000</td>
+      <td class="num">$51,500</td>
+      <td class="num">$51,000</td>
+      <td class="num">$51,000</td>
+    </tr><tr>
+      <td>小惠</td>
+      <td>固定支出</td>
+      <td class="num">$200,000</td>
+      <td class="num">1.7%</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+    </tr><tr>
+      <td>張綺蓮</td>
+      <td>固定支出</td>
+      <td class="num">$200,000</td>
+      <td class="num">1.7%</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+    </tr><tr>
+      <td>林安邦</td>
+      <td>固定支出</td>
+      <td class="num">$193,200</td>
+      <td class="num">1.6%</td>
+      <td class="num">$43,200</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+      <td class="num">$50,000</td>
+    </tr><tr>
+      <td>惠通</td>
+      <td>食材</td>
+      <td class="num">$193,045</td>
+      <td class="num">1.6%</td>
+      <td class="num">$45,770</td>
+      <td class="num">$44,710</td>
+      <td class="num">$47,500</td>
+      <td class="num">$55,065</td>
+    </tr><tr>
+      <td>營業稅</td>
+      <td>雜支</td>
+      <td class="num">$189,150</td>
+      <td class="num">1.6%</td>
+      <td class="num">$95,411</td>
+      <td class="num">$0</td>
+      <td class="num">$93,739</td>
+      <td class="num">$0</td>
+    </tr><tr>
+      <td>梁桂蓮</td>
+      <td>固定支出</td>
+      <td class="num">$173,600</td>
+      <td class="num">1.4%</td>
+      <td class="num">$45,400</td>
+      <td class="num">$43,200</td>
+      <td class="num">$42,500</td>
+      <td class="num">$42,500</td>
+    </tr><tr>
+      <td>曾美惠</td>
+      <td>固定支出</td>
+      <td class="num">$170,800</td>
+      <td class="num">1.4%</td>
+      <td class="num">$44,000</td>
+      <td class="num">$42,500</td>
+      <td class="num">$42,500</td>
+      <td class="num">$41,800</td>
+    </tr><tr>
+      <td>鍾正綱</td>
+      <td>固定支出</td>
+      <td class="num">$160,000</td>
+      <td class="num">1.3%</td>
+      <td class="num">$40,000</td>
+      <td class="num">$40,000</td>
+      <td class="num">$40,000</td>
+      <td class="num">$40,000</td>
+    </tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>五、人事成本明細</h2>
+    <div class="grid2">
+      <div class="card scroll">
+        <h3>正職（固定支出）</h3>
+        <table>
+          <thead><tr><th>姓名</th><th class="num">合計</th><th class="num">佔正職</th>
+          <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th></tr></thead>
+          <tbody><tr><td>吳啟德</td><td class="num">$275,000</td><td class="num">8.0%</td><td class="num">$60,000</td><td class="num">$65,000</td><td class="num">$70,000</td><td class="num">$80,000</td></tr><tr><td>李偉文</td><td class="num">$252,700</td><td class="num">7.4%</td><td class="num">$65,100</td><td class="num">$65,100</td><td class="num">$59,500</td><td class="num">$63,000</td></tr><tr><td>吳大衛</td><td class="num">$250,000</td><td class="num">7.3%</td><td class="num">$60,000</td><td class="num">$65,000</td><td class="num">$65,000</td><td class="num">$60,000</td></tr><tr><td>陳棋瑞</td><td class="num">$244,900</td><td class="num">7.2%</td><td class="num">$64,900</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td></tr><tr><td>黃楚平</td><td class="num">$238,450</td><td class="num">7.0%</td><td class="num">$69,700</td><td class="num">$31,250</td><td class="num">$70,000</td><td class="num">$67,500</td></tr><tr><td>高雲鵬</td><td class="num">$205,500</td><td class="num">6.0%</td><td class="num">$52,000</td><td class="num">$51,500</td><td class="num">$51,000</td><td class="num">$51,000</td></tr><tr><td>小惠</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>陳速華</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td></tr><tr><td>張綺蓮</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>吳慧芬</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$63,300</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td></tr><tr><td>梁桂蓮</td><td class="num">$173,600</td><td class="num">5.1%</td><td class="num">$45,400</td><td class="num">$43,200</td><td class="num">$42,500</td><td class="num">$42,500</td></tr><tr><td>曾美惠</td><td class="num">$170,800</td><td class="num">5.0%</td><td class="num">$44,000</td><td class="num">$42,500</td><td class="num">$42,500</td><td class="num">$41,800</td></tr><tr><td>鍾正綱</td><td class="num">$160,000</td><td class="num">4.7%</td><td class="num">$40,000</td><td class="num">$40,000</td><td class="num">$40,000</td><td class="num">$40,000</td></tr><tr><td>林安邦</td><td class="num">$150,000</td><td class="num">4.4%</td><td class="num">$43,200</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>林美玉</td><td class="num">$129,000</td><td class="num">3.8%</td><td class="num">$34,000</td><td class="num">$29,000</td><td class="num">$33,000</td><td class="num">$33,000</td></tr><tr><td>Noel</td><td class="num">$118,000</td><td class="num">3.4%</td><td class="num">$36,000</td><td class="num">$15,000</td><td class="num">$34,000</td><td class="num">$33,000</td></tr><tr><td>鍾耀霆</td><td class="num">$83,900</td><td class="num">2.5%</td><td class="num">$40,200</td><td class="num">$20,000</td><td class="num">$23,700</td><td class="num">$0</td></tr><tr><td>陳世郎</td><td class="num">$65,200</td><td class="num">1.9%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$21,700</td><td class="num">$43,500</td></tr><tr><td>Ho</td><td class="num">$56,400</td><td class="num">1.6%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td><td class="num">$56,400</td></tr><tr><td>Daily2</td><td class="num">$37,500</td><td class="num">1.1%</td><td class="num">$37,500</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td></tr><tr><td>Carmen</td><td class="num">$11,000</td><td class="num">0.3%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td><td class="num">$11,000</td></tr></tbody>
+        </table>
+      </div>
+      <div class="card scroll">
+        <h3>PT Top 20</h3>
+        <table>
+          <thead><tr><th>姓名</th><th class="num">合計</th><th class="num">佔 PT</th>
+          <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th></tr></thead>
+          <tbody><tr><td>PT</td><td class="num">$255,046</td><td class="num">37.6%</td><td class="num">$95,046</td><td class="num">$92,500</td><td class="num">$30,000</td><td class="num">$37,500</td></tr><tr><td>葉俊宏</td><td class="num">$130,000</td><td class="num">19.2%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$60,000</td><td class="num">$70,000</td></tr><tr><td>Dee</td><td class="num">$73,200</td><td class="num">10.8%</td><td class="num">$19,200</td><td class="num">$18,600</td><td class="num">$17,400</td><td class="num">$18,000</td></tr><tr><td>林進賢</td><td class="num">$62,250</td><td class="num">9.2%</td><td class="num">$19,250</td><td class="num">$15,000</td><td class="num">$10,500</td><td class="num">$17,500</td></tr><tr><td>拖地</td><td class="num">$58,200</td><td class="num">8.6%</td><td class="num">$13,600</td><td class="num">$13,600</td><td class="num">$14,000</td><td class="num">$17,000</td></tr><tr><td>林安邦</td><td class="num">$43,200</td><td class="num">6.4%</td><td class="num">$43,200</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>陳東海</td><td class="num">$31,000</td><td class="num">4.6%</td><td class="num">$12,000</td><td class="num">$15,000</td><td class="num">$4,000</td><td class="num">$0</td></tr><tr><td>收垃圾</td><td class="num">$12,606</td><td class="num">1.9%</td><td class="num">$1,803</td><td class="num">$7,803</td><td class="num">$0</td><td class="num">$3,000</td></tr><tr><td>垃圾（廚餘）</td><td class="num">$12,000</td><td class="num">1.8%</td><td class="num">$6,000</td><td class="num">$0</td><td class="num">$3,000</td><td class="num">$3,000</td></tr></tbody>
+        </table>
+        <p class="note">林安邦：5月為 PT（約 4.3 萬），6月起轉正職（月 5 萬）。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>六、優化建議（依優先度）</h2>
+    <div class="rec rec-high">
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先優化</span> <strong>食材成本偏高</strong></div>
+      <p>5–8月食材合計 $5,672,997，佔營收 44.4%（餐飲常見目標約 25–32%，粵菜偏高可接受，但需盯緊前三大供應商）。</p>
+      <ul><li>前三大貨款供應商：阿肥 $1,581,276（佔貨款 35%）、工廠 $1,373,954（佔貨款 30%）、牛肉 $564,327（佔貨款 12%）</li><li>建議：對阿肥／工廠／牛肉做月用量與單價抽查，比對進貨單與耗用；評估能否合併採購降運費／議價。</li><li>現金菜金占比不低，建議抽樣核對有無與貨款重複或未入庫耗損。</li></ul>
+    </div><div class="rec rec-high">
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先優化</span> <strong>人事成本偏高</strong></div>
+      <p>正職+PT 合計 $4,099,452，佔營收 32.1%（餐飲常見目標約 25–35%）。</p>
+      <ul><li>正職 $3,421,950（26.8% 營收）／PT $677,502（5.3% 營收）</li><li>建議：比對尖峰工時與 PT 排班；檢視薪資 Top 人員產值；林安邦 5月 PT→6月起正職，確認人力編制是否必要。</li></ul>
+    </div><div class="rec rec-mid">
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>房租固定成本</strong></div>
+      <p>月租 26 萬 ×4 = $1,040,000，佔營收 8.1%。屬固定成本，優化空間在拉高翻桌／營收而非砍租金。</p>
+      <ul><li>6月營收最低（毛利最薄），優先改善淡季營收與行銷。</li></ul>
+    </div><div class="rec rec-mid">
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>水電瓦斯</strong></div>
+      <p>合計 $550,746，佔營收 4.3%、佔支出 4.6%。電費為主（雙電表）。</p>
+      <ul><li>建議：逐月比較度數與單價；查空調／冰櫃離峰設定；6月電費單筆較高需對帳單。</li></ul>
+    </div><div class="rec rec-high">
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先優化</span> <strong>供應商過度集中：阿肥</strong></div>
+      <p>阿肥 4 個月 $1,581,276，佔食材貨款 34.5%、佔總支出 13.1%。</p>
+      <ul><li>議價或尋找備援供應商分攤風險；核對退貨／缺重條款。</li></ul>
+    </div><div class="rec rec-mid">
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>供應商集中：工廠</strong></div>
+      <p>工廠 $1,373,954，佔食材貨款 30.0%。</p>
+      <ul><li>同樣建議做單價／用量月追蹤。</li></ul>
+    </div>
+    <div class="rec rec-mid">
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>營運節奏</strong></div>
+      <p>5/15、6/15 等「月結日」支出會暴衝（貨款＋房租＋稅費同日），屬記帳歸屬習慣，不一定是當日現金壓力；但管理上仍建議分開看「進貨成本月」與「現金流週」。</p>
+      <ul>
+        <li>建立每月「食材三率」看板：食材／營收、前三大供應商占比、現金菜金占比。</li>
+        <li>人事：正職人數與班表固定化後，PT 應隨翻桌與尖峰浮動；避免淡季 PT 與正職重疊。</li>
+        <li>水電：電費雙表合計追蹤度數，避免只看金額。</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    本報告由系統依雲端流水帳自動彙總；金額為絕對值加總。粗利＝營收−账面支出（尚未扣除年終／修繕預留／所得稅／員工紅利等股東報表調整項）。
+  </footer>
+</div>
+
+<script>
+const monthLabels = ["5月", "6月", "7月", "8月"];
+new Chart(document.getElementById('chartTrend'), {
+  type: 'line',
+  data: {
+    labels: monthLabels,
+    datasets: [
+      { label: '營收', data: [3550197, 2842557, 3027865, 3346340], borderColor: '#2A7A3B', backgroundColor: 'rgba(42,122,59,0.12)', fill: true, tension: 0.3 },
+      { label: '支出', data: [3138905, 2736425, 2971704, 3236814], borderColor: '#A62424', backgroundColor: 'rgba(166,36,36,0.08)', fill: true, tension: 0.3 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom' }, title: { display: true, text: '營收 vs 支出 月趨勢' } },
+    scales: { y: { ticks: { callback: v => '$' + Number(v).toLocaleString('zh-TW') } } }
+  }
+});
+
+new Chart(document.getElementById('chartFoodLabor'), {
+  type: 'bar',
+  data: {
+    labels: monthLabels,
+    datasets: [
+      { label: '食材', data: [1439777, 1272101, 1382431, 1578688], backgroundColor: '#92400E' },
+      { label: '人事', data: [1058899, 940053, 1001800, 1098700], backgroundColor: '#7F1D1D' },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { y: { ticks: { callback: v => '$' + Number(v).toLocaleString('zh-TW') } } }
+  }
+});
+
+new Chart(document.getElementById('chartUtil'), {
+  type: 'bar',
+  data: {
+    labels: monthLabels,
+    datasets: [{"label": "電費", "data": [61471, 74457, 83014, 91454], "backgroundColor": "#C9882B"}, {"label": "水費", "data": [24113, 24500, 24500, 24990], "backgroundColor": "#1D4E89"}, {"label": "瓦斯", "data": [36574, 37585, 35278, 32810], "backgroundColor": "#A62424"}]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { x: { stacked: true }, y: { stacked: true, ticks: { callback: v => '$' + Number(v).toLocaleString('zh-TW') } } }
+  }
+});
+
+new Chart(document.getElementById('chartBucket'), {
+  type: 'doughnut',
+  data: {
+    labels: ["食材採購（貨款）", "人事成本（正職）", "食材採購（現金）", "房租", "人事成本（PT）", "水電瓦斯", "營運雜支（其他）", "營業稅", "修繕動支", "雜支／餐具（貨款）", "環境衛生", "管理費"],
+    datasets: [{
+      data: [4577792, 3421950, 1095205, 1040000, 677502, 550746, 284213, 189150, 119348, 59242, 56700, 12000],
+      backgroundColor: ['#92400E','#7F1D1D','#A62424','#44403C','#C9882B','#1D4E89','#0F766E','#78716C','#A8A29E','#D6D3D1','#B45309','#57534E']
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+      title: { display: true, text: '支出分類佔比（4個月合計）' }
+    }
+  }
+});
+
+new Chart(document.getElementById('chartVendors'), {
+  type: 'line',
+  data: {
+    labels: monthLabels,
+    datasets: [{"label": "阿肥", "data": [428682, 331370, 400189, 421035], "borderColor": "#A62424", "backgroundColor": "#A62424", "tension": 0.25}, {"label": "工廠", "data": [360560, 327839, 321550, 364005], "borderColor": "#C9882B", "backgroundColor": "#C9882B", "tension": 0.25}, {"label": "牛肉", "data": [154685, 125216, 137895, 146531], "borderColor": "#2A7A3B", "backgroundColor": "#2A7A3B", "tension": 0.25}, {"label": "臘味", "data": [91450, 66650, 65100, 88350], "borderColor": "#1D4E89", "backgroundColor": "#1D4E89", "tension": 0.25}, {"label": "振農", "data": [61060, 79986, 67825, 83124], "borderColor": "#7C3AED", "backgroundColor": "#7C3AED", "tension": 0.25}, {"label": "惠通", "data": [45770, 44710, 47500, 55065], "borderColor": "#0F766E", "backgroundColor": "#0F766E", "tension": 0.25}]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { y: { ticks: { callback: v => '$' + Number(v).toLocaleString('zh-TW') } } }
+  }
+});
+</script>
+</body>
+</html>
