@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>粵香園 5–8月支出分析報告</title>
+<title>粵香園｜2026年5–8月營業成本分析報告</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root {
@@ -68,40 +68,40 @@
 <div class="wrap">
   <header class="hero">
     <p class="brand">粵香園</p>
-    <p class="subtitle">2026年 5–8 月支出綜合分析報告</p>
-    <p class="meta">資料來源：financial_records　｜　統計區間：2026-05-01 ~ 2026-08-31　｜　產出目的：揪出占比偏高支出並提出優化方向</p>
+    <p class="subtitle">2026 年 5–8 月營業成本分析報告</p>
+    <p class="meta">資料來源：雲端財務流水帳（financial_records）　｜　統計期間：2026-05-01 至 2026-08-31　｜　報告目的：檢視成本結構、供應商集中度，並提出管理改善建議</p>
   </header>
 
   <section>
     <h2>一、執行摘要</h2>
     <div class="kpis">
-      <div class="kpi"><div class="label">總營收</div><div class="value">$12,766,959</div><div class="sub">4 個月合計</div></div>
-      <div class="kpi"><div class="label">總支出</div><div class="value">$12,083,848</div><div class="sub">支出／營收 94.6%</div></div>
-      <div class="kpi"><div class="label">粗利（營收−支出）</div><div class="value">$683,111</div><div class="sub">粗利率 5.4%</div></div>
-      <div class="kpi"><div class="label">食材＋人事</div><div class="value">76.5%</div><div class="sub">佔營收（兩大變動成本）</div></div>
+      <div class="kpi"><div class="label">營業收入</div><div class="value">$12,766,959</div><div class="sub">四個月累計</div></div>
+      <div class="kpi"><div class="label">營業支出</div><div class="value">$12,083,848</div><div class="sub">支出佔營收比 94.6%</div></div>
+      <div class="kpi"><div class="label">營業毛利（收入−支出）</div><div class="value">$683,111</div><div class="sub">毛利率 5.4%</div></div>
+      <div class="kpi"><div class="label">食材與人事合計</div><div class="value">76.5%</div><div class="sub">佔營收（主要變動成本）</div></div>
     </div>
     <div class="card">
       <ul class="exec">
-<li><strong>總營收</strong> $12,766,959　｜　<strong>總支出</strong> $12,083,848　｜　<strong>粗利</strong> $683,111（5.4%）</li>
-<li><strong>支出／營收比</strong> 94.6%　｜　食材佔營收 <strong>44.4%</strong>　｜　人事佔營收 <strong>32.1%</strong></li>
-<li>支出結構前三：食材採購（貨款）（38%）、人事成本（正職）（28%）、食材採購（現金）（9%）</li>
-<li>供應商集中風險：阿肥 13.1% 總支出、工廠 11.4%；兩者合計佔食材貨款 65%</li>
-<li>最需優化月份：<strong>7月</strong>毛利僅 $56,161（支出率 98.1%）；6月次之</li>
+<li><strong>營業收入</strong> $12,766,959　｜　<strong>營業支出</strong> $12,083,848　｜　<strong>營業毛利</strong> $683,111（毛利率 5.4%）</li>
+<li><strong>支出佔營收比</strong> 94.6%　｜　食材成本率 <strong>44.4%</strong>　｜　人事成本率 <strong>32.1%</strong></li>
+<li>支出結構前三大：食材採購（貨款）38%、人事成本（正職）28%、食材採購（現金）9%</li>
+<li>供應商集中度：阿肥佔總支出 13.1%、工廠佔 11.4%；兩者合計佔食材貨款 65%</li>
+<li>獲利承壓月份：<strong>7 月</strong>營業毛利 $56,161（支出率 98.1%）；6 月次之</li>
 </ul>
     </div>
   </section>
 
   <section>
-    <h2>二、月度趨勢</h2>
+    <h2>二、月度營運趨勢</h2>
     <div class="card">
       <canvas id="chartTrend"></canvas>
-      <p class="note">6、7 月毛利明顯偏薄：支出率升高（食材貨款＋人事＋固定成本疊加）。8 月營收回升，但仍須盯食材與人事占比。</p>
+      <p class="note">6、7 月營業毛利明顯收斂，主因為食材貨款、人事及固定成本同步推升支出率。8 月營收回升，惟食材與人事成本占比仍須持續控管。</p>
     </div>
     <div class="card scroll">
       <table>
         <thead><tr>
-          <th>月份</th><th class="num">營收</th><th class="num">支出</th><th class="num">粗利</th>
-          <th class="num">支出率</th><th class="num">食材／營收</th><th class="num">人事／營收</th>
+          <th>月份</th><th class="num">營業收入</th><th class="num">營業支出</th><th class="num">營業毛利</th>
+          <th class="num">支出率</th><th class="num">食材成本率</th><th class="num">人事成本率</th>
         </tr></thead>
         <tbody><tr>
       <td>5月</td>
@@ -139,28 +139,28 @@
       </table>
     </div>
     <div class="grid2">
-      <div class="card"><h3>食材 vs 人事（月）</h3><canvas id="chartFoodLabor"></canvas></div>
-      <div class="card"><h3>水電瓦斯拆解（月）</h3><canvas id="chartUtil"></canvas></div>
+      <div class="card"><h3>食材成本與人事成本（按月）</h3><canvas id="chartFoodLabor"></canvas></div>
+      <div class="card"><h3>公用事業費明細（按月）</h3><canvas id="chartUtil"></canvas></div>
     </div>
   </section>
 
   <section>
-    <h2>三、支出結構佔比</h2>
+    <h2>三、支出結構分析</h2>
     <div class="grid2">
       <div class="card"><canvas id="chartBucket"></canvas></div>
       <div class="card">
-        <h3>解讀</h3>
+        <h3>結構說明</h3>
         <ul class="exec">
-          <li>食材貨款 $4,577,792（37.9% 支出）＋現金食材 $1,095,205（9.1%）→ 食材合計佔支出 <strong>46.9%</strong></li>
-          <li>正職 $3,421,950、PT $677,502 → 人事合計佔支出 <strong>33.9%</strong></li>
-          <li>房租屬固定槓桿：每月 26 萬，淡季（6–7月）壓力最大</li>
+          <li>食材貨款 $4,577,792（佔支出 37.9%）與現金食材 $1,095,205（佔支出 9.1%），食材合計佔支出 <strong>46.9%</strong></li>
+          <li>正職員工薪資 $3,421,950、計時人員薪資 $677,502，人事合計佔支出 <strong>33.9%</strong></li>
+          <li>房租屬固定成本（每月 $260,000），於營收較低之 6–7 月對毛利率影響尤為顯著</li>
         </ul>
       </div>
     </div>
     <div class="card scroll">
       <table>
         <thead><tr>
-          <th>支出分類</th><th class="num">合計</th><th class="num">佔支出</th><th class="num">佔營收</th>
+          <th>支出分類</th><th class="num">累計金額</th><th class="num">佔支出比</th><th class="num">佔營收比</th>
           <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th>
         </tr></thead>
         <tbody><tr>
@@ -200,7 +200,7 @@
       <td class="num">$260,000</td>
       <td class="num">$260,000</td>
     </tr><tr>
-      <td>人事成本（PT）</td>
+      <td>人事成本（計時人員）</td>
       <td class="num">$677,502</td>
       <td class="num">5.6%</td>
       <td class="num">5.3%</td>
@@ -218,7 +218,7 @@
       <td class="num">$142,792</td>
       <td class="num">$149,254</td>
     </tr><tr>
-      <td>營運雜支（其他）</td>
+      <td>營運雜支</td>
       <td class="num">$284,213</td>
       <td class="num">2.4%</td>
       <td class="num">2.2%</td>
@@ -236,7 +236,7 @@
       <td class="num">$93,739</td>
       <td class="num">$0</td>
     </tr><tr>
-      <td>修繕動支</td>
+      <td>修繕支出</td>
       <td class="num">$119,348</td>
       <td class="num">1.0%</td>
       <td class="num">0.9%</td>
@@ -245,7 +245,7 @@
       <td class="num">$0</td>
       <td class="num">$69,600</td>
     </tr><tr>
-      <td>雜支／餐具（貨款）</td>
+      <td>餐具與雜支（貨款）</td>
       <td class="num">$59,242</td>
       <td class="num">0.5%</td>
       <td class="num">0.5%</td>
@@ -277,16 +277,16 @@
   </section>
 
   <section>
-    <h2>四、供應商／項目分析</h2>
+    <h2>四、供應商與採購項目分析</h2>
     <div class="card">
-      <h3>食材貨款供應商趨勢（前六大）</h3>
+      <h3>主要食材供應商採購趨勢（前六名）</h3>
       <canvas id="chartVendors"></canvas>
     </div>
     <div class="card scroll">
-      <h3>食材貨款供應商明細</h3>
+      <h3>食材供應商採購明細</h3>
       <table>
         <thead><tr>
-          <th>供應商</th><th class="num">合計</th><th class="num">佔貨款</th><th class="num">佔營收</th>
+          <th>供應商</th><th class="num">累計金額</th><th class="num">佔貨款比</th><th class="num">佔營收比</th>
           <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th>
         </tr></thead>
         <tbody><tr>
@@ -437,10 +437,10 @@
       </table>
     </div>
     <div class="card scroll">
-      <h3>全體供應商／項目 Top 25</h3>
+      <h3>全體供應商與支出項目（前 25 名）</h3>
       <table>
         <thead><tr>
-          <th>名稱</th><th>入帳科目</th><th class="num">合計</th><th class="num">佔支出</th>
+          <th>名稱</th><th>會計科目</th><th class="num">累計金額</th><th class="num">佔支出比</th>
           <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th>
         </tr></thead>
         <tbody><tr>
@@ -677,65 +677,65 @@
     <h2>五、人事成本明細</h2>
     <div class="grid2">
       <div class="card scroll">
-        <h3>正職（固定支出）</h3>
+        <h3>正職員工薪資（固定支出）</h3>
         <table>
-          <thead><tr><th>姓名</th><th class="num">合計</th><th class="num">佔正職</th>
+          <thead><tr><th>姓名</th><th class="num">累計金額</th><th class="num">佔正職比</th>
           <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th></tr></thead>
           <tbody><tr><td>吳啟德</td><td class="num">$275,000</td><td class="num">8.0%</td><td class="num">$60,000</td><td class="num">$65,000</td><td class="num">$70,000</td><td class="num">$80,000</td></tr><tr><td>李偉文</td><td class="num">$252,700</td><td class="num">7.4%</td><td class="num">$65,100</td><td class="num">$65,100</td><td class="num">$59,500</td><td class="num">$63,000</td></tr><tr><td>吳大衛</td><td class="num">$250,000</td><td class="num">7.3%</td><td class="num">$60,000</td><td class="num">$65,000</td><td class="num">$65,000</td><td class="num">$60,000</td></tr><tr><td>陳棋瑞</td><td class="num">$244,900</td><td class="num">7.2%</td><td class="num">$64,900</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td></tr><tr><td>黃楚平</td><td class="num">$238,450</td><td class="num">7.0%</td><td class="num">$69,700</td><td class="num">$31,250</td><td class="num">$70,000</td><td class="num">$67,500</td></tr><tr><td>高雲鵬</td><td class="num">$205,500</td><td class="num">6.0%</td><td class="num">$52,000</td><td class="num">$51,500</td><td class="num">$51,000</td><td class="num">$51,000</td></tr><tr><td>小惠</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>陳速華</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td></tr><tr><td>張綺蓮</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>吳慧芬</td><td class="num">$200,000</td><td class="num">5.8%</td><td class="num">$63,300</td><td class="num">$60,000</td><td class="num">$60,000</td><td class="num">$60,000</td></tr><tr><td>梁桂蓮</td><td class="num">$173,600</td><td class="num">5.1%</td><td class="num">$45,400</td><td class="num">$43,200</td><td class="num">$42,500</td><td class="num">$42,500</td></tr><tr><td>曾美惠</td><td class="num">$170,800</td><td class="num">5.0%</td><td class="num">$44,000</td><td class="num">$42,500</td><td class="num">$42,500</td><td class="num">$41,800</td></tr><tr><td>鍾正綱</td><td class="num">$160,000</td><td class="num">4.7%</td><td class="num">$40,000</td><td class="num">$40,000</td><td class="num">$40,000</td><td class="num">$40,000</td></tr><tr><td>林安邦</td><td class="num">$150,000</td><td class="num">4.4%</td><td class="num">$43,200</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>林美玉</td><td class="num">$129,000</td><td class="num">3.8%</td><td class="num">$34,000</td><td class="num">$29,000</td><td class="num">$33,000</td><td class="num">$33,000</td></tr><tr><td>Noel</td><td class="num">$118,000</td><td class="num">3.4%</td><td class="num">$36,000</td><td class="num">$15,000</td><td class="num">$34,000</td><td class="num">$33,000</td></tr><tr><td>鍾耀霆</td><td class="num">$83,900</td><td class="num">2.5%</td><td class="num">$40,200</td><td class="num">$20,000</td><td class="num">$23,700</td><td class="num">$0</td></tr><tr><td>陳世郎</td><td class="num">$65,200</td><td class="num">1.9%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$21,700</td><td class="num">$43,500</td></tr><tr><td>Ho</td><td class="num">$56,400</td><td class="num">1.6%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td><td class="num">$56,400</td></tr><tr><td>Daily2</td><td class="num">$37,500</td><td class="num">1.1%</td><td class="num">$37,500</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td></tr><tr><td>Carmen</td><td class="num">$11,000</td><td class="num">0.3%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$0</td><td class="num">$11,000</td></tr></tbody>
         </table>
       </div>
       <div class="card scroll">
-        <h3>PT Top 20</h3>
+        <h3>計時人員薪資（前 20 名）</h3>
         <table>
-          <thead><tr><th>姓名</th><th class="num">合計</th><th class="num">佔 PT</th>
+          <thead><tr><th>姓名</th><th class="num">累計金額</th><th class="num">佔計時人員比</th>
           <th class="num">5月</th><th class="num">6月</th><th class="num">7月</th><th class="num">8月</th></tr></thead>
           <tbody><tr><td>PT</td><td class="num">$255,046</td><td class="num">37.6%</td><td class="num">$95,046</td><td class="num">$92,500</td><td class="num">$30,000</td><td class="num">$37,500</td></tr><tr><td>葉俊宏</td><td class="num">$130,000</td><td class="num">19.2%</td><td class="num">$0</td><td class="num">$0</td><td class="num">$60,000</td><td class="num">$70,000</td></tr><tr><td>Dee</td><td class="num">$73,200</td><td class="num">10.8%</td><td class="num">$19,200</td><td class="num">$18,600</td><td class="num">$17,400</td><td class="num">$18,000</td></tr><tr><td>林進賢</td><td class="num">$62,250</td><td class="num">9.2%</td><td class="num">$19,250</td><td class="num">$15,000</td><td class="num">$10,500</td><td class="num">$17,500</td></tr><tr><td>拖地</td><td class="num">$58,200</td><td class="num">8.6%</td><td class="num">$13,600</td><td class="num">$13,600</td><td class="num">$14,000</td><td class="num">$17,000</td></tr><tr><td>林安邦</td><td class="num">$43,200</td><td class="num">6.4%</td><td class="num">$43,200</td><td class="num">$50,000</td><td class="num">$50,000</td><td class="num">$50,000</td></tr><tr><td>陳東海</td><td class="num">$31,000</td><td class="num">4.6%</td><td class="num">$12,000</td><td class="num">$15,000</td><td class="num">$4,000</td><td class="num">$0</td></tr><tr><td>收垃圾</td><td class="num">$12,606</td><td class="num">1.9%</td><td class="num">$1,803</td><td class="num">$7,803</td><td class="num">$0</td><td class="num">$3,000</td></tr><tr><td>垃圾（廚餘）</td><td class="num">$12,000</td><td class="num">1.8%</td><td class="num">$6,000</td><td class="num">$0</td><td class="num">$3,000</td><td class="num">$3,000</td></tr></tbody>
         </table>
-        <p class="note">林安邦：5月為 PT（約 4.3 萬），6月起轉正職（月 5 萬）。</p>
+        <p class="note">備註：林安邦於 5 月以計時人員列帳（約 $43,200），自 6 月起改列正職員工（每月約 $50,000）。</p>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>六、優化建議（依優先度）</h2>
+    <h2>六、管理建議（依優先順序）</h2>
     <div class="rec rec-high">
-      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先優化</span> <strong>食材成本偏高</strong></div>
-      <p>5–8月食材合計 $5,672,997，佔營收 44.4%（餐飲常見目標約 25–32%，粵菜偏高可接受，但需盯緊前三大供應商）。</p>
-      <ul><li>前三大貨款供應商：阿肥 $1,581,276（佔貨款 35%）、工廠 $1,373,954（佔貨款 30%）、牛肉 $564,327（佔貨款 12%）</li><li>建議：對阿肥／工廠／牛肉做月用量與單價抽查，比對進貨單與耗用；評估能否合併採購降運費／議價。</li><li>現金菜金占比不低，建議抽樣核對有無與貨款重複或未入庫耗損。</li></ul>
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先改善</span> <strong>食材成本率偏高</strong></div>
+      <p>5–8 月食材成本合計 $5,672,997，食材成本率 44.4%。餐飲業常見參考區間約 25–32%；考量粵菜業態可略高，仍建議將前三大供應商納入重點控管。</p>
+      <ul><li>前三大貨款供應商：阿肥 $1,581,276（佔貨款 35%）、工廠 $1,373,954（佔貨款 30%）、牛肉 $564,327（佔貨款 12%）</li><li>建議逐月核對進貨單價與用量，並與實際耗用比對；評估採購整合以降低物流成本並強化議價能力。</li><li>現金採購（菜金）占比不低，建議抽樣檢核是否與貨款重複入帳，或存在未入庫耗損。</li></ul>
     </div><div class="rec rec-high">
-      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先優化</span> <strong>人事成本偏高</strong></div>
-      <p>正職+PT 合計 $4,099,452，佔營收 32.1%（餐飲常見目標約 25–35%）。</p>
-      <ul><li>正職 $3,421,950（26.8% 營收）／PT $677,502（5.3% 營收）</li><li>建議：比對尖峰工時與 PT 排班；檢視薪資 Top 人員產值；林安邦 5月 PT→6月起正職，確認人力編制是否必要。</li></ul>
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先改善</span> <strong>人事成本率偏高</strong></div>
+      <p>正職員工與計時人員薪資合計 $4,099,452，人事成本率 32.1%（餐飲業常見參考區間約 25–35%）。</p>
+      <ul><li>正職員工 $3,421,950（佔營收 26.8%）／計時人員 $677,502（佔營收 5.3%）</li><li>建議比對尖峰時段產能與計時人員排班；檢視薪資排名前列人員之產值貢獻；並就林安邦自 5 月計時轉 6 月正職之編制合理性進行覆核。</li></ul>
     </div><div class="rec rec-mid">
-      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>房租固定成本</strong></div>
-      <p>月租 26 萬 ×4 = $1,040,000，佔營收 8.1%。屬固定成本，優化空間在拉高翻桌／營收而非砍租金。</p>
-      <ul><li>6月營收最低（毛利最薄），優先改善淡季營收與行銷。</li></ul>
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">持續關注</span> <strong>房租固定成本</strong></div>
+      <p>月租金 $260,000，四個月累計 $1,040,000，佔營收 8.1%。屬固定成本，改善重點宜放在提升桌次週轉與營收規模，而非短期調降租金。</p>
+      <ul><li>6 月營收為四個月最低、毛利亦較弱，建議優先強化淡季營收與行銷策略。</li></ul>
     </div><div class="rec rec-mid">
-      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>水電瓦斯</strong></div>
-      <p>合計 $550,746，佔營收 4.3%、佔支出 4.6%。電費為主（雙電表）。</p>
-      <ul><li>建議：逐月比較度數與單價；查空調／冰櫃離峰設定；6月電費單筆較高需對帳單。</li></ul>
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">持續關注</span> <strong>公用事業費（水電瓦斯）</strong></div>
+      <p>合計 $550,746，佔營收 4.3%、佔支出 4.6%。其中以電費為主（雙電表計費）。</p>
+      <ul><li>建議逐月比對用電度數與單價；檢視空調與冷凍設備離峰設定；6 月電費金額偏高，宜與帳單明細核對。</li></ul>
     </div><div class="rec rec-high">
-      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先優化</span> <strong>供應商過度集中：阿肥</strong></div>
-      <p>阿肥 4 個月 $1,581,276，佔食材貨款 34.5%、佔總支出 13.1%。</p>
-      <ul><li>議價或尋找備援供應商分攤風險；核對退貨／缺重條款。</li></ul>
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#A62424;color:#fff;font-size:12px;font-weight:600">優先改善</span> <strong>供應商集中度偏高：阿肥</strong></div>
+      <p>阿肥四個月採購金額 $1,581,276，佔食材貨款 34.5%、佔總支出 13.1%。</p>
+      <ul><li>建議進行議價談判，並建立備援供應商以分散採購風險；同時覆核退貨與缺重相關條款。</li></ul>
     </div><div class="rec rec-mid">
-      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>供應商集中：工廠</strong></div>
-      <p>工廠 $1,373,954，佔食材貨款 30.0%。</p>
-      <ul><li>同樣建議做單價／用量月追蹤。</li></ul>
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">持續關注</span> <strong>供應商集中度：工廠</strong></div>
+      <p>工廠採購金額 $1,373,954，佔食材貨款 30.0%。</p>
+      <ul><li>建議同步建立單價與用量之月度追蹤機制。</li></ul>
     </div>
     <div class="rec rec-mid">
-      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">建議關注</span> <strong>營運節奏</strong></div>
-      <p>5/15、6/15 等「月結日」支出會暴衝（貨款＋房租＋稅費同日），屬記帳歸屬習慣，不一定是當日現金壓力；但管理上仍建議分開看「進貨成本月」與「現金流週」。</p>
+      <div class="rec-head"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:#C9882B;color:#fff;font-size:12px;font-weight:600">持續關注</span> <strong>帳務歸屬與現金流管理</strong></div>
+      <p>每月 15 日等月結日，貨款、房租與稅費常集中入帳，屬會計歸屬安排，未必等同當日現金流出高峰。管理上建議區分「成本歸屬月」與「現金流週期」分別檢視。</p>
       <ul>
-        <li>建立每月「食材三率」看板：食材／營收、前三大供應商占比、現金菜金占比。</li>
-        <li>人事：正職人數與班表固定化後，PT 應隨翻桌與尖峰浮動；避免淡季 PT 與正職重疊。</li>
-        <li>水電：電費雙表合計追蹤度數，避免只看金額。</li>
+        <li>建立月度食材成本監測指標：食材成本率、前三大供應商占比、現金採購占比。</li>
+        <li>人事：正職員工編制與班表穩定後，計時人員宜隨尖峰需求彈性調配，避免淡季人力重疊。</li>
+        <li>公用事業費：電費建議以雙表度數合計追蹤，不宜僅觀察金額。</li>
       </ul>
     </div>
   </section>
 
   <footer>
-    本報告由系統依雲端流水帳自動彙總；金額為絕對值加總。粗利＝營收−账面支出（尚未扣除年終／修繕預留／所得稅／員工紅利等股東報表調整項）。
+    本報告依雲端財務流水帳自動彙總，金額以絕對值加計。營業毛利＝營業收入−账面營業支出，尚未扣除年終獎金攤提、修繕金預留、所得稅及員工紅利等股東分配相關調整項目。
   </footer>
 </div>
 
@@ -746,13 +746,13 @@ new Chart(document.getElementById('chartTrend'), {
   data: {
     labels: monthLabels,
     datasets: [
-      { label: '營收', data: [3550197, 2842557, 3027865, 3346340], borderColor: '#2A7A3B', backgroundColor: 'rgba(42,122,59,0.12)', fill: true, tension: 0.3 },
-      { label: '支出', data: [3138905, 2736425, 2971704, 3236814], borderColor: '#A62424', backgroundColor: 'rgba(166,36,36,0.08)', fill: true, tension: 0.3 },
+      { label: '營業收入', data: [3550197, 2842557, 3027865, 3346340], borderColor: '#2A7A3B', backgroundColor: 'rgba(42,122,59,0.12)', fill: true, tension: 0.3 },
+      { label: '營業支出', data: [3138905, 2736425, 2971704, 3236814], borderColor: '#A62424', backgroundColor: 'rgba(166,36,36,0.08)', fill: true, tension: 0.3 },
     ]
   },
   options: {
     responsive: true,
-    plugins: { legend: { position: 'bottom' }, title: { display: true, text: '營收 vs 支出 月趨勢' } },
+    plugins: { legend: { position: 'bottom' }, title: { display: true, text: '營業收入與營業支出月趨勢' } },
     scales: { y: { ticks: { callback: v => '$' + Number(v).toLocaleString('zh-TW') } } }
   }
 });
@@ -762,8 +762,8 @@ new Chart(document.getElementById('chartFoodLabor'), {
   data: {
     labels: monthLabels,
     datasets: [
-      { label: '食材', data: [1439777, 1272101, 1382431, 1578688], backgroundColor: '#92400E' },
-      { label: '人事', data: [1058899, 940053, 1001800, 1098700], backgroundColor: '#7F1D1D' },
+      { label: '食材成本', data: [1439777, 1272101, 1382431, 1578688], backgroundColor: '#92400E' },
+      { label: '人事成本', data: [1058899, 940053, 1001800, 1098700], backgroundColor: '#7F1D1D' },
     ]
   },
   options: {
@@ -789,7 +789,7 @@ new Chart(document.getElementById('chartUtil'), {
 new Chart(document.getElementById('chartBucket'), {
   type: 'doughnut',
   data: {
-    labels: ["食材採購（貨款）", "人事成本（正職）", "食材採購（現金）", "房租", "人事成本（PT）", "水電瓦斯", "營運雜支（其他）", "營業稅", "修繕動支", "雜支／餐具（貨款）", "環境衛生", "管理費"],
+    labels: ["食材採購（貨款）", "人事成本（正職）", "食材採購（現金）", "房租", "人事成本（計時人員）", "水電瓦斯", "營運雜支", "營業稅", "修繕支出", "餐具與雜支（貨款）", "環境衛生", "管理費"],
     datasets: [{
       data: [4577792, 3421950, 1095205, 1040000, 677502, 550746, 284213, 189150, 119348, 59242, 56700, 12000],
       backgroundColor: ['#92400E','#7F1D1D','#A62424','#44403C','#C9882B','#1D4E89','#0F766E','#78716C','#A8A29E','#D6D3D1','#B45309','#57534E']
@@ -798,7 +798,7 @@ new Chart(document.getElementById('chartBucket'), {
   options: {
     plugins: {
       legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
-      title: { display: true, text: '支出分類佔比（4個月合計）' }
+      title: { display: true, text: '支出分類佔比（四個月累計）' }
     }
   }
 });
