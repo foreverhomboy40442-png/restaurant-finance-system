@@ -1,0 +1,16 @@
+{
+  "name": "restaurant-finance-system",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "vite-dev-server",
+      "command": "npm run dev -- --host 0.0.0.0 --port 5173"
+    }
+  ],
+  "ports": [
+    {
+      "name": "Vite dev server",
+      "port": 5173
+    }
+  ]
+}
