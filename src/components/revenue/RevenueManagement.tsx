@@ -21,6 +21,7 @@ import {
   validateRevenueAmountInput,
 } from '../../utils/revenue-form';
 import RevenueConfirmModal from './RevenueConfirmModal';
+import RevenueMissingCalendar from './RevenueMissingCalendar';
 import RevenueTable from './RevenueTable';
 
 const PERIOD_OPTIONS = Object.values(REVENUE_PERIOD);
@@ -303,6 +304,15 @@ export default function RevenueManagement({
 
   return (
     <div className="space-y-6 md:space-y-10">
+      <RevenueMissingCalendar
+        revenues={revenues}
+        selectedDate={form.dateInput}
+        onSelectDate={(dateISO) => {
+          updateForm('dateInput', dateISO);
+          setFormError(null);
+        }}
+      />
+
       {/* 頂部：新增 / 編輯表單 */}
       <section className="max-w-full overflow-hidden rounded-sm border border-canton-dark/8 bg-white p-4 shadow-canton sm:p-6 md:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
