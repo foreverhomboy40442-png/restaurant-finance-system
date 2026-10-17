@@ -60,32 +60,56 @@
   }
 
   // ---------- lightweight name modal ----------
+  function memberList() {
+    try {
+      const m = window.TRIP_DATA && window.TRIP_DATA.members;
+      return Array.isArray(m) ? m.filter(Boolean) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
   function askName() {
     return new Promise((resolve) => {
+      const members = memberList();
+      const chips = members
+        .map(
+          (m) =>
+            `<button type="button" class="member-pick" data-name="${esc(
+              m
+            )}">${esc(m)}</button>`
+        )
+        .join("");
       const overlay = document.createElement("div");
       overlay.className = "modal-overlay";
       overlay.innerHTML = `
         <div class="modal" role="dialog" aria-modal="true">
-          <h3>加入共享行程</h3>
-          <p>輸入你的名字，大家會看到是誰記帳／留言。</p>
-          <input type="text" id="member-name" class="exp-input exp-grow" placeholder="你的名字（例：小美）" maxlength="20" />
+          <h3>你是哪一位？</h3>
+          <p>點選你的名字就能加入，大家會看到是誰記帳／留言。</p>
+          ${chips ? `<div class="member-picks">${chips}</div>` : ""}
+          <input type="text" id="member-name" class="exp-input exp-grow" placeholder="或自行輸入名字" maxlength="20" />
           <button type="button" class="btn btn-primary" id="member-ok">進入</button>
         </div>`;
       document.body.appendChild(overlay);
       const input = overlay.querySelector("#member-name");
       const ok = overlay.querySelector("#member-ok");
       input.value = getMember();
-      input.focus();
+      function finish(v) {
+        setMember(v);
+        overlay.remove();
+        resolve(v);
+      }
       function submit() {
         const v = (input.value || "").trim();
         if (!v) {
           input.focus();
           return;
         }
-        setMember(v);
-        overlay.remove();
-        resolve(v);
+        finish(v);
       }
+      overlay.querySelectorAll(".member-pick").forEach((btn) => {
+        btn.addEventListener("click", () => finish(btn.dataset.name));
+      });
       ok.addEventListener("click", submit);
       input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") submit();

@@ -8,6 +8,8 @@ window.TRIP_DATA = {
     region: "大阪・京都",
   },
 
+  members: ["阿亭", "阿瓜", "茶米", "阿萱"],
+
   flights: [
     {
       id: "outbound",
