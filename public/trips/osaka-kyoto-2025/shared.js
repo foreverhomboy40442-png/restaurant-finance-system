@@ -124,7 +124,15 @@
       const h = head.querySelector("h2");
       const p = head.querySelector("p");
       if (h) h.textContent = "共享記帳";
-      if (p) p.textContent = "大家的花費即時同步，並顯示每人分攤";
+      if (p) p.textContent = "點團員分頁，各自記帳；大家即時同步";
+    }
+    const form = document.getElementById("expense-form");
+    if (form && !document.getElementById("exp-who-hint")) {
+      const hint = document.createElement("p");
+      hint.className = "exp-who-hint";
+      hint.id = "exp-who-hint";
+      hint.innerHTML = '記在 <strong id="exp-who"></strong> 的帳上';
+      form.insertBefore(hint, form.firstChild);
     }
   }
 
@@ -144,7 +152,10 @@
     });
   }
 
-  // ---------- expenses ----------
+  // ---------- expenses (split per member) ----------
+  let allExpenses = [];
+  let selectedMember = null;
+
   async function loadExpenses() {
     const { data, error } = await supabase
       .from("trip_expenses")
@@ -159,48 +170,102 @@
     return data || [];
   }
 
+  function sumByCurrency(items) {
+    const totals = {};
+    items.forEach((it) => {
+      const cur = CURRENCY[it.currency] ? it.currency : "JPY";
+      totals[cur] = (totals[cur] || 0) + (Number(it.amount) || 0);
+    });
+    return totals;
+  }
+
+  function sumText(totals) {
+    const parts = Object.keys(CURRENCY)
+      .filter((c) => totals[c])
+      .map((c) => money(totals[c], c));
+    return parts.length ? parts.join(" + ") : "";
+  }
+
+  function tabMembers(items) {
+    const base = memberList().slice();
+    items.forEach((it) => {
+      if (it.member && base.indexOf(it.member) < 0) base.push(it.member);
+    });
+    return base;
+  }
+
+  function ensureMemberBar() {
+    let bar = document.getElementById("expense-members");
+    if (!bar) {
+      const form = document.getElementById("expense-form");
+      if (!form) return null;
+      bar = document.createElement("div");
+      bar.id = "expense-members";
+      bar.className = "expense-members";
+      bar.setAttribute("role", "tablist");
+      form.parentNode.insertBefore(bar, form);
+    }
+    return bar;
+  }
+
+  function renderMemberBar(items) {
+    const bar = ensureMemberBar();
+    if (!bar) return;
+    const members = tabMembers(items);
+    if (!selectedMember || members.indexOf(selectedMember) < 0) {
+      const me = getMember();
+      selectedMember = members.indexOf(me) >= 0 ? me : members[0] || me;
+    }
+    bar.innerHTML = members
+      .map((m) => {
+        const mine = items.filter((it) => it.member === m);
+        const txt = sumText(sumByCurrency(mine)) || "—";
+        return `<button type="button" class="exp-member${
+          m === selectedMember ? " is-active" : ""
+        }" data-member="${esc(m)}" role="tab" aria-selected="${
+          m === selectedMember
+        }">
+          <span class="exp-member-name">${esc(m)}</span>
+          <span class="exp-member-sum">${txt}</span>
+        </button>`;
+      })
+      .join("");
+  }
+
+  function updateFormWho() {
+    const hint = document.getElementById("exp-who");
+    if (hint) hint.textContent = selectedMember || "";
+  }
+
   function paintExpenses(items) {
+    allExpenses = items;
     const totalsEl = document.getElementById("expense-totals");
     const listEl = document.getElementById("expense-list");
     if (!totalsEl || !listEl) return;
 
-    const totals = {};
-    const perMember = {};
-    items.forEach((it) => {
-      const cur = CURRENCY[it.currency] ? it.currency : "JPY";
-      const amt = Number(it.amount) || 0;
-      totals[cur] = (totals[cur] || 0) + amt;
-      perMember[it.member] = perMember[it.member] || {};
-      perMember[it.member][cur] = (perMember[it.member][cur] || 0) + amt;
-    });
+    renderMemberBar(items);
+    updateFormWho();
 
-    const totalChips = Object.keys(CURRENCY)
+    const mine = items.filter((it) => it.member === selectedMember);
+    const totals = sumByCurrency(mine);
+    const chips = Object.keys(CURRENCY)
       .filter((c) => totals[c])
       .map(
         (c) =>
-          `<div class="total-chip"><span class="total-label">總計</span><span class="total-value">${money(
+          `<div class="total-chip"><span class="total-label">${esc(
+            selectedMember
+          )} 小計</span><span class="total-value">${money(
             totals[c],
             c
           )}</span></div>`
       )
       .join("");
 
-    const memberChips = Object.keys(perMember)
-      .map((m) => {
-        const parts = Object.keys(perMember[m])
-          .map((c) => money(perMember[m][c], c))
-          .join(" + ");
-        return `<div class="member-chip"><span class="member-chip-name">${esc(
-          m
-        )}</span><span>${parts}</span></div>`;
-      })
-      .join("");
-
     totalsEl.innerHTML =
-      (totalChips || `<p class="expense-empty">尚未有人記帳。</p>`) +
-      (memberChips ? `<div class="member-tally">${memberChips}</div>` : "");
+      chips ||
+      `<p class="expense-empty">${esc(selectedMember)} 還沒有記帳。</p>`;
 
-    listEl.innerHTML = items
+    listEl.innerHTML = mine
       .map(
         (it) => `
       <li class="expense-item">
@@ -211,7 +276,6 @@
           </div>
           <div class="expense-sub">
             <span class="cat-tag" data-cat="${esc(it.category)}">${esc(it.category)}</span>
-            <span class="who">${esc(it.member)}</span>
             <span class="expense-date">${esc(it.spent_on)}</span>
           </div>
         </div>
@@ -219,6 +283,17 @@
       </li>`
       )
       .join("");
+  }
+
+  function bindMemberBar() {
+    const section = document.getElementById("expense");
+    if (!section) return;
+    section.addEventListener("click", (e) => {
+      const btn = e.target.closest(".exp-member");
+      if (!btn) return;
+      selectedMember = btn.dataset.member;
+      paintExpenses(allExpenses);
+    });
   }
 
   async function refreshExpenses() {
@@ -256,7 +331,7 @@
 
       const payload = {
         trip_id: TRIP,
-        member: getMember() || "匿名",
+        member: selectedMember || getMember() || "匿名",
         item,
         amount: Math.round(amount * 100) / 100,
         currency: CURRENCY[curEl.value] ? curEl.value : "JPY",
@@ -491,6 +566,7 @@
     if (!member) member = await askName();
     renderBar(member);
     bindExpenseForm();
+    bindMemberBar();
     bindBoard();
     bindVotes();
     await refreshAll();

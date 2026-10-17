@@ -673,13 +673,15 @@ img {
   gap: 0.5rem;
 }
 
-/* Mobile-first: never overflow a phone screen. */
+/* Mobile-first: never overflow a phone screen.
+   minmax(0, 1fr) lets tracks shrink below the native date/select
+   min-content width, which otherwise forces horizontal overflow. */
 .expense-row--main {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .expense-row--detail {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .expense-row--detail #exp-amt {
@@ -701,11 +703,11 @@ img {
 
 @media (min-width: 560px) {
   .expense-row--main {
-    grid-template-columns: 160px 1fr;
+    grid-template-columns: 160px minmax(0, 1fr);
   }
 
   .expense-row--detail {
-    grid-template-columns: 1fr 1fr 1.3fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
   }
 
   .expense-row--detail #exp-amt {
@@ -769,6 +771,68 @@ img {
   padding: 0;
   display: grid;
   gap: 0.4rem;
+  max-height: 340px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Per-member tabs (shared mode) */
+.expense-members {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.3rem;
+  margin-bottom: 0.9rem;
+  scrollbar-width: thin;
+}
+
+.exp-member {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  min-width: 5.2rem;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.exp-member.is-active {
+  border-color: var(--accent);
+  background: linear-gradient(180deg, #fff 0%, #fff2ec 100%);
+  box-shadow: 0 2px 10px rgba(224, 69, 44, 0.12);
+}
+
+.exp-member-name {
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+
+.exp-member-sum {
+  font-size: 0.76rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.exp-member.is-active .exp-member-sum {
+  color: var(--accent-strong);
+}
+
+.exp-who-hint {
+  margin: 0 0 0.1rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.exp-who-hint strong {
+  color: var(--accent-strong);
 }
 
 .expense-item {
