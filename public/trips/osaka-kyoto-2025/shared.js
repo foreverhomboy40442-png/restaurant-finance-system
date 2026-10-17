@@ -84,6 +84,40 @@
     return MENTION_ALL.some((a) => bodyMentions(body, a));
   }
 
+  // (Re)build the @mention quick-pick bar for the CURRENT logged-in member.
+  // Must be re-run on identity switch so "（我）" tracks the right person.
+  function renderMentionBar() {
+    const form = document.getElementById("board-form");
+    const input = document.getElementById("board-input");
+    if (!form || !input) return;
+    let bar = document.getElementById("board-mention-bar");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "board-mention-bar";
+      bar.className = "board-mention-bar";
+      form.parentNode.insertBefore(bar, form);
+      bar.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-mention]");
+        if (!btn) return;
+        const token = "@" + btn.dataset.mention + " ";
+        const cur = input.value || "";
+        input.value = (cur && !cur.endsWith(" ") ? cur + " " : cur) + token;
+        input.focus();
+      });
+    }
+    const me = getMember();
+    const chips = mentionTargets()
+      .concat(["全部"])
+      .map(
+        (n) =>
+          `<button type="button" class="mention-chip" data-mention="${esc(
+            n
+          )}">@${esc(n)}${n === me ? "（我）" : ""}</button>`
+      )
+      .join("");
+    bar.innerHTML = `<span class="board-mention-label">標註：</span>${chips}`;
+  }
+
   // Escape, highlight @mentions, then linkify URLs (order keeps spans intact).
   function renderBody(body) {
     let s = esc(body);
@@ -220,6 +254,7 @@
       const name = await askName();
       selectedMember = null;
       renderBar(name);
+      renderMentionBar();
       refreshAll();
     });
   }
@@ -576,31 +611,7 @@
     const form = document.getElementById("board-form");
     const input = document.getElementById("board-input");
 
-    if (form && input && !document.getElementById("board-mention-bar")) {
-      const bar = document.createElement("div");
-      bar.id = "board-mention-bar";
-      bar.className = "board-mention-bar";
-      const me = getMember();
-      const chips = mentionTargets()
-        .concat(["全部"])
-        .map(
-          (n) =>
-            `<button type="button" class="mention-chip" data-mention="${esc(
-              n
-            )}">@${esc(n)}${n === me ? "（我）" : ""}</button>`
-        )
-        .join("");
-      bar.innerHTML = `<span class="board-mention-label">標註：</span>${chips}`;
-      form.parentNode.insertBefore(bar, form);
-      bar.addEventListener("click", (e) => {
-        const btn = e.target.closest("[data-mention]");
-        if (!btn) return;
-        const token = "@" + btn.dataset.mention + " ";
-        const cur = input.value || "";
-        input.value = (cur && !cur.endsWith(" ") ? cur + " " : cur) + token;
-        input.focus();
-      });
-    }
+    renderMentionBar();
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
