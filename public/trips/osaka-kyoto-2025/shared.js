@@ -43,6 +43,23 @@
       .replace(/"/g, "&quot;");
   }
 
+  // Escape first (XSS-safe), then turn URLs into links that open in a new tab.
+  function linkify(s) {
+    const escaped = esc(s);
+    return escaped.replace(/((?:https?:\/\/|www\.)[^\s<]+)/gi, (raw) => {
+      const tm = raw.match(/[),.;:!?，。！？、）】」』]+$/);
+      let url = raw;
+      let trail = "";
+      if (tm) {
+        trail = tm[0];
+        url = raw.slice(0, -trail.length);
+      }
+      if (!url) return raw;
+      const href = url.toLowerCase().startsWith("www.") ? "https://" + url : url;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="board-link">${url}</a>${trail}`;
+    });
+  }
+
   function money(amount, currency) {
     const cfg = CURRENCY[currency] || CURRENCY.JPY;
     const safe = Number.isFinite(Number(amount)) ? Number(amount) : 0;
@@ -443,7 +460,7 @@
           <div class="board-who">${esc(m.member)} <span class="board-time">${fmtTime(
             m.created_at
           )}</span></div>
-          <div class="board-body">${esc(m.body)}</div>
+          <div class="board-body">${linkify(m.body)}</div>
         </div>
       </li>`
       )
