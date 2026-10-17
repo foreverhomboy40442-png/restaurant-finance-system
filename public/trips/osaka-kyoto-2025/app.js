@@ -173,6 +173,54 @@
       .join("");
   }
 
+  function renderBooking(b) {
+    const row = (k, v) =>
+      `<div class="booking-row"><span class="booking-k">${escapeHtml(
+        k
+      )}</span><span class="booking-v">${escapeHtml(v)}</span></div>`;
+    const incl = (b.included || [])
+      .map((x) => `<li>${escapeHtml(x)}</li>`)
+      .join("");
+    const excl = (b.excluded || [])
+      .map((x) => `<li>${escapeHtml(x)}</li>`)
+      .join("");
+    return `
+      <section class="booking-card">
+        <div class="booking-head">
+          <span class="booking-badge">${escapeHtml(b.platform || "一日遊")}</span>
+          <h4>${escapeHtml(b.tourName)}</h4>
+          ${b.tourNameEn ? `<p class="booking-en">${escapeHtml(b.tourNameEn)}</p>` : ""}
+        </div>
+        <div class="booking-qr">
+          <img src="${escapeHtml(b.qr)}" alt="Klook 兌換 QR Code ${escapeHtml(
+            b.voucher || ""
+          )}" width="200" height="200" />
+          <div class="booking-voucher">
+            <span class="booking-k">憑證號 Voucher</span>
+            <strong>${escapeHtml(b.voucher || "")}</strong>
+          </div>
+        </div>
+        <div class="booking-rows">
+          ${b.package ? row("方案", b.package) : ""}
+          ${b.lead ? row("預訂人", b.lead) : ""}
+          ${b.dateLabel ? row("日期", b.dateLabel) : ""}
+          ${b.quantity ? row("數量", b.quantity) : ""}
+          ${b.bookingRef ? row("訂單號", b.bookingRef) : ""}
+          ${b.meetPoint ? row("集合地點", b.meetPoint) : ""}
+          ${b.meetTime ? row("集合時間", b.meetTime) : ""}
+        </div>
+        ${
+          incl || excl
+            ? `<div class="booking-incl">
+                ${incl ? `<div><h5>費用包含</h5><ul>${incl}</ul></div>` : ""}
+                ${excl ? `<div><h5>費用不包含</h5><ul>${excl}</ul></div>` : ""}
+              </div>`
+            : ""
+        }
+        ${b.note ? `<p class="booking-note">${escapeHtml(b.note)}</p>` : ""}
+      </section>`;
+  }
+
   function renderDays() {
     const tabs = document.getElementById("day-tabs");
     const root = document.getElementById("days-root");
@@ -201,6 +249,7 @@
       .map((d) => {
         const isActive = d.day === active.day;
         const isToday = d.date === todayIso;
+        const bookingBlock = d.booking ? renderBooking(d.booking) : "";
         const freeBlock = d.isFreeDay
           ? `
           <div class="free-options">
@@ -225,6 +274,7 @@
             )}）${escapeHtml(d.title)}</h3>
             <p>${escapeHtml(d.summary)}</p>
           </div>
+          ${bookingBlock}
           <ol class="timeline">
             ${d.slots
               .map(
