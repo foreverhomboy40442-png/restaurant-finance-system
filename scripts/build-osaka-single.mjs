@@ -1,12 +1,16 @@
 // Build the standalone single-file trip handbook by inlining
 // styles.css, data.js and app.js into index.html.
+// Writes two copies:
+//   - public/trips/osaka-kyoto-2025/osaka-kyoto-2026.html (reference)
+//   - docs/index.html (served by GitHub Pages "Deploy from a branch", /docs)
 // Usage: node scripts/build-osaka-single.mjs
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dir = join(here, "..", "public", "trips", "osaka-kyoto-2025");
+const docsDir = join(here, "..", "docs");
 
 const html = readFileSync(join(dir, "index.html"), "utf8");
 const css = readFileSync(join(dir, "styles.css"), "utf8");
@@ -36,4 +40,9 @@ let out = html
   );
 
 writeFileSync(join(dir, "osaka-kyoto-2026.html"), out);
-console.log("Built osaka-kyoto-2026.html");
+
+mkdirSync(docsDir, { recursive: true });
+writeFileSync(join(docsDir, "index.html"), out);
+writeFileSync(join(docsDir, ".nojekyll"), "");
+
+console.log("Built osaka-kyoto-2026.html and docs/index.html");
