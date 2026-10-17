@@ -109,32 +109,92 @@
 
   function renderFlights() {
     const root = document.getElementById("flights-root");
-    root.innerHTML = DATA.flights
+    root.innerHTML = DATA.flights.map((f) => flightCard(f)).join("");
+  }
+
+  function flightCard(f) {
+    const chips = [f.flightNo, f.cabin, f.aircraft]
+      .filter(Boolean)
+      .map((c) => `<span class="flight-chip">${escapeHtml(c)}</span>`)
+      .join("");
+    const metaRows = [];
+    metaRows.push(
+      flightMeta("預訂編號", f.bookingRef ? f.bookingRef : "—（請補上）")
+    );
+    metaRows.push(flightMeta("飛行時間", f.duration + "・" + f.stops));
+    metaRows.push(flightMeta("行李", f.baggageSummary));
+    const metaHtml = metaRows.join("");
+
+    const seatNote = f.seatsAssigned
+      ? '<span class="flight-seat-badge is-set">已指定座位</span>'
+      : '<span class="flight-seat-badge is-open">尚未指定座位・需網上選位</span>';
+
+    const paxRows = (f.passengers || [])
       .map(
-        (f) => `
+        (p) => `
+        <tr>
+          <td class="pax-name">${escapeHtml(p.name)}</td>
+          <td class="pax-seat">${escapeHtml(p.seat || "—")}</td>
+          <td class="pax-bag">${escapeHtml(p.checked || "")}${
+          p.carry ? " / " + escapeHtml(p.carry) : ""
+        }</td>
+        </tr>`
+      )
+      .join("");
+
+    return `
       <article class="card flight-card">
         <div class="flight-top">
-          <span class="flight-dir">${escapeHtml(f.direction)}</span>
+          <span class="flight-dir">${escapeHtml(f.direction)}・${escapeHtml(f.airline)}</span>
           <span class="flight-date">${escapeHtml(formatDisplayDate(f.date))}（${escapeHtml(
-            f.weekday
-          )}）</span>
+      f.weekday
+    )}）</span>
         </div>
+        <div class="flight-chips">${chips}</div>
         <div class="flight-route">
           <div class="flight-city">
             <strong>${escapeHtml(f.fromCode)}</strong>
-            <span>${escapeHtml(f.fromName)} ${escapeHtml(f.dep)}</span>
+            <span class="flight-time">${escapeHtml(f.dep)}</span>
+            <span class="flight-place">${escapeHtml(f.fromName)}</span>
+            <span class="flight-sub">${escapeHtml(f.fromAirport)}・${escapeHtml(
+      f.fromTerminal
+    )}</span>
+            <span class="flight-tz">${escapeHtml(f.fromTz)}</span>
           </div>
-          <div class="flight-arrow" aria-hidden="true">→</div>
+          <div class="flight-arrow" aria-hidden="true">
+            <span>✈</span>
+            <small>${escapeHtml(f.duration)}</small>
+          </div>
           <div class="flight-city to">
             <strong>${escapeHtml(f.toCode)}</strong>
-            <span>${escapeHtml(f.toName)} ${escapeHtml(f.arr)}</span>
+            <span class="flight-time">${escapeHtml(f.arr)}</span>
+            <span class="flight-place">${escapeHtml(f.toName)}</span>
+            <span class="flight-sub">${escapeHtml(f.toAirport)}・${escapeHtml(
+      f.toTerminal
+    )}</span>
+            <span class="flight-tz">${escapeHtml(f.toTz)}</span>
           </div>
+        </div>
+        <dl class="flight-meta">${metaHtml}</dl>
+        <div class="flight-pax">
+          <div class="flight-pax-head">
+            <span>乘客與座位</span>
+            ${seatNote}
+          </div>
+          <table class="pax-table">
+            <thead><tr><th>乘客</th><th>座位</th><th>行李（託運／隨身）</th></tr></thead>
+            <tbody>${paxRows}</tbody>
+          </table>
         </div>
         <p class="flight-note">${escapeHtml(f.note)}</p>
       </article>
-    `
-      )
-      .join("");
+    `;
+  }
+
+  function flightMeta(k, v) {
+    return `<div class="flight-meta-row"><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(
+      v
+    )}</dd></div>`;
   }
 
   function renderHotels() {
