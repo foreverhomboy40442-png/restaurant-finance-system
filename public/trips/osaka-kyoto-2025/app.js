@@ -80,7 +80,7 @@
     meta.innerHTML = `
       <span>${escapeHtml(formatDisplayDate(DATA.trip.startDate))}–${escapeHtml(
         formatDisplayDate(DATA.trip.endDate)
-      )}（2025）</span>
+      )}（${escapeHtml(DATA.trip.startDate.slice(0, 4))}）</span>
       <span>${escapeHtml(DATA.trip.region)}</span>
       <span>6 天</span>
     `;

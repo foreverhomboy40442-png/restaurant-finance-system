@@ -2,8 +2,8 @@ window.TRIP_DATA = {
   trip: {
     title: "大阪京都瘋女18",
     subtitle: "秋日紅葉・海之京都・難波夜遊",
-    startDate: "2025-11-19",
-    endDate: "2025-11-24",
+    startDate: "2026-11-19",
+    endDate: "2026-11-24",
     timezone: "Asia/Tokyo",
     region: "大阪・京都",
   },
@@ -12,7 +12,7 @@ window.TRIP_DATA = {
     {
       id: "outbound",
       direction: "去程",
-      date: "2025-11-19",
+      date: "2026-11-19",
       weekday: "三",
       fromCode: "TPE",
       fromName: "桃園",
@@ -25,7 +25,7 @@ window.TRIP_DATA = {
     {
       id: "return",
       direction: "回程",
-      date: "2025-11-24",
+      date: "2026-11-24",
       weekday: "一",
       fromCode: "KIX",
       fromName: "關西",
@@ -42,7 +42,7 @@ window.TRIP_DATA = {
       id: "wellstay",
       name: "WellStayNamba",
       nightsLabel: "Day 1（11/19）",
-      nights: ["2025-11-19"],
+      nights: ["2026-11-19"],
       area: "惠美須町 / 難波南",
       mapsUrl: "https://maps.app.goo.gl/ayqNMurnCcQpqZLk6?g_st=ic",
       tip: "抵達後約 21:20 入住，寄放行李後前往道頓崛宵夜",
@@ -51,7 +51,7 @@ window.TRIP_DATA = {
       id: "wayfarer",
       name: "WAYFARER Kyoto Shijo",
       nightsLabel: "Day 2–4（11/20–11/22）",
-      nights: ["2025-11-20", "2025-11-21", "2025-11-22"],
+      nights: ["2026-11-20", "2026-11-21", "2026-11-22"],
       area: "四條烏丸 / 西洞院通",
       mapsUrl: "https://maps.app.goo.gl/zS4TAYPMaEw8jpgY7?g_st=ic",
       tip: "抵京都後先寄行李；四條烏丸交通便利，適合往返清水寺與河原町",
@@ -60,7 +60,7 @@ window.TRIP_DATA = {
       id: "firstcabin",
       name: "First Cabin Midosuji-Namba",
       nightsLabel: "Day 5（11/23）",
-      nights: ["2025-11-23"],
+      nights: ["2026-11-23"],
       area: "御堂筋難波",
       mapsUrl: "https://maps.app.goo.gl/LuxYdWRUKsmAx94f7?g_st=ic",
       tip: "地鐵難波站 13 號出口；晚間可享館內大浴場與桑拿",
@@ -89,7 +89,7 @@ window.TRIP_DATA = {
   days: [
     {
       day: 1,
-      date: "2025-11-19",
+      date: "2026-11-19",
       weekday: "三",
       title: "抵達大阪・難波宵夜場",
       summary: "KIX 入境後直奔難波，道頓崛夜遊開場",
@@ -122,7 +122,7 @@ window.TRIP_DATA = {
     },
     {
       day: 2,
-      date: "2025-11-20",
+      date: "2026-11-20",
       weekday: "四",
       title: "京都和服美照・清水寺滿山紅葉",
       summary: "和服、二三年坂、清水寺與祇園夜楓",
@@ -161,7 +161,7 @@ window.TRIP_DATA = {
     },
     {
       day: 3,
-      date: "2025-11-21",
+      date: "2026-11-21",
       weekday: "五",
       title: "海之京都・天橋立與伊根舟屋",
       summary: "一日包車／巴士暢遊天橋立與伊根",
@@ -189,7 +189,7 @@ window.TRIP_DATA = {
     },
     {
       day: 4,
-      date: "2025-11-22",
+      date: "2026-11-22",
       weekday: "六",
       title: "個人自由行動日",
       summary: "各自隨心探索，晚上全員集合吃居酒屋",
@@ -211,7 +211,7 @@ window.TRIP_DATA = {
     },
     {
       day: 5,
-      date: "2025-11-23",
+      date: "2026-11-23",
       weekday: "日",
       title: "回大阪・心齋橋購物與大浴場放鬆",
       summary: "血拼心齋橋、梅田，晚間泡湯桑拿",
@@ -244,7 +244,7 @@ window.TRIP_DATA = {
     },
     {
       day: 6,
-      date: "2025-11-24",
+      date: "2026-11-24",
       weekday: "一",
       title: "黑門市場早午餐・滿載賦歸",
       summary: "黑門開吃後搭 Rapi:t 返台",
