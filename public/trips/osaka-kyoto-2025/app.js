@@ -202,7 +202,9 @@
     root.innerHTML = DATA.hotels
       .map(
         (h) => `
-      <article class="card hotel-card${h.nights.includes(todayIso) ? " is-today" : ""}">
+      <article id="hotel-${escapeHtml(h.id)}" class="card hotel-card${
+          h.nights.includes(todayIso) ? " is-today" : ""
+        }">
         <h3>${escapeHtml(h.name)}</h3>
         <p class="hotel-meta">${escapeHtml(h.nightsLabel)} · ${escapeHtml(h.area)}</p>
         <p class="hotel-tip">${escapeHtml(h.tip)}</p>
@@ -281,6 +283,43 @@
       </section>`;
   }
 
+  function hotelById(id) {
+    return (DATA.hotels || []).find((h) => h.id === id) || null;
+  }
+
+  function mapsSearchUrl(query) {
+    return (
+      "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(query)
+    );
+  }
+
+  function slotActions(s) {
+    const parts = [];
+    if (s.hotelId) {
+      const h = hotelById(s.hotelId);
+      if (h) {
+        parts.push(
+          `<button type="button" class="slot-link slot-hotel" data-hotel="${escapeHtml(
+            s.hotelId
+          )}">🏨 ${escapeHtml(h.name)}</button>`
+        );
+      }
+    }
+    const place = s.place || (s.type === "景點" ? s.title : "");
+    if (place && (s.type === "景點" || s.mapsUrl || s.place)) {
+      const url = s.mapsUrl || mapsSearchUrl(place);
+      parts.push(
+        `<a class="slot-link slot-map" href="${escapeHtml(
+          url
+        )}" target="_blank" rel="noopener noreferrer">📍 Google Map</a>`
+      );
+    }
+    return parts.length
+      ? `<div class="slot-actions">${parts.join("")}</div>`
+      : "";
+  }
+
   function renderDays() {
     const tabs = document.getElementById("day-tabs");
     const root = document.getElementById("days-root");
@@ -347,6 +386,7 @@
                   )}</span>
                   <h4>${escapeHtml(s.title)}</h4>
                   <p>${escapeHtml(s.detail)}</p>
+                  ${slotActions(s)}
                 </div>
               </li>
             `
@@ -365,6 +405,25 @@
       const day = Number(btn.dataset.day);
       setActiveDay(day);
     });
+
+    if (!root.dataset.hotelBound) {
+      root.dataset.hotelBound = "1";
+      root.addEventListener("click", (e) => {
+        const link = e.target.closest(".slot-hotel");
+        if (!link) return;
+        jumpToHotel(link.dataset.hotel);
+      });
+    }
+  }
+
+  function jumpToHotel(id) {
+    const el = document.getElementById("hotel-" + id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.remove("is-flash");
+    void el.offsetWidth;
+    el.classList.add("is-flash");
+    setTimeout(() => el.classList.remove("is-flash"), 1600);
   }
 
   function setActiveDay(day) {

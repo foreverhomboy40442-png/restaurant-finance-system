@@ -155,12 +155,21 @@ window.TRIP_DATA = {
           title: "WellStayNamba Check-in",
           detail: "計程車約 5 分鐘抵達，寄放行李。",
           type: "住宿",
+          hotelId: "wellstay",
         },
         {
           time: "21:40 – 23:30",
           title: "道頓崛宵夜夜遊",
           detail: "難波／道頓崛周邊宵夜與夜景散步。",
           type: "景點",
+          place: "道頓堀",
+        },
+        {
+          time: "23:30",
+          title: "回 WellStayNamba 休息",
+          detail: "散步或計程車返回 WellStayNamba，結束精彩的第一晚。",
+          type: "住宿",
+          hotelId: "wellstay",
         },
       ],
     },
@@ -183,6 +192,7 @@ window.TRIP_DATA = {
           detail:
             "烏丸站下車步行至 WAYFARER 寄放行李。寄完直接在飯店門口攔計程車（約 12–15 分鐘、車資約 ¥1,400–1,800，每人約 NT$80–100）直達清水寺仁王門，免除擠公車與爬坡！",
           type: "住宿",
+          hotelId: "wayfarer",
         },
         {
           time: "11:15 – 13:30",
@@ -190,6 +200,7 @@ window.TRIP_DATA = {
           detail:
             "從最高點開始逛本堂、清水舞台（滿山紅葉環繞）。順步道而下，於音羽之瀑旁或「瀧の家（瀧之家）」吃熱烏龍麵與抹茶糰子充飢。",
           type: "景點",
+          place: "清水寺",
         },
         {
           time: "13:30 – 15:30",
@@ -197,6 +208,7 @@ window.TRIP_DATA = {
           detail:
             "穿平底鞋／球鞋走石板路最輕鬆，一路順下坡逛老街小店、吃草莓大福與抹茶霜淇淋，拍古都建築大片。",
           type: "景點",
+          place: "二年坂",
         },
         {
           time: "15:30 – 17:00",
@@ -204,6 +216,7 @@ window.TRIP_DATA = {
           detail:
             "沿二年坂走到底直達高台寺（深秋庭園與夕陽）。加碼選去：時間與體力許可可順遊建仁寺，欣賞「風神雷神圖」與庭園，人潮較少、禪意十足。",
           type: "景點",
+          place: "高台寺",
         },
         {
           time: "17:00 – 18:30",
@@ -211,6 +224,7 @@ window.TRIP_DATA = {
           detail:
             "17:00 太陽下山，觀高台寺夜間點燈（臥龍池楓葉倒影），接著散步穿越夜間點燈的祇園花見小路與巽橋。",
           type: "景點",
+          place: "祇園 花見小路",
         },
         {
           time: "18:30 – 20:30",
@@ -218,6 +232,14 @@ window.TRIP_DATA = {
           detail:
             "散步至鴨川周邊（河原町／先斗町）享用暖呼呼晚宴。餐後直接搭計程車（約 ¥1,000，每人約 NT$55）回 WAYFARER 入住，完美又不累的一天！",
           type: "用餐",
+          place: "鴨川 先斗町",
+        },
+        {
+          time: "20:30",
+          title: "回 WAYFARER Kyoto Shijo 入住休息",
+          detail: "計程車返回 WAYFARER Kyoto Shijo 入住，好好休息迎接明天的一日遊。",
+          type: "住宿",
+          hotelId: "wayfarer",
         },
       ],
     },
@@ -266,6 +288,7 @@ window.TRIP_DATA = {
           detail:
             "含天橋立觀景區纜車／單軌電車通用票（價值 ¥1,000）。登觀景台看海天倒置絕景。注意：2026/12/15–12/17 view land 整修關閉，將改往傘松公園。",
           type: "景點",
+          place: "天橋立",
         },
         {
           time: "搭乘巴士 約 50 分",
@@ -279,6 +302,7 @@ window.TRIP_DATA = {
           detail:
             "含伊根灣觀光遊覽船船票（價值 ¥1,200）。從海上欣賞整排依海而建的舟屋「海上人家」，世界最美海灣之一盡收眼底。",
           type: "景點",
+          place: "伊根 舟屋",
         },
         {
           time: "17:30",
@@ -291,6 +315,14 @@ window.TRIP_DATA = {
           title: "京都市區自由晚餐",
           detail: "回到四條烏丸／河原町，自由選擇晚餐。",
           type: "用餐",
+          place: "四條烏丸",
+        },
+        {
+          time: "晚間",
+          title: "回 WAYFARER Kyoto Shijo 休息",
+          detail: "晚餐後步行返回 WAYFARER Kyoto Shijo，養足精神迎接自由日。",
+          type: "住宿",
+          hotelId: "wayfarer",
         },
       ],
     },
@@ -313,6 +345,13 @@ window.TRIP_DATA = {
           title: "全員集合・居酒屋晚餐",
           detail: "依大家一日遊結束時間再決定餐廳與集合時間。",
           type: "用餐",
+        },
+        {
+          time: "晚間",
+          title: "回 WAYFARER Kyoto Shijo 休息",
+          detail: "居酒屋後各自或結伴返回 WAYFARER Kyoto Shijo，這是在京都的最後一晚。",
+          type: "住宿",
+          hotelId: "wayfarer",
         },
       ],
     },
@@ -340,18 +379,21 @@ window.TRIP_DATA = {
           title: "心齋橋 / PARCO / 大丸爆買 & 午餐",
           detail: "逛心齋橋筋、PARCO、大丸百貨補貨採買，順道午餐。",
           type: "景點",
+          place: "心齋橋筋商店街",
         },
         {
           time: "15:00 – 15:30",
           title: "（貼心救援）回飯店丟第一波戰利品",
           detail: "回 First Cabin 卸下戰利品、稍作休息再出發。",
           type: "住宿",
+          hotelId: "firstcabin",
         },
         {
           time: "15:30 – 18:30",
           title: "梅田商圈 / 難波公園續逛",
           detail: "自由續逛梅田商圈與難波公園，採買伴手禮。",
           type: "景點",
+          place: "難波公園 Namba Parks",
         },
         {
           time: "18:30 – 21:00",
@@ -364,6 +406,7 @@ window.TRIP_DATA = {
           title: "返回飯店 → 大浴場泡湯 & 桑拿放鬆",
           detail: "回館內大浴場泡湯與桑拿，洗去疲憊、放鬆最後一晚。",
           type: "住宿",
+          hotelId: "firstcabin",
         },
       ],
     },
@@ -379,18 +422,21 @@ window.TRIP_DATA = {
           title: "Check-out 寄放行李",
           detail: "大行李寄放在 First Cabin 櫃檯。",
           type: "住宿",
+          hotelId: "firstcabin",
         },
         {
           time: "09:30 – 11:15",
           title: "黑門市場早午餐",
           detail: "步行約 8 分鐘：現烤日本大生蠔、生干貝、炙燒神戶牛肉串與鮮甜海膽。",
           type: "用餐",
+          place: "黑門市場",
         },
         {
           time: "11:20",
           title: "返回飯店取行李",
           detail: "取行李後前往南海難波站。",
           type: "住宿",
+          hotelId: "firstcabin",
         },
         {
           time: "11:30 – 12:20",
