@@ -11,7 +11,9 @@ const dir = join(here, "..", "public", "trips", "osaka-kyoto-2025");
 const html = readFileSync(join(dir, "index.html"), "utf8");
 const css = readFileSync(join(dir, "styles.css"), "utf8");
 const data = readFileSync(join(dir, "data.js"), "utf8");
+const bootstrap = readFileSync(join(dir, "config-bootstrap.js"), "utf8");
 const app = readFileSync(join(dir, "app.js"), "utf8");
+const shared = readFileSync(join(dir, "shared.js"), "utf8");
 
 let out = html
   .replace(
@@ -23,8 +25,14 @@ let out = html
     `    <style>\n${css}\n    </style>`
   )
   .replace(
-    '    <script src="./data.js"></script>\n    <script src="./app.js"></script>',
-    `    <script>\n${data}\n    </script>\n    <script>\n${app}\n    </script>`
+    `    <script src="./data.js"></script>\n` +
+      `    <script src="./config-bootstrap.js"></script>\n` +
+      `    <script src="./app.js"></script>\n` +
+      `    <script type="module" src="./shared.js"></script>`,
+    `    <script>\n${data}\n    </script>\n` +
+      `    <script>\n${bootstrap}\n    </script>\n` +
+      `    <script>\n${app}\n    </script>\n` +
+      `    <script type="module">\n${shared}\n    </script>`
   );
 
 writeFileSync(join(dir, "osaka-kyoto-2026.html"), out);

@@ -273,7 +273,8 @@
   window.__tripSetDay = setActiveDay;
 
   function renderDay4Options() {
-    const selected = new Set(loadJson(STORAGE_KEYS.day4, []));
+    const shared = !!window.TRIP_SHARED;
+    const selected = shared ? new Set() : new Set(loadJson(STORAGE_KEYS.day4, []));
     const root = document.getElementById("options-root");
     if (!root) return;
 
@@ -305,6 +306,8 @@
       })
       .join("");
 
+    if (shared) return; // shared.js wires voting to Supabase
+
     root.addEventListener("change", (e) => {
       const input = e.target.closest("input[data-day4]");
       if (!input) return;
@@ -333,6 +336,7 @@
   }
 
   function renderExpense() {
+    if (window.TRIP_SHARED) return; // shared.js owns the expense section
     const form = document.getElementById("expense-form");
     const listEl = document.getElementById("expense-list");
     const totalsEl = document.getElementById("expense-totals");

@@ -843,6 +843,191 @@ img {
   font-size: 0.85rem;
 }
 
+/* Shared mode */
+.shared-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff 0%, #eef6ee 100%);
+  border: 1px solid color-mix(in srgb, var(--matcha) 45%, var(--line));
+  font-size: 0.9rem;
+}
+
+.shared-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--matcha);
+  box-shadow: 0 0 0 3px rgba(111, 143, 78, 0.2);
+}
+
+.shared-switch {
+  margin-left: auto;
+  border: 1px solid var(--line);
+  background: transparent;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.shared-switch:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.member-tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.member-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  font-size: 0.82rem;
+}
+
+.member-chip-name {
+  font-weight: 600;
+  color: var(--indigo);
+}
+
+.expense-sub .who {
+  color: var(--indigo);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Vote tally on Day4 options */
+.vote-tally {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.vote-count {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.vote-count.vote-zero {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.voter {
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.75rem;
+}
+
+/* Message board */
+.board-list {
+  list-style: none;
+  margin: 0 0 0.85rem;
+  padding: 0.5rem;
+  display: grid;
+  gap: 0.5rem;
+  max-height: 360px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.board-item {
+  display: flex;
+}
+
+.board-item.is-me {
+  justify-content: flex-end;
+}
+
+.board-bubble {
+  max-width: 80%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 14px;
+  background: var(--chip-bg);
+}
+
+.board-item.is-me .board-bubble {
+  background: var(--accent-soft);
+}
+
+.board-who {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-bottom: 0.1rem;
+}
+
+.board-who .board-time {
+  margin-left: 0.35rem;
+  opacity: 0.75;
+}
+
+.board-body {
+  font-size: 0.95rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.board-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Name modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(42, 29, 23, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  width: min(100%, 360px);
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.3rem;
+  box-shadow: 0 20px 50px rgba(42, 29, 23, 0.25);
+  display: grid;
+  gap: 0.7rem;
+}
+
+.modal h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+
+.modal p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
 .footer {
   margin-top: 2rem;
   padding-top: 1.25rem;
@@ -970,10 +1155,13 @@ img {
           <a href="#itinerary" onclick="window.__tripSetDay&&window.__tripSetDay(4)">自由日</a>
           <a href="#transport">交通</a>
           <a href="#expense">記帳</a>
+          <a href="#board">留言</a>
           <a href="#checklist">清單</a>
           <a href="#notes">備忘</a>
         </div>
       </nav>
+
+      <div class="shared-bar" id="shared-bar" hidden></div>
 
       <main>
         <section class="section" id="flights">
@@ -1047,6 +1235,28 @@ img {
             <p>勾選狀態會保存在本機瀏覽器</p>
           </div>
           <div id="checklist-root"></div>
+        </section>
+
+        <section class="section" id="board">
+          <div class="section-head">
+            <h2>留言板</h2>
+            <p class="board-hint-personal">需用「共享連結」開啟，四人才能一起即時留言。</p>
+            <p class="board-hint-shared" hidden>大家即時交流，訊息會同步給所有人。</p>
+          </div>
+          <div class="board-wrap" hidden>
+            <ul class="board-list" id="board-list"></ul>
+            <form class="board-form" id="board-form">
+              <input
+                type="text"
+                id="board-input"
+                class="exp-input exp-grow"
+                placeholder="說點什麼…"
+                maxlength="2000"
+                autocomplete="off"
+              />
+              <button type="submit" class="btn btn-primary">送出</button>
+            </form>
+          </div>
         </section>
 
         <section class="section" id="notes">
@@ -1406,6 +1616,61 @@ window.TRIP_DATA = {
 
     </script>
     <script>
+// Parses shared-backend config carried in the link hash (#s=base64json)
+// and persists it locally so the plain URL keeps working afterwards.
+// Sets window.TRIP_SHARED = { url, key, trip } or null.
+(function () {
+  "use strict";
+
+  var SAVE_KEY = "fk18-shared-cfg";
+
+  function fromBase64(b64) {
+    var std = b64.replace(/-/g, "+").replace(/_/g, "/");
+    return decodeURIComponent(
+      atob(std)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+  }
+
+  function parse() {
+    try {
+      var h = window.location.hash || "";
+      var m = h.match(/[#&]s=([^&]+)/);
+      if (m) {
+        var cfg = JSON.parse(fromBase64(m[1]));
+        if (cfg && cfg.url && cfg.key) {
+          cfg.trip = cfg.trip || "osaka-kyoto-2026";
+          localStorage.setItem(SAVE_KEY, JSON.stringify(cfg));
+          return cfg;
+        }
+      }
+    } catch (e) {
+      /* ignore malformed hash */
+    }
+    try {
+      var saved = localStorage.getItem(SAVE_KEY);
+      if (saved) {
+        var c = JSON.parse(saved);
+        if (c && c.url && c.key) {
+          c.trip = c.trip || "osaka-kyoto-2026";
+          return c;
+        }
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return null;
+  }
+
+  window.TRIP_SHARED = parse();
+})();
+
+    </script>
+    <script>
 (function () {
   "use strict";
 
@@ -1681,7 +1946,8 @@ window.TRIP_DATA = {
   window.__tripSetDay = setActiveDay;
 
   function renderDay4Options() {
-    const selected = new Set(loadJson(STORAGE_KEYS.day4, []));
+    const shared = !!window.TRIP_SHARED;
+    const selected = shared ? new Set() : new Set(loadJson(STORAGE_KEYS.day4, []));
     const root = document.getElementById("options-root");
     if (!root) return;
 
@@ -1713,6 +1979,8 @@ window.TRIP_DATA = {
       })
       .join("");
 
+    if (shared) return; // shared.js wires voting to Supabase
+
     root.addEventListener("change", (e) => {
       const input = e.target.closest("input[data-day4]");
       if (!input) return;
@@ -1741,6 +2009,7 @@ window.TRIP_DATA = {
   }
 
   function renderExpense() {
+    if (window.TRIP_SHARED) return; // shared.js owns the expense section
     const form = document.getElementById("expense-form");
     const listEl = document.getElementById("expense-list");
     const totalsEl = document.getElementById("expense-totals");
@@ -1967,6 +2236,448 @@ window.TRIP_DATA = {
     bindNotes();
     bindJumpToday();
     bindNavActive();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+
+    </script>
+    <script type="module">
+// Shared-mode layer: when window.TRIP_SHARED is set, connect to the
+// trip's own Supabase project for live expenses, message board and
+// Day4 votes. No-op in personal mode.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+(function () {
+  "use strict";
+
+  const CFG = window.TRIP_SHARED;
+  if (!CFG) return;
+
+  const TRIP = CFG.trip || "osaka-kyoto-2026";
+  const MEMBER_KEY = "fk18-member";
+  const CURRENCY = {
+    JPY: { symbol: "¥", fractionDigits: 0 },
+    TWD: { symbol: "NT$", fractionDigits: 0 },
+  };
+
+  const supabase = createClient(CFG.url.replace(/\/$/, ""), CFG.key, {
+    auth: { persistSession: false },
+  });
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function money(amount, currency) {
+    const cfg = CURRENCY[currency] || CURRENCY.JPY;
+    const safe = Number.isFinite(Number(amount)) ? Number(amount) : 0;
+    return `${cfg.symbol}${safe.toLocaleString("en-US", {
+      minimumFractionDigits: cfg.fractionDigits,
+      maximumFractionDigits: cfg.fractionDigits,
+    })}`;
+  }
+
+  function getMember() {
+    return (localStorage.getItem(MEMBER_KEY) || "").trim();
+  }
+  function setMember(name) {
+    localStorage.setItem(MEMBER_KEY, name.trim());
+  }
+
+  // ---------- lightweight name modal ----------
+  function askName() {
+    return new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      overlay.innerHTML = `
+        <div class="modal" role="dialog" aria-modal="true">
+          <h3>加入共享行程</h3>
+          <p>輸入你的名字，大家會看到是誰記帳／留言。</p>
+          <input type="text" id="member-name" class="exp-input exp-grow" placeholder="你的名字（例：小美）" maxlength="20" />
+          <button type="button" class="btn btn-primary" id="member-ok">進入</button>
+        </div>`;
+      document.body.appendChild(overlay);
+      const input = overlay.querySelector("#member-name");
+      const ok = overlay.querySelector("#member-ok");
+      input.value = getMember();
+      input.focus();
+      function submit() {
+        const v = (input.value || "").trim();
+        if (!v) {
+          input.focus();
+          return;
+        }
+        setMember(v);
+        overlay.remove();
+        resolve(v);
+      }
+      ok.addEventListener("click", submit);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") submit();
+      });
+    });
+  }
+
+  // ---------- shared bar ----------
+  function renderBar(member) {
+    const bar = document.getElementById("shared-bar");
+    if (!bar) return;
+    bar.hidden = false;
+    bar.innerHTML = `
+      <span class="shared-dot" aria-hidden="true"></span>
+      <span>共享已連線 · 你是 <strong>${esc(member)}</strong></span>
+      <button type="button" class="shared-switch" id="shared-switch">切換身分</button>`;
+    bar.querySelector("#shared-switch").addEventListener("click", async () => {
+      const name = await askName();
+      renderBar(name);
+      refreshAll();
+    });
+  }
+
+  // ---------- expenses ----------
+  async function loadExpenses() {
+    const { data, error } = await supabase
+      .from("trip_expenses")
+      .select("*")
+      .eq("trip_id", TRIP)
+      .order("spent_on", { ascending: false })
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error(error);
+      return [];
+    }
+    return data || [];
+  }
+
+  function paintExpenses(items) {
+    const totalsEl = document.getElementById("expense-totals");
+    const listEl = document.getElementById("expense-list");
+    if (!totalsEl || !listEl) return;
+
+    const totals = {};
+    const perMember = {};
+    items.forEach((it) => {
+      const cur = CURRENCY[it.currency] ? it.currency : "JPY";
+      const amt = Number(it.amount) || 0;
+      totals[cur] = (totals[cur] || 0) + amt;
+      perMember[it.member] = perMember[it.member] || {};
+      perMember[it.member][cur] = (perMember[it.member][cur] || 0) + amt;
+    });
+
+    const totalChips = Object.keys(CURRENCY)
+      .filter((c) => totals[c])
+      .map(
+        (c) =>
+          `<div class="total-chip"><span class="total-label">總計</span><span class="total-value">${money(
+            totals[c],
+            c
+          )}</span></div>`
+      )
+      .join("");
+
+    const memberChips = Object.keys(perMember)
+      .map((m) => {
+        const parts = Object.keys(perMember[m])
+          .map((c) => money(perMember[m][c], c))
+          .join(" + ");
+        return `<div class="member-chip"><span class="member-chip-name">${esc(
+          m
+        )}</span><span>${parts}</span></div>`;
+      })
+      .join("");
+
+    totalsEl.innerHTML =
+      (totalChips || `<p class="expense-empty">尚未有人記帳。</p>`) +
+      (memberChips ? `<div class="member-tally">${memberChips}</div>` : "");
+
+    listEl.innerHTML = items
+      .map(
+        (it) => `
+      <li class="expense-item">
+        <div class="expense-meta">
+          <div class="expense-top">
+            <span class="expense-item-name">${esc(it.item)}</span>
+            <span class="expense-amount">${money(it.amount, it.currency)}</span>
+          </div>
+          <div class="expense-sub">
+            <span class="cat-tag" data-cat="${esc(it.category)}">${esc(it.category)}</span>
+            <span class="who">${esc(it.member)}</span>
+            <span class="expense-date">${esc(it.spent_on)}</span>
+          </div>
+        </div>
+        <button type="button" class="expense-del" data-del="${esc(it.id)}" aria-label="刪除">刪除</button>
+      </li>`
+      )
+      .join("");
+  }
+
+  async function refreshExpenses() {
+    paintExpenses(await loadExpenses());
+  }
+
+  function bindExpenseForm() {
+    const form = document.getElementById("expense-form");
+    const listEl = document.getElementById("expense-list");
+    const errorEl = document.getElementById("exp-error");
+    const dateEl = document.getElementById("exp-date");
+    const itemEl = document.getElementById("exp-item");
+    const amtEl = document.getElementById("exp-amt");
+    const catEl = document.getElementById("exp-cat");
+    const curEl = document.getElementById("exp-cur");
+    if (!form) return;
+
+    if (dateEl && !dateEl.value) {
+      const d = new Date();
+      dateEl.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(d.getDate()).padStart(2, "0")}`;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const item = (itemEl.value || "").trim();
+      const raw = (amtEl.value || "").trim();
+      const amount = Number(raw);
+      if (!item) return showErr("請輸入品項名稱");
+      if (raw === "" || !Number.isFinite(amount)) return showErr("金額必須是數字");
+      if (amount <= 0) return showErr("金額必須大於 0");
+      hideErr();
+
+      const payload = {
+        trip_id: TRIP,
+        member: getMember() || "匿名",
+        item,
+        amount: Math.round(amount * 100) / 100,
+        currency: CURRENCY[curEl.value] ? curEl.value : "JPY",
+        category: catEl.value || "其他",
+        spent_on: dateEl.value || undefined,
+      };
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      const { error } = await supabase.from("trip_expenses").insert(payload);
+      btn.disabled = false;
+      if (error) return showErr("儲存失敗，請重試");
+      itemEl.value = "";
+      amtEl.value = "";
+      itemEl.focus();
+      refreshExpenses();
+    });
+
+    listEl.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".expense-del");
+      if (!btn) return;
+      btn.disabled = true;
+      const { error } = await supabase
+        .from("trip_expenses")
+        .delete()
+        .eq("id", btn.dataset.del);
+      if (error) btn.disabled = false;
+      refreshExpenses();
+    });
+
+    function showErr(m) {
+      errorEl.textContent = m;
+      errorEl.hidden = false;
+    }
+    function hideErr() {
+      errorEl.hidden = true;
+    }
+  }
+
+  // ---------- message board ----------
+  async function loadMessages() {
+    const { data, error } = await supabase
+      .from("trip_messages")
+      .select("*")
+      .eq("trip_id", TRIP)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error(error);
+      return [];
+    }
+    return data || [];
+  }
+
+  function fmtTime(iso) {
+    try {
+      const d = new Date(iso);
+      return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(
+        d.getDate()
+      ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
+        d.getMinutes()
+      ).padStart(2, "0")}`;
+    } catch {
+      return "";
+    }
+  }
+
+  function paintMessages(items) {
+    const listEl = document.getElementById("board-list");
+    if (!listEl) return;
+    const me = getMember();
+    listEl.innerHTML = items
+      .map(
+        (m) => `
+      <li class="board-item${m.member === me ? " is-me" : ""}">
+        <div class="board-bubble">
+          <div class="board-who">${esc(m.member)} <span class="board-time">${fmtTime(
+            m.created_at
+          )}</span></div>
+          <div class="board-body">${esc(m.body)}</div>
+        </div>
+      </li>`
+      )
+      .join("");
+    listEl.scrollTop = listEl.scrollHeight;
+  }
+
+  async function refreshMessages() {
+    paintMessages(await loadMessages());
+  }
+
+  function bindBoard() {
+    const section = document.getElementById("board");
+    if (!section) return;
+    section.querySelectorAll(".board-hint-personal").forEach((e) => (e.hidden = true));
+    section.querySelectorAll(".board-hint-shared").forEach((e) => (e.hidden = false));
+    const wrap = section.querySelector(".board-wrap");
+    if (wrap) wrap.hidden = false;
+
+    const form = document.getElementById("board-form");
+    const input = document.getElementById("board-input");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const body = (input.value || "").trim();
+      if (!body) return;
+      input.value = "";
+      const { error } = await supabase.from("trip_messages").insert({
+        trip_id: TRIP,
+        member: getMember() || "匿名",
+        body,
+      });
+      if (error) {
+        input.value = body;
+        return;
+      }
+      refreshMessages();
+    });
+  }
+
+  // ---------- day4 votes ----------
+  async function loadVotes() {
+    const { data, error } = await supabase
+      .from("trip_day4_votes")
+      .select("*")
+      .eq("trip_id", TRIP);
+    if (error) {
+      console.error(error);
+      return [];
+    }
+    return data || [];
+  }
+
+  function paintVotes(votes) {
+    const me = getMember();
+    const byOption = {};
+    votes.forEach((v) => {
+      byOption[v.option_id] = byOption[v.option_id] || [];
+      byOption[v.option_id].push(v.member);
+    });
+    document.querySelectorAll(".option-card").forEach((card) => {
+      const id = card.dataset.option;
+      const voters = byOption[id] || [];
+      const input = card.querySelector("input[data-day4]");
+      if (input) input.checked = voters.includes(me);
+      card.classList.toggle("is-selected", voters.includes(me));
+      let tally = card.querySelector(".vote-tally");
+      if (!tally) {
+        tally = document.createElement("div");
+        tally.className = "vote-tally";
+        card.appendChild(tally);
+      }
+      tally.innerHTML = voters.length
+        ? `<span class="vote-count">${voters.length} 票</span> ${voters
+            .map((m) => `<span class="voter">${esc(m)}</span>`)
+            .join("")}`
+        : `<span class="vote-count vote-zero">還沒有人選</span>`;
+    });
+  }
+
+  async function refreshVotes() {
+    paintVotes(await loadVotes());
+  }
+
+  function bindVotes() {
+    const root = document.getElementById("options-root");
+    if (!root) return;
+    root.addEventListener("change", async (e) => {
+      const input = e.target.closest("input[data-day4]");
+      if (!input) return;
+      const id = input.dataset.day4;
+      const me = getMember() || "匿名";
+      if (input.checked) {
+        await supabase
+          .from("trip_day4_votes")
+          .upsert({ trip_id: TRIP, member: me, option_id: id });
+      } else {
+        await supabase
+          .from("trip_day4_votes")
+          .delete()
+          .eq("trip_id", TRIP)
+          .eq("member", me)
+          .eq("option_id", id);
+      }
+      refreshVotes();
+    });
+  }
+
+  function refreshAll() {
+    refreshExpenses();
+    refreshMessages();
+    refreshVotes();
+  }
+
+  function subscribe() {
+    supabase
+      .channel("trip-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "trip_expenses", filter: `trip_id=eq.${TRIP}` },
+        refreshExpenses
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "trip_messages", filter: `trip_id=eq.${TRIP}` },
+        refreshMessages
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "trip_day4_votes", filter: `trip_id=eq.${TRIP}` },
+        refreshVotes
+      )
+      .subscribe();
+  }
+
+  async function init() {
+    let member = getMember();
+    if (!member) member = await askName();
+    renderBar(member);
+    bindExpenseForm();
+    bindBoard();
+    bindVotes();
+    await refreshAll();
+    subscribe();
+    window.__tripRefreshAll = refreshAll;
   }
 
   if (document.readyState === "loading") {

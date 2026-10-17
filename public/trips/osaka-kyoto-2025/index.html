@@ -35,10 +35,13 @@
           <a href="#itinerary" onclick="window.__tripSetDay&&window.__tripSetDay(4)">自由日</a>
           <a href="#transport">交通</a>
           <a href="#expense">記帳</a>
+          <a href="#board">留言</a>
           <a href="#checklist">清單</a>
           <a href="#notes">備忘</a>
         </div>
       </nav>
+
+      <div class="shared-bar" id="shared-bar" hidden></div>
 
       <main>
         <section class="section" id="flights">
@@ -114,6 +117,28 @@
           <div id="checklist-root"></div>
         </section>
 
+        <section class="section" id="board">
+          <div class="section-head">
+            <h2>留言板</h2>
+            <p class="board-hint-personal">需用「共享連結」開啟，四人才能一起即時留言。</p>
+            <p class="board-hint-shared" hidden>大家即時交流，訊息會同步給所有人。</p>
+          </div>
+          <div class="board-wrap" hidden>
+            <ul class="board-list" id="board-list"></ul>
+            <form class="board-form" id="board-form">
+              <input
+                type="text"
+                id="board-input"
+                class="exp-input exp-grow"
+                placeholder="說點什麼…"
+                maxlength="2000"
+                autocomplete="off"
+              />
+              <button type="submit" class="btn btn-primary">送出</button>
+            </form>
+          </div>
+        </section>
+
         <section class="section" id="notes">
           <div class="section-head">
             <h2>行前／行中備忘</h2>
@@ -134,6 +159,8 @@
     </div>
 
     <script src="./data.js"></script>
+    <script src="./config-bootstrap.js"></script>
     <script src="./app.js"></script>
+    <script type="module" src="./shared.js"></script>
   </body>
 </html>
