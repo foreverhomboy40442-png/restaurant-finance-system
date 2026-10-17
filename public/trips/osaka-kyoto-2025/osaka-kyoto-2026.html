@@ -1593,11 +1593,11 @@ img {
         <div class="nav-track">
           <a href="#flights">航班</a>
           <a href="#hotels">住宿</a>
+          <a href="#board">留言</a>
           <a href="#itinerary">行程</a>
           <a href="#itinerary" onclick="window.__tripSetDay&&window.__tripSetDay(4)">自由日</a>
           <a href="#transport">交通</a>
           <a href="#expense">記帳</a>
-          <a href="#board">留言</a>
           <a href="#checklist">清單</a>
           <a href="#notes">備忘</a>
         </div>
@@ -1620,6 +1620,28 @@ img {
             <p>三晚不同據點，點連結可開 Google Maps</p>
           </div>
           <div class="stack" id="hotels-root"></div>
+        </section>
+
+        <section class="section" id="board">
+          <div class="section-head">
+            <h2>留言板</h2>
+            <p class="board-hint-personal">需用「共享連結」開啟，四人才能一起即時留言。</p>
+            <p class="board-hint-shared" hidden>大家即時交流，訊息會同步給所有人。</p>
+          </div>
+          <div class="board-wrap" hidden>
+            <ul class="board-list" id="board-list"></ul>
+            <form class="board-form" id="board-form">
+              <input
+                type="text"
+                id="board-input"
+                class="exp-input exp-grow"
+                placeholder="說點什麼…"
+                maxlength="2000"
+                autocomplete="off"
+              />
+              <button type="submit" class="btn btn-primary">送出</button>
+            </form>
+          </div>
         </section>
 
         <section class="section" id="itinerary">
@@ -1669,28 +1691,6 @@ img {
           </form>
           <div class="expense-totals" id="expense-totals"></div>
           <ul class="expense-list" id="expense-list"></ul>
-        </section>
-
-        <section class="section" id="board">
-          <div class="section-head">
-            <h2>留言板</h2>
-            <p class="board-hint-personal">需用「共享連結」開啟，四人才能一起即時留言。</p>
-            <p class="board-hint-shared" hidden>大家即時交流，訊息會同步給所有人。</p>
-          </div>
-          <div class="board-wrap" hidden>
-            <ul class="board-list" id="board-list"></ul>
-            <form class="board-form" id="board-form">
-              <input
-                type="text"
-                id="board-input"
-                class="exp-input exp-grow"
-                placeholder="說點什麼…"
-                maxlength="2000"
-                autocomplete="off"
-              />
-              <button type="submit" class="btn btn-primary">送出</button>
-            </form>
-          </div>
         </section>
 
         <section class="section" id="checklist">
