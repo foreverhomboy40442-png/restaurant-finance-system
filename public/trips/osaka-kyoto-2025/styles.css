@@ -205,6 +205,7 @@ img {
 /* Sections */
 .section {
   margin-bottom: 2.75rem;
+  scroll-margin-top: calc(var(--nav-h) + 12px);
   animation: rise 0.65s ease both;
 }
 
@@ -339,9 +340,15 @@ img {
   display: flex;
   gap: 0.4rem;
   overflow-x: auto;
-  margin-bottom: 1rem;
-  padding-bottom: 0.15rem;
+  margin: 0 0 1rem;
+  padding: 0.45rem 0;
   scrollbar-width: none;
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 15;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .day-tabs::-webkit-scrollbar {

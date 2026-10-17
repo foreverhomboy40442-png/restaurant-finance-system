@@ -184,6 +184,7 @@
           role="tab"
           aria-selected="${isActive}"
           data-day="${d.day}"
+          onclick="window.__tripSetDay && window.__tripSetDay(${d.day})"
         >
           Day ${d.day}${isToday ? " · 今" : ""}
         </button>
@@ -243,15 +244,19 @@
   }
 
   function setActiveDay(day) {
+    const target = Number(day);
     document.querySelectorAll(".day-tab").forEach((btn) => {
-      const on = Number(btn.dataset.day) === day;
+      const on = Number(btn.dataset.day) === target;
       btn.classList.toggle("is-active", on);
       btn.setAttribute("aria-selected", String(on));
     });
     document.querySelectorAll(".day-panel").forEach((panel) => {
-      panel.classList.toggle("is-active", Number(panel.dataset.dayPanel) === day);
+      panel.classList.toggle("is-active", Number(panel.dataset.dayPanel) === target);
     });
   }
+
+  // Expose for reliable tab switching (also used by inline handlers)
+  window.__tripSetDay = setActiveDay;
 
   function renderDay4Options() {
     const selected = new Set(loadJson(STORAGE_KEYS.day4, []));
@@ -273,9 +278,11 @@
             </div>
           </div>
           <label>
-            <input type="checkbox" data-day4="${escapeHtml(opt.id)}" ${
-              checked ? "checked" : ""
-            } />
+            <input
+              type="checkbox"
+              data-day4="${escapeHtml(opt.id)}"
+              ${checked ? "checked" : ""}
+            />
             <span>我想去</span>
           </label>
         </article>
