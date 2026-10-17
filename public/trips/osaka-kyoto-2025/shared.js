@@ -43,9 +43,8 @@
       .replace(/"/g, "&quot;");
   }
 
-  // Escape first (XSS-safe), then turn URLs into links that open in a new tab.
-  function linkify(s) {
-    const escaped = esc(s);
+  // Turn URLs into links that open in a new tab. Input must already be escaped.
+  function linkifyEscaped(escaped) {
     return escaped.replace(/((?:https?:\/\/|www\.)[^\s<]+)/gi, (raw) => {
       const tm = raw.match(/[),.;:!?，。！？、）】」』]+$/);
       let url = raw;
@@ -58,6 +57,52 @@
       const href = url.toLowerCase().startsWith("www.") ? "https://" + url : url;
       return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="board-link">${url}</a>${trail}`;
     });
+  }
+
+  function linkify(s) {
+    return linkifyEscaped(esc(s));
+  }
+
+  // ---------- @mentions ----------
+  const MENTION_ALL = ["全部", "all", "everyone", "大家"];
+
+  function mentionTargets() {
+    const names = (window.TRIP_DATA && window.TRIP_DATA.members) || [];
+    return names.slice();
+  }
+
+  function bodyMentions(body, name) {
+    if (!name) return false;
+    const e = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("@" + e + "(?![\\w\\u4e00-\\u9fff])", "i").test(body);
+  }
+
+  function mentionsMe(body) {
+    const me = getMember();
+    if (!me) return false;
+    if (bodyMentions(body, me)) return true;
+    return MENTION_ALL.some((a) => bodyMentions(body, a));
+  }
+
+  // Escape, highlight @mentions, then linkify URLs (order keeps spans intact).
+  function renderBody(body) {
+    let s = esc(body);
+    const me = esc(getMember() || "");
+    const names = mentionTargets().map(esc).concat(MENTION_ALL);
+    if (names.length) {
+      const alt = names
+        .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+        .join("|");
+      const re = new RegExp("@(" + alt + ")(?![\\w\\u4e00-\\u9fff])", "gi");
+      s = s.replace(re, (full, name) => {
+        const isAll = MENTION_ALL.some(
+          (a) => a.toLowerCase() === name.toLowerCase()
+        );
+        const isMe = (me && name === me) || isAll;
+        return `<span class="mention${isMe ? " mention-me" : ""}">@${name}</span>`;
+      });
+    }
+    return linkifyEscaped(s);
   }
 
   function money(amount, currency) {
@@ -460,7 +505,7 @@
           <div class="board-who">${esc(m.member)} <span class="board-time">${fmtTime(
             m.created_at
           )}</span></div>
-          <div class="board-body">${linkify(m.body)}</div>
+          <div class="board-body">${renderBody(m.body)}</div>
         </div>
       </li>`
       )
@@ -468,8 +513,56 @@
     listEl.scrollTop = listEl.scrollHeight;
   }
 
+  let mentionSeen = null;
+
+  function checkMentions(items) {
+    const me = getMember();
+    if (mentionSeen === null) {
+      // First load: treat existing history as already seen (no toast replay).
+      mentionSeen = new Set(items.map((m) => m.id));
+      return;
+    }
+    const fresh = items.filter((m) => !mentionSeen.has(m.id));
+    fresh.forEach((m) => mentionSeen.add(m.id));
+    if (!me) return;
+    const forMe = fresh.filter((m) => m.member !== me && mentionsMe(m.body));
+    if (forMe.length) {
+      const last = forMe[forMe.length - 1];
+      showMentionToast(last.member, last.body);
+    }
+  }
+
+  function showMentionToast(from, body) {
+    let toast = document.getElementById("mention-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "mention-toast";
+      toast.className = "mention-toast";
+      document.body.appendChild(toast);
+    }
+    const preview = String(body || "").slice(0, 40);
+    toast.innerHTML = `
+      <span class="mention-toast-badge">📣 您已被標註</span>
+      <span class="mention-toast-text"><strong>${esc(from)}</strong> 在留言板提到你：${esc(
+      preview
+    )}${body.length > 40 ? "…" : ""}</span>`;
+    toast.classList.add("is-visible");
+    toast.onclick = () => {
+      const board = document.getElementById("board");
+      if (board) board.scrollIntoView({ behavior: "smooth" });
+      toast.classList.remove("is-visible");
+    };
+    clearTimeout(showMentionToast._t);
+    showMentionToast._t = setTimeout(
+      () => toast.classList.remove("is-visible"),
+      7000
+    );
+  }
+
   async function refreshMessages() {
-    paintMessages(await loadMessages());
+    const items = await loadMessages();
+    paintMessages(items);
+    checkMentions(items);
   }
 
   function bindBoard() {
@@ -482,6 +575,33 @@
 
     const form = document.getElementById("board-form");
     const input = document.getElementById("board-input");
+
+    if (form && input && !document.getElementById("board-mention-bar")) {
+      const bar = document.createElement("div");
+      bar.id = "board-mention-bar";
+      bar.className = "board-mention-bar";
+      const me = getMember();
+      const chips = mentionTargets()
+        .concat(["全部"])
+        .map(
+          (n) =>
+            `<button type="button" class="mention-chip" data-mention="${esc(
+              n
+            )}">@${esc(n)}${n === me ? "（我）" : ""}</button>`
+        )
+        .join("");
+      bar.innerHTML = `<span class="board-mention-label">標註：</span>${chips}`;
+      form.parentNode.insertBefore(bar, form);
+      bar.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-mention]");
+        if (!btn) return;
+        const token = "@" + btn.dataset.mention + " ";
+        const cur = input.value || "";
+        input.value = (cur && !cur.endsWith(" ") ? cur + " " : cur) + token;
+        input.focus();
+      });
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const body = (input.value || "").trim();

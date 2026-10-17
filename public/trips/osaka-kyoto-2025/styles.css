@@ -1392,6 +1392,86 @@ img {
   word-break: break-all;
 }
 
+.mention {
+  color: #1f5fbf;
+  font-weight: 700;
+  background: rgba(31, 95, 191, 0.1);
+  border-radius: 6px;
+  padding: 0 0.2rem;
+}
+
+.mention-me {
+  color: #b23b00;
+  background: rgba(224, 69, 44, 0.16);
+}
+
+.board-mention-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.board-mention-label {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
+.mention-chip {
+  border: 1px solid rgba(31, 95, 191, 0.35);
+  background: rgba(31, 95, 191, 0.08);
+  color: #1f5fbf;
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mention-chip:active {
+  background: rgba(31, 95, 191, 0.18);
+}
+
+.mention-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 140%);
+  width: min(92%, 420px);
+  background: #2a2a2a;
+  color: #fff;
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  display: grid;
+  gap: 0.2rem;
+  z-index: 9999;
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.mention-toast.is-visible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.mention-toast-badge {
+  font-weight: 800;
+  color: #ffd27a;
+  font-size: 0.9rem;
+}
+
+.mention-toast-text {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.mention-toast-text strong {
+  color: #ffd27a;
+}
+
 .board-form {
   display: flex;
   gap: 0.5rem;
