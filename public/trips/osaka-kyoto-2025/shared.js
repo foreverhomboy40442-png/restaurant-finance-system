@@ -93,6 +93,17 @@
     });
   }
 
+  // ---------- relabel personal-mode copy for shared mode ----------
+  function relabelShared() {
+    const head = document.querySelector("#expense .section-head");
+    if (head) {
+      const h = head.querySelector("h2");
+      const p = head.querySelector("p");
+      if (h) h.textContent = "共享記帳";
+      if (p) p.textContent = "大家的花費即時同步，並顯示每人分攤";
+    }
+  }
+
   // ---------- shared bar ----------
   function renderBar(member) {
     const bar = document.getElementById("shared-bar");
@@ -451,6 +462,7 @@
       { auth: { persistSession: false } }
     );
 
+    relabelShared();
     let member = getMember();
     if (!member) member = await askName();
     renderBar(member);
