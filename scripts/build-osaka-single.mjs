@@ -28,11 +28,11 @@ let out = html
     `    <script src="./data.js"></script>\n` +
       `    <script src="./config-bootstrap.js"></script>\n` +
       `    <script src="./app.js"></script>\n` +
-      `    <script type="module" src="./shared.js"></script>`,
+      `    <script src="./shared.js"></script>`,
     `    <script>\n${data}\n    </script>\n` +
       `    <script>\n${bootstrap}\n    </script>\n` +
       `    <script>\n${app}\n    </script>\n` +
-      `    <script type="module">\n${shared}\n    </script>`
+      `    <script>\n${shared}\n    </script>`
   );
 
 writeFileSync(join(dir, "osaka-kyoto-2026.html"), out);

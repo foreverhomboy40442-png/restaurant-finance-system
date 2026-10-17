@@ -1,8 +1,10 @@
 // Shared-mode layer: when window.TRIP_SHARED is set, connect to the
 // trip's own Supabase project for live expenses, message board and
 // Day4 votes. No-op in personal mode.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
+//
+// Classic (non-module) script: in shared mode it lazy-loads the Supabase
+// UMD bundle so simple static hosts that do not execute ES modules still
+// work, and personal mode never pays for the library.
 (function () {
   "use strict";
 
@@ -16,9 +18,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
     TWD: { symbol: "NT$", fractionDigits: 0 },
   };
 
-  const supabase = createClient(CFG.url.replace(/\/$/, ""), CFG.key, {
-    auth: { persistSession: false },
-  });
+  const SUPABASE_UMD =
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
+
+  let supabase = null;
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (window.supabase && window.supabase.createClient) return resolve();
+      const s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error("load failed: " + src));
+      document.head.appendChild(s);
+    });
+  }
 
   function esc(s) {
     return String(s)
@@ -420,6 +435,22 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
   }
 
   async function init() {
+    try {
+      await loadScript(SUPABASE_UMD);
+    } catch (e) {
+      console.error("Supabase 載入失敗", e);
+      return;
+    }
+    if (!window.supabase || !window.supabase.createClient) {
+      console.error("Supabase UMD 全域未就緒");
+      return;
+    }
+    supabase = window.supabase.createClient(
+      CFG.url.replace(/\/$/, ""),
+      CFG.key,
+      { auth: { persistSession: false } }
+    );
+
     let member = getMember();
     if (!member) member = await askName();
     renderBar(member);
