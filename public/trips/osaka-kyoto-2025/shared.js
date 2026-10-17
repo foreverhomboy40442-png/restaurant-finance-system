@@ -124,7 +124,7 @@
       const h = head.querySelector("h2");
       const p = head.querySelector("p");
       if (h) h.textContent = "共享記帳";
-      if (p) p.textContent = "點團員分頁，各自記帳；大家即時同步";
+      if (p) p.textContent = "你只會記在自己帳上，可切分頁查看其他人";
     }
     const form = document.getElementById("expense-form");
     if (form && !document.getElementById("exp-who-hint")) {
@@ -133,6 +133,15 @@
       hint.id = "exp-who-hint";
       hint.innerHTML = '記在 <strong id="exp-who"></strong> 的帳上';
       form.insertBefore(hint, form.firstChild);
+    }
+    // Read-only note shown when viewing another member's tab.
+    const totals = document.getElementById("expense-totals");
+    if (totals && !document.getElementById("exp-readonly")) {
+      const note = document.createElement("p");
+      note.className = "exp-readonly";
+      note.id = "exp-readonly";
+      note.hidden = true;
+      totals.parentNode.insertBefore(note, totals);
     }
   }
 
@@ -147,6 +156,7 @@
       <button type="button" class="shared-switch" id="shared-switch">切換身分</button>`;
     bar.querySelector("#shared-switch").addEventListener("click", async () => {
       const name = await askName();
+      selectedMember = null;
       renderBar(name);
       refreshAll();
     });
@@ -188,6 +198,8 @@
 
   function tabMembers(items) {
     const base = memberList().slice();
+    const me = getMember();
+    if (me && base.indexOf(me) < 0) base.push(me);
     items.forEach((it) => {
       if (it.member && base.indexOf(it.member) < 0) base.push(it.member);
     });
@@ -234,17 +246,33 @@
 
   function updateFormWho() {
     const hint = document.getElementById("exp-who");
-    if (hint) hint.textContent = selectedMember || "";
+    if (hint) hint.textContent = getMember() || "";
   }
 
+  // Recording is always locked to the logged-in member. Tabs only switch
+  // which member you are VIEWING; you can never add on someone else's behalf.
   function paintExpenses(items) {
     allExpenses = items;
     const totalsEl = document.getElementById("expense-totals");
     const listEl = document.getElementById("expense-list");
     if (!totalsEl || !listEl) return;
 
+    const me = getMember();
     renderMemberBar(items);
     updateFormWho();
+
+    const viewingSelf = selectedMember === me;
+
+    // Toggle the add form: only usable on your own tab.
+    const form = document.getElementById("expense-form");
+    const note = document.getElementById("exp-readonly");
+    if (form) form.hidden = !viewingSelf;
+    if (note) {
+      note.hidden = viewingSelf;
+      note.textContent = viewingSelf
+        ? ""
+        : `正在查看 ${selectedMember} 的記帳（唯讀）。要記帳請切回「${me}」。`;
+    }
 
     const mine = items.filter((it) => it.member === selectedMember);
     const totals = sumByCurrency(mine);
@@ -279,7 +307,13 @@
             <span class="expense-date">${esc(it.spent_on)}</span>
           </div>
         </div>
-        <button type="button" class="expense-del" data-del="${esc(it.id)}" aria-label="刪除">刪除</button>
+        ${
+          viewingSelf
+            ? `<button type="button" class="expense-del" data-del="${esc(
+                it.id
+              )}" aria-label="刪除">刪除</button>`
+            : ""
+        }
       </li>`
       )
       .join("");
@@ -331,7 +365,7 @@
 
       const payload = {
         trip_id: TRIP,
-        member: selectedMember || getMember() || "匿名",
+        member: getMember() || "匿名",
         item,
         amount: Math.round(amount * 100) / 100,
         currency: CURRENCY[curEl.value] ? curEl.value : "JPY",

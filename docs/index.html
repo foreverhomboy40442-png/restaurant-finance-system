@@ -683,6 +683,20 @@ img {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   margin-bottom: 1rem;
+  overflow-x: clip;
+}
+
+.expense-form[hidden] {
+  display: none;
+}
+
+.exp-readonly {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  background: var(--chip-bg);
+  color: var(--ink-soft);
+  font-size: 0.88rem;
 }
 
 .expense-row {
@@ -734,6 +748,25 @@ img {
 
 .exp-grow {
   flex: 1 1 auto;
+}
+
+/* iOS Safari gives native date inputs an intrinsic min-width and ignores
+   width:100%, which overflows the grid cell. Strip the native appearance
+   so the control respects its container. */
+.exp-input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+
+.exp-input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+  margin: 0;
+  min-width: 0;
+}
+
+.exp-input[type="date"]::-webkit-calendar-picker-indicator {
+  margin: 0 0 0 auto;
 }
 
 .exp-input:focus {
@@ -2516,7 +2549,7 @@ window.TRIP_DATA = {
       const h = head.querySelector("h2");
       const p = head.querySelector("p");
       if (h) h.textContent = "共享記帳";
-      if (p) p.textContent = "點團員分頁，各自記帳；大家即時同步";
+      if (p) p.textContent = "你只會記在自己帳上，可切分頁查看其他人";
     }
     const form = document.getElementById("expense-form");
     if (form && !document.getElementById("exp-who-hint")) {
@@ -2525,6 +2558,15 @@ window.TRIP_DATA = {
       hint.id = "exp-who-hint";
       hint.innerHTML = '記在 <strong id="exp-who"></strong> 的帳上';
       form.insertBefore(hint, form.firstChild);
+    }
+    // Read-only note shown when viewing another member's tab.
+    const totals = document.getElementById("expense-totals");
+    if (totals && !document.getElementById("exp-readonly")) {
+      const note = document.createElement("p");
+      note.className = "exp-readonly";
+      note.id = "exp-readonly";
+      note.hidden = true;
+      totals.parentNode.insertBefore(note, totals);
     }
   }
 
@@ -2539,6 +2581,7 @@ window.TRIP_DATA = {
       <button type="button" class="shared-switch" id="shared-switch">切換身分</button>`;
     bar.querySelector("#shared-switch").addEventListener("click", async () => {
       const name = await askName();
+      selectedMember = null;
       renderBar(name);
       refreshAll();
     });
@@ -2580,6 +2623,8 @@ window.TRIP_DATA = {
 
   function tabMembers(items) {
     const base = memberList().slice();
+    const me = getMember();
+    if (me && base.indexOf(me) < 0) base.push(me);
     items.forEach((it) => {
       if (it.member && base.indexOf(it.member) < 0) base.push(it.member);
     });
@@ -2626,17 +2671,33 @@ window.TRIP_DATA = {
 
   function updateFormWho() {
     const hint = document.getElementById("exp-who");
-    if (hint) hint.textContent = selectedMember || "";
+    if (hint) hint.textContent = getMember() || "";
   }
 
+  // Recording is always locked to the logged-in member. Tabs only switch
+  // which member you are VIEWING; you can never add on someone else's behalf.
   function paintExpenses(items) {
     allExpenses = items;
     const totalsEl = document.getElementById("expense-totals");
     const listEl = document.getElementById("expense-list");
     if (!totalsEl || !listEl) return;
 
+    const me = getMember();
     renderMemberBar(items);
     updateFormWho();
+
+    const viewingSelf = selectedMember === me;
+
+    // Toggle the add form: only usable on your own tab.
+    const form = document.getElementById("expense-form");
+    const note = document.getElementById("exp-readonly");
+    if (form) form.hidden = !viewingSelf;
+    if (note) {
+      note.hidden = viewingSelf;
+      note.textContent = viewingSelf
+        ? ""
+        : `正在查看 ${selectedMember} 的記帳（唯讀）。要記帳請切回「${me}」。`;
+    }
 
     const mine = items.filter((it) => it.member === selectedMember);
     const totals = sumByCurrency(mine);
@@ -2671,7 +2732,13 @@ window.TRIP_DATA = {
             <span class="expense-date">${esc(it.spent_on)}</span>
           </div>
         </div>
-        <button type="button" class="expense-del" data-del="${esc(it.id)}" aria-label="刪除">刪除</button>
+        ${
+          viewingSelf
+            ? `<button type="button" class="expense-del" data-del="${esc(
+                it.id
+              )}" aria-label="刪除">刪除</button>`
+            : ""
+        }
       </li>`
       )
       .join("");
@@ -2723,7 +2790,7 @@ window.TRIP_DATA = {
 
       const payload = {
         trip_id: TRIP,
-        member: selectedMember || getMember() || "匿名",
+        member: getMember() || "匿名",
         item,
         amount: Math.round(amount * 100) / 100,
         currency: CURRENCY[curEl.value] ? curEl.value : "JPY",
