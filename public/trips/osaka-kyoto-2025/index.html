@@ -86,11 +86,11 @@
             <p>記錄這趟花費，資料存在你自己的裝置</p>
           </div>
           <form class="expense-form" id="expense-form" novalidate>
-            <div class="expense-row">
+            <div class="expense-row expense-row--main">
               <input type="date" id="exp-date" class="exp-input" aria-label="日期" required />
               <input type="text" id="exp-item" class="exp-input exp-grow" placeholder="品項（例：一蘭拉麵）" aria-label="品項" required />
             </div>
-            <div class="expense-row">
+            <div class="expense-row expense-row--detail">
               <select id="exp-cat" class="exp-input" aria-label="分類">
                 <option value="餐飲">餐飲</option>
                 <option value="交通">交通</option>

@@ -55,23 +55,39 @@ body {
   line-height: 1.65;
   background-color: var(--bg);
   background-image:
-    radial-gradient(900px 420px at 108% -8%, rgba(224, 69, 44, 0.16), transparent 60%),
-    radial-gradient(820px 520px at -12% 108%, rgba(38, 72, 111, 0.14), transparent 58%),
-    radial-gradient(640px 420px at 50% 50%, rgba(207, 155, 63, 0.08), transparent 70%),
-    linear-gradient(180deg, #fff3e4 0%, var(--bg) 42%, #f6ecdd 100%);
+    radial-gradient(1150px 520px at 50% -14%, rgba(224, 69, 44, 0.26), transparent 60%),
+    radial-gradient(760px 440px at 112% 6%, rgba(224, 122, 44, 0.2), transparent 58%),
+    radial-gradient(720px 480px at -10% 20%, rgba(230, 108, 150, 0.12), transparent 55%),
+    radial-gradient(860px 560px at -14% 102%, rgba(38, 72, 111, 0.14), transparent 58%),
+    radial-gradient(760px 520px at 114% 108%, rgba(111, 143, 78, 0.14), transparent 60%),
+    radial-gradient(680px 460px at 50% 52%, rgba(207, 155, 63, 0.12), transparent 72%),
+    linear-gradient(180deg, #fff7f1 0%, #fdeede 38%, #f7ead9 72%, #f3e4d0 100%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
+/* Seigaiha waves — Kyoto/Osaka water motif (subtle base layer). */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.5;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='56' viewBox='0 0 112 56'%3E%3Cg fill='none' stroke-width='1.5'%3E%3Cpath d='M0 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%23e0452c' stroke-opacity='0.1'/%3E%3Cpath d='M-56 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%2326486f' stroke-opacity='0.09'/%3E%3Cpath d='M0 56a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0' stroke='%23cf9b3f' stroke-opacity='0.1'/%3E%3C/g%3E%3C/svg%3E");
+  opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='56' viewBox='0 0 112 56'%3E%3Cg fill='none' stroke-width='1.5'%3E%3Cpath d='M0 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%23e0452c' stroke-opacity='0.1'/%3E%3Cpath d='M-56 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%2326486f' stroke-opacity='0.08'/%3E%3Cpath d='M0 56a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0' stroke='%23cf9b3f' stroke-opacity='0.1'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 112px 56px;
   z-index: 0;
+}
+
+/* Momiji — scattered maple leaves for an autumn Kyoto feel (hero layer). */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.9;
+  z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cg stroke='none'%3E%3Cg transform='translate(26 30) rotate(12) scale(0.52)' fill='%23e0452c' fill-opacity='0.16'%3E%3Cpath d='M50 2c3 15 10 20 19 16-5 9-3 15 6 16-7 6-6 12 2 16-9 3-11 9-6 17-9-2-15 2-15 13-4-11-10-15-19-13 5-8 3-14-6-17 8-4 9-10 2-16 9-1 11-7 6-16 9 4 16-1 19-16z'/%3E%3C/g%3E%3Cg transform='translate(236 70) rotate(-24) scale(0.4)' fill='%23e07a2c' fill-opacity='0.16'%3E%3Cpath d='M50 2c3 15 10 20 19 16-5 9-3 15 6 16-7 6-6 12 2 16-9 3-11 9-6 17-9-2-15 2-15 13-4-11-10-15-19-13 5-8 3-14-6-17 8-4 9-10 2-16 9-1 11-7 6-16 9 4 16-1 19-16z'/%3E%3C/g%3E%3Cg transform='translate(150 158) rotate(44) scale(0.46)' fill='%23cf9b3f' fill-opacity='0.17'%3E%3Cpath d='M50 2c3 15 10 20 19 16-5 9-3 15 6 16-7 6-6 12 2 16-9 3-11 9-6 17-9-2-15 2-15 13-4-11-10-15-19-13 5-8 3-14-6-17 8-4 9-10 2-16 9-1 11-7 6-16 9 4 16-1 19-16z'/%3E%3C/g%3E%3Cg transform='translate(40 236) rotate(-14) scale(0.42)' fill='%23c0392b' fill-opacity='0.14'%3E%3Cpath d='M50 2c3 15 10 20 19 16-5 9-3 15 6 16-7 6-6 12 2 16-9 3-11 9-6 17-9-2-15 2-15 13-4-11-10-15-19-13 5-8 3-14-6-17 8-4 9-10 2-16 9-1 11-7 6-16 9 4 16-1 19-16z'/%3E%3C/g%3E%3Cg transform='translate(250 250) rotate(28) scale(0.5)' fill='%23e0452c' fill-opacity='0.13'%3E%3Cpath d='M50 2c3 15 10 20 19 16-5 9-3 15 6 16-7 6-6 12 2 16-9 3-11 9-6 17-9-2-15 2-15 13-4-11-10-15-19-13 5-8 3-14-6-17 8-4 9-10 2-16 9-1 11-7 6-16 9 4 16-1 19-16z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-size: 320px 320px;
 }
 
 a {
@@ -670,13 +686,27 @@ img {
 }
 
 .expense-row {
-  display: flex;
+  display: grid;
   gap: 0.5rem;
 }
 
+/* Mobile-first: never overflow a phone screen. */
+.expense-row--main {
+  grid-template-columns: 1fr;
+}
+
+.expense-row--detail {
+  grid-template-columns: 1fr 1fr;
+}
+
+.expense-row--detail #exp-amt {
+  grid-column: 1 / -1;
+}
+
 .exp-input {
-  flex: 0 0 auto;
+  width: 100%;
   min-width: 0;
+  max-width: 100%;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 0.6rem 0.7rem;
@@ -686,7 +716,21 @@ img {
   color: var(--ink);
 }
 
-.exp-input.exp-grow {
+@media (min-width: 560px) {
+  .expense-row--main {
+    grid-template-columns: 160px 1fr;
+  }
+
+  .expense-row--detail {
+    grid-template-columns: 1fr 1fr 1.3fr;
+  }
+
+  .expense-row--detail #exp-amt {
+    grid-column: auto;
+  }
+}
+
+.exp-grow {
   flex: 1 1 auto;
 }
 
@@ -1236,11 +1280,11 @@ img {
             <p>記錄這趟花費，資料存在你自己的裝置</p>
           </div>
           <form class="expense-form" id="expense-form" novalidate>
-            <div class="expense-row">
+            <div class="expense-row expense-row--main">
               <input type="date" id="exp-date" class="exp-input" aria-label="日期" required />
               <input type="text" id="exp-item" class="exp-input exp-grow" placeholder="品項（例：一蘭拉麵）" aria-label="品項" required />
             </div>
-            <div class="expense-row">
+            <div class="expense-row expense-row--detail">
               <select id="exp-cat" class="exp-input" aria-label="分類">
                 <option value="餐飲">餐飲</option>
                 <option value="交通">交通</option>
