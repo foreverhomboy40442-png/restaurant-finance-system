@@ -488,17 +488,4 @@ window.TRIP_DATA = {
     },
   ],
 
-  checklist: [
-    { id: "passport", label: "護照（效期 6 個月以上）", group: "證件" },
-    { id: "ticket", label: "機票／登機證截圖", group: "證件" },
-    { id: "hotel", label: "飯店預約確認", group: "證件" },
-    { id: "cash", label: "日圓現金／信用卡", group: "金錢" },
-    { id: "ic", label: "交通 IC 卡（ICOCA／Suica）或手機支付", group: "金錢" },
-    { id: "adapter", label: "轉接插頭（日本多用兩腳）", group: "裝備" },
-    { id: "powerbank", label: "行動電源與充電線", group: "裝備" },
-    { id: "meds", label: "個人藥品／常備藥", group: "裝備" },
-    { id: "clothes", label: "秋裝層次＋好走的平底鞋／球鞋", group: "裝備" },
-    { id: "day3tour", label: "Klook 天橋立／伊根一日遊憑證（Day3，訂單 RCB328655）", group: "行程" },
-    { id: "rapit", label: "南海 Rapi:t 票券或購票方式確認", group: "行程" },
-  ],
 };

@@ -1756,7 +1756,6 @@ img {
           <a href="#itinerary">行程</a>
           <a href="#transport">交通</a>
           <a href="#expense">記帳</a>
-          <a href="#checklist">清單</a>
           <a href="#notes">備忘</a>
         </div>
       </nav>
@@ -1849,14 +1848,6 @@ img {
           </form>
           <div class="expense-totals" id="expense-totals"></div>
           <ul class="expense-list" id="expense-list"></ul>
-        </section>
-
-        <section class="section" id="checklist">
-          <div class="section-head">
-            <h2>打包／證件清單</h2>
-            <p>勾選狀態會保存在本機瀏覽器</p>
-          </div>
-          <div id="checklist-root"></div>
         </section>
 
         <section class="section" id="notes">
@@ -2369,19 +2360,6 @@ window.TRIP_DATA = {
     },
   ],
 
-  checklist: [
-    { id: "passport", label: "護照（效期 6 個月以上）", group: "證件" },
-    { id: "ticket", label: "機票／登機證截圖", group: "證件" },
-    { id: "hotel", label: "飯店預約確認", group: "證件" },
-    { id: "cash", label: "日圓現金／信用卡", group: "金錢" },
-    { id: "ic", label: "交通 IC 卡（ICOCA／Suica）或手機支付", group: "金錢" },
-    { id: "adapter", label: "轉接插頭（日本多用兩腳）", group: "裝備" },
-    { id: "powerbank", label: "行動電源與充電線", group: "裝備" },
-    { id: "meds", label: "個人藥品／常備藥", group: "裝備" },
-    { id: "clothes", label: "秋裝層次＋好走的平底鞋／球鞋", group: "裝備" },
-    { id: "day3tour", label: "Klook 天橋立／伊根一日遊憑證（Day3，訂單 RCB328655）", group: "行程" },
-    { id: "rapit", label: "南海 Rapi:t 票券或購票方式確認", group: "行程" },
-  ],
 };
 
     </script>
@@ -2451,7 +2429,6 @@ window.TRIP_DATA = {
   }
 
   const STORAGE_KEYS = {
-    checklist: "fk18-checklist-v1",
     day4: "fk18-day4-v1",
     expense: "fk18-expense-v1",
     notes: "fk18-notes-v1",
@@ -3067,54 +3044,6 @@ window.TRIP_DATA = {
     paint();
   }
 
-  function renderChecklist() {
-    const checked = new Set(loadJson(STORAGE_KEYS.checklist, []));
-    const root = document.getElementById("checklist-root");
-    const groups = {};
-
-    DATA.checklist.forEach((item) => {
-      if (!groups[item.group]) groups[item.group] = [];
-      groups[item.group].push(item);
-    });
-
-    root.innerHTML = Object.entries(groups)
-      .map(([group, items]) => {
-        return `
-        <p class="group-title">${escapeHtml(group)}</p>
-        <ul class="check-list">
-          ${items
-            .map((item) => {
-              const on = checked.has(item.id);
-              return `
-              <li>
-                <label class="${on ? "is-done" : ""}">
-                  <input type="checkbox" data-check="${escapeHtml(item.id)}" ${
-                    on ? "checked" : ""
-                  } />
-                  <span>${escapeHtml(item.label)}</span>
-                </label>
-              </li>
-            `;
-            })
-            .join("")}
-        </ul>
-      `;
-      })
-      .join("");
-
-    root.addEventListener("change", (e) => {
-      const input = e.target.closest("input[data-check]");
-      if (!input) return;
-      const id = input.dataset.check;
-      const current = new Set(loadJson(STORAGE_KEYS.checklist, []));
-      if (input.checked) current.add(id);
-      else current.delete(id);
-      saveJson(STORAGE_KEYS.checklist, [...current]);
-      const label = input.closest("label");
-      if (label) label.classList.toggle("is-done", input.checked);
-    });
-  }
-
   function bindNotes() {
     const area = document.getElementById("notes-area");
     area.value = localStorage.getItem(STORAGE_KEYS.notes) || "";
@@ -3171,7 +3100,6 @@ window.TRIP_DATA = {
     renderDay4Options();
     renderTransport();
     renderExpense();
-    renderChecklist();
     bindNotes();
     bindJumpToday();
     bindNavActive();

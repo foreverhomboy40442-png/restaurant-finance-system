@@ -8,7 +8,6 @@
   }
 
   const STORAGE_KEYS = {
-    checklist: "fk18-checklist-v1",
     day4: "fk18-day4-v1",
     expense: "fk18-expense-v1",
     notes: "fk18-notes-v1",
@@ -624,54 +623,6 @@
     paint();
   }
 
-  function renderChecklist() {
-    const checked = new Set(loadJson(STORAGE_KEYS.checklist, []));
-    const root = document.getElementById("checklist-root");
-    const groups = {};
-
-    DATA.checklist.forEach((item) => {
-      if (!groups[item.group]) groups[item.group] = [];
-      groups[item.group].push(item);
-    });
-
-    root.innerHTML = Object.entries(groups)
-      .map(([group, items]) => {
-        return `
-        <p class="group-title">${escapeHtml(group)}</p>
-        <ul class="check-list">
-          ${items
-            .map((item) => {
-              const on = checked.has(item.id);
-              return `
-              <li>
-                <label class="${on ? "is-done" : ""}">
-                  <input type="checkbox" data-check="${escapeHtml(item.id)}" ${
-                    on ? "checked" : ""
-                  } />
-                  <span>${escapeHtml(item.label)}</span>
-                </label>
-              </li>
-            `;
-            })
-            .join("")}
-        </ul>
-      `;
-      })
-      .join("");
-
-    root.addEventListener("change", (e) => {
-      const input = e.target.closest("input[data-check]");
-      if (!input) return;
-      const id = input.dataset.check;
-      const current = new Set(loadJson(STORAGE_KEYS.checklist, []));
-      if (input.checked) current.add(id);
-      else current.delete(id);
-      saveJson(STORAGE_KEYS.checklist, [...current]);
-      const label = input.closest("label");
-      if (label) label.classList.toggle("is-done", input.checked);
-    });
-  }
-
   function bindNotes() {
     const area = document.getElementById("notes-area");
     area.value = localStorage.getItem(STORAGE_KEYS.notes) || "";
@@ -728,7 +679,6 @@
     renderDay4Options();
     renderTransport();
     renderExpense();
-    renderChecklist();
     bindNotes();
     bindJumpToday();
     bindNavActive();
