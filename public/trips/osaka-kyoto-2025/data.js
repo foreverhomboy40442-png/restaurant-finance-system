@@ -18,7 +18,7 @@ window.TRIP_DATA = {
       flightNo: "AK 176",
       cabin: "Economy 經濟艙",
       aircraft: "",
-      bookingRef: "",
+      bookingRef: "P8L9YL",
       date: "2026-11-19",
       weekday: "四",
       dep: "15:40",
