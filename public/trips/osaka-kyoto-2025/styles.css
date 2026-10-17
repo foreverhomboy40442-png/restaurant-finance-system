@@ -493,6 +493,24 @@ img {
 .type-tag[data-type="自由"] { background: var(--accent-soft); color: var(--accent-strong); }
 
 /* Day4 options */
+.free-options {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--line);
+}
+
+.free-options-title {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.free-options-sub {
+  margin: 0 0 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
 .option-grid {
   display: grid;
   gap: 0.75rem;

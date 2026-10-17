@@ -32,7 +32,7 @@
           <a href="#flights">航班</a>
           <a href="#hotels">住宿</a>
           <a href="#itinerary">行程</a>
-          <a href="#free-day">自由日</a>
+          <a href="#itinerary" onclick="window.__tripSetDay&&window.__tripSetDay(4)">自由日</a>
           <a href="#transport">交通</a>
           <a href="#places">收藏</a>
           <a href="#checklist">清單</a>
@@ -60,26 +60,10 @@
         <section class="section" id="itinerary">
           <div class="section-head">
             <h2>每日行程</h2>
-            <p>時間軸一覽；旅途中會自動標示今天</p>
+            <p>時間軸一覽；旅途中會自動標示今天。Day 4 為自由日，選項在該分頁內。</p>
           </div>
           <div class="day-tabs" id="day-tabs" role="tablist" aria-label="選擇日期"></div>
           <div id="days-root"></div>
-        </section>
-
-        <section class="section" id="free-day">
-          <div class="section-head">
-            <h2>Day 4 自由日選項</h2>
-            <p>勾選你想去的方案（存在本機，可多人各自勾）</p>
-          </div>
-          <div class="option-grid" id="options-root"></div>
-          <div class="card dinner-note">
-            <h3 style="margin: 0; font-family: var(--font-display); font-size: 1.1rem">
-              晚上全員集合・居酒屋
-            </h3>
-            <p style="margin: 0.45rem 0 0; color: var(--ink-soft)">
-              餐廳與集合時間待定——依大家一日遊結束時間再決定。
-            </p>
-          </div>
         </section>
 
         <section class="section" id="transport">

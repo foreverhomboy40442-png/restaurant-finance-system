@@ -196,8 +196,17 @@
       .map((d) => {
         const isActive = d.day === active.day;
         const isToday = d.date === todayIso;
-        const freeLink = d.isFreeDay
-          ? `<p style="margin:0.5rem 0 0"><a href="#free-day">查看自由日選項 A–E →</a></p>`
+        const freeBlock = d.isFreeDay
+          ? `
+          <div class="free-options">
+            <h4 class="free-options-title">自由日選項 A–E</h4>
+            <p class="free-options-sub">勾選你想去的方案（紀錄只存在你自己的裝置）</p>
+            <div class="option-grid" id="options-root"></div>
+            <div class="card dinner-note">
+              <h3 style="margin:0;font-family:var(--font-display);font-size:1.1rem">晚上全員集合・居酒屋</h3>
+              <p style="margin:0.45rem 0 0;color:var(--ink-soft)">餐廳與集合時間待定——依大家一日遊結束時間再決定。</p>
+            </div>
+          </div>`
           : "";
         return `
         <div
@@ -210,7 +219,6 @@
               d.weekday
             )}）${escapeHtml(d.title)}</h3>
             <p>${escapeHtml(d.summary)}</p>
-            ${freeLink}
           </div>
           <ol class="timeline">
             ${d.slots
@@ -230,6 +238,7 @@
               )
               .join("")}
           </ol>
+          ${freeBlock}
         </div>
       `;
       })
@@ -261,6 +270,7 @@
   function renderDay4Options() {
     const selected = new Set(loadJson(STORAGE_KEYS.day4, []));
     const root = document.getElementById("options-root");
+    if (!root) return;
 
     root.innerHTML = DATA.day4Options
       .map((opt) => {
