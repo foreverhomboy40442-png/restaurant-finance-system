@@ -317,20 +317,6 @@ window.TRIP_DATA = {
     },
   ],
 
-  places: [
-    { id: "dotonbori", name: "道頓崛", kind: "景點", day: 1 },
-    { id: "kiyomizu", name: "清水寺", kind: "景點", day: 2 },
-    { id: "sannenzaka", name: "二年坂・三年坂", kind: "景點", day: 2 },
-    { id: "gion", name: "祇園花見小路", kind: "景點", day: 2 },
-    { id: "kodaiji", name: "高台寺夜楓", kind: "景點", day: 2 },
-    { id: "ine", name: "伊根舟屋 / INE CAFE", kind: "景點", day: 3 },
-    { id: "amanohashidate", name: "天橋立・傘松公園", kind: "景點", day: 3 },
-    { id: "inoichi", name: "豬一拉麵 Inoichi", kind: "餐廳", day: 3 },
-    { id: "katsugyu", name: "勝牛 Gyu-Katsu", kind: "餐廳", day: 3 },
-    { id: "shinsaibashi", name: "心齋橋筋商店街", kind: "景點", day: 5 },
-    { id: "kuromon", name: "黑門市場", kind: "餐廳", day: 6 },
-  ],
-
   checklist: [
     { id: "passport", label: "護照（效期 6 個月以上）", group: "證件" },
     { id: "ticket", label: "機票／登機證截圖", group: "證件" },

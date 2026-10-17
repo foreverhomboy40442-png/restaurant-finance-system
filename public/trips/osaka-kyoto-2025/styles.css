@@ -1,15 +1,18 @@
 :root {
-  --bg: #fafaf8;
+  --bg: #fdf5ea;
   --bg-elevated: #ffffff;
-  --ink: #1c1b19;
-  --ink-soft: #5c5954;
-  --line: rgba(28, 27, 25, 0.1);
-  --accent: #8b2e2e;
-  --accent-soft: rgba(139, 46, 46, 0.08);
-  --accent-strong: #6f2222;
-  --chip-bg: #f3f1ec;
-  --shadow: 0 1px 0 rgba(28, 27, 25, 0.04);
-  --radius: 14px;
+  --ink: #2a1d17;
+  --ink-soft: #6d5c51;
+  --line: rgba(42, 29, 23, 0.12);
+  --accent: #e0452c;
+  --accent-soft: rgba(224, 69, 44, 0.1);
+  --accent-strong: #b8341e;
+  --indigo: #26486f;
+  --gold: #cf9b3f;
+  --matcha: #6f8f4e;
+  --chip-bg: #f4ede1;
+  --shadow: 0 2px 10px rgba(42, 29, 23, 0.06);
+  --radius: 16px;
   --font-display: "Shippori Mincho", "Noto Serif TC", "Songti TC", serif;
   --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   --max: 720px;
@@ -35,9 +38,11 @@ body {
   line-height: 1.65;
   background-color: var(--bg);
   background-image:
-    radial-gradient(rgba(28, 27, 25, 0.035) 0.7px, transparent 0.7px),
-    linear-gradient(180deg, #fcfcfa 0%, var(--bg) 40%, #f6f4ef 100%);
-  background-size: 3px 3px, 100% 100%;
+    radial-gradient(900px 420px at 108% -8%, rgba(224, 69, 44, 0.16), transparent 60%),
+    radial-gradient(820px 520px at -12% 108%, rgba(38, 72, 111, 0.14), transparent 58%),
+    radial-gradient(640px 420px at 50% 50%, rgba(207, 155, 63, 0.08), transparent 70%),
+    linear-gradient(180deg, #fff3e4 0%, var(--bg) 42%, #f6ecdd 100%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -46,9 +51,9 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.35;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='56' viewBox='0 0 112 56'%3E%3Cg fill='none' stroke-width='1.5'%3E%3Cpath d='M0 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%23e0452c' stroke-opacity='0.1'/%3E%3Cpath d='M-56 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%2326486f' stroke-opacity='0.09'/%3E%3Cpath d='M0 56a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0' stroke='%23cf9b3f' stroke-opacity='0.1'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 112px 56px;
   z-index: 0;
 }
 
@@ -72,15 +77,27 @@ img {
 
 /* Hero */
 .hero {
+  position: relative;
   padding: 3.5rem 0 2.25rem;
   animation: rise 0.7s ease both;
 }
 
+.hero::before {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 6px;
+  margin-bottom: 1.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent) 0 40%, var(--gold) 40% 70%, var(--indigo) 70% 100%);
+}
+
 .hero-kicker {
-  margin: 0 0 0.75rem;
-  color: var(--ink-soft);
+  margin: 0 0 0.6rem;
+  color: var(--accent-strong);
   font-size: 0.85rem;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
@@ -112,12 +129,13 @@ img {
 .hero-status {
   margin-top: 1rem;
   display: inline-block;
-  padding: 0.35rem 0.75rem;
-  background: var(--accent-soft);
+  padding: 0.4rem 0.85rem;
+  background: linear-gradient(180deg, #fff 0%, #fff6e9 100%);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
   color: var(--accent-strong);
   border-radius: 999px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .hero-actions {
@@ -486,10 +504,10 @@ img {
   letter-spacing: 0.04em;
 }
 
-.type-tag[data-type="交通"] { background: #eef2f5; }
-.type-tag[data-type="景點"] { background: #f3eee6; }
-.type-tag[data-type="用餐"] { background: #f6ebe8; color: var(--accent-strong); }
-.type-tag[data-type="住宿"] { background: #eef0ea; }
+.type-tag[data-type="交通"] { background: rgba(38, 72, 111, 0.12); color: var(--indigo); }
+.type-tag[data-type="景點"] { background: rgba(224, 69, 44, 0.12); color: var(--accent-strong); }
+.type-tag[data-type="用餐"] { background: rgba(207, 155, 63, 0.18); color: #8a641b; }
+.type-tag[data-type="住宿"] { background: rgba(111, 143, 78, 0.16); color: #4f6a34; }
 .type-tag[data-type="自由"] { background: var(--accent-soft); color: var(--accent-strong); }
 
 /* Day4 options */
@@ -622,25 +640,158 @@ img {
   text-decoration: line-through;
 }
 
-.place-list .place-meta {
-  flex: 1;
-  min-width: 0;
+/* Expense tracker */
+.expense-form {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.1rem 1.15rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
 }
 
-.place-list .place-name {
+.expense-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.exp-input {
+  flex: 0 0 auto;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  font-size: 0.95rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.exp-input.exp-grow {
+  flex: 1 1 auto;
+}
+
+.exp-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.expense-error {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
   font-weight: 500;
 }
 
-.place-list .place-sub {
+.expense-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.total-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff 0%, #fff6e9 100%);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
+}
+
+.total-label {
   color: var(--ink-soft);
   font-size: 0.82rem;
 }
 
-.place-toggle {
+.total-value {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--accent-strong);
+}
+
+.expense-empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.expense-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.expense-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.expense-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.expense-item-name {
+  font-weight: 500;
+}
+
+.expense-amount {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.expense-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.cat-tag {
+  display: inline-block;
+  padding: 0.08rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  background: var(--chip-bg);
+  color: var(--ink-soft);
+}
+
+.cat-tag[data-cat="餐飲"] { background: rgba(207, 155, 63, 0.18); color: #8a641b; }
+.cat-tag[data-cat="交通"] { background: rgba(38, 72, 111, 0.12); color: var(--indigo); }
+.cat-tag[data-cat="購物"] { background: rgba(224, 69, 44, 0.12); color: var(--accent-strong); }
+.cat-tag[data-cat="住宿"] { background: rgba(111, 143, 78, 0.16); color: #4f6a34; }
+.cat-tag[data-cat="門票"] { background: rgba(38, 72, 111, 0.1); color: var(--indigo); }
+
+.expense-date {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-del {
   border: 1px solid var(--line);
   background: transparent;
   border-radius: 999px;
-  padding: 0.3rem 0.7rem;
+  padding: 0.3rem 0.65rem;
   font: inherit;
   font-size: 0.8rem;
   color: var(--ink-soft);
@@ -648,9 +799,8 @@ img {
   white-space: nowrap;
 }
 
-.place-toggle.is-on {
-  background: var(--accent-soft);
-  border-color: transparent;
+.expense-del:hover {
+  border-color: var(--accent);
   color: var(--accent-strong);
 }
 

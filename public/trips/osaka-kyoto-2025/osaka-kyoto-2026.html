@@ -13,17 +13,20 @@
     />
     <style>
 :root {
-  --bg: #fafaf8;
+  --bg: #fdf5ea;
   --bg-elevated: #ffffff;
-  --ink: #1c1b19;
-  --ink-soft: #5c5954;
-  --line: rgba(28, 27, 25, 0.1);
-  --accent: #8b2e2e;
-  --accent-soft: rgba(139, 46, 46, 0.08);
-  --accent-strong: #6f2222;
-  --chip-bg: #f3f1ec;
-  --shadow: 0 1px 0 rgba(28, 27, 25, 0.04);
-  --radius: 14px;
+  --ink: #2a1d17;
+  --ink-soft: #6d5c51;
+  --line: rgba(42, 29, 23, 0.12);
+  --accent: #e0452c;
+  --accent-soft: rgba(224, 69, 44, 0.1);
+  --accent-strong: #b8341e;
+  --indigo: #26486f;
+  --gold: #cf9b3f;
+  --matcha: #6f8f4e;
+  --chip-bg: #f4ede1;
+  --shadow: 0 2px 10px rgba(42, 29, 23, 0.06);
+  --radius: 16px;
   --font-display: "Shippori Mincho", "Noto Serif TC", "Songti TC", serif;
   --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   --max: 720px;
@@ -49,9 +52,11 @@ body {
   line-height: 1.65;
   background-color: var(--bg);
   background-image:
-    radial-gradient(rgba(28, 27, 25, 0.035) 0.7px, transparent 0.7px),
-    linear-gradient(180deg, #fcfcfa 0%, var(--bg) 40%, #f6f4ef 100%);
-  background-size: 3px 3px, 100% 100%;
+    radial-gradient(900px 420px at 108% -8%, rgba(224, 69, 44, 0.16), transparent 60%),
+    radial-gradient(820px 520px at -12% 108%, rgba(38, 72, 111, 0.14), transparent 58%),
+    radial-gradient(640px 420px at 50% 50%, rgba(207, 155, 63, 0.08), transparent 70%),
+    linear-gradient(180deg, #fff3e4 0%, var(--bg) 42%, #f6ecdd 100%);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -60,9 +65,9 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.35;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='112' height='56' viewBox='0 0 112 56'%3E%3Cg fill='none' stroke-width='1.5'%3E%3Cpath d='M0 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%23e0452c' stroke-opacity='0.1'/%3E%3Cpath d='M-56 56a28 28 0 0 1 56 0a28 28 0 0 1 56 0' stroke='%2326486f' stroke-opacity='0.09'/%3E%3Cpath d='M0 56a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0a16 16 0 0 1 32 0' stroke='%23cf9b3f' stroke-opacity='0.1'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 112px 56px;
   z-index: 0;
 }
 
@@ -84,16 +89,29 @@ img {
   padding: 0 0 4.5rem;
 }
 
+/* Hero */
 .hero {
+  position: relative;
   padding: 3.5rem 0 2.25rem;
   animation: rise 0.7s ease both;
 }
 
+.hero::before {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 6px;
+  margin-bottom: 1.5rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent) 0 40%, var(--gold) 40% 70%, var(--indigo) 70% 100%);
+}
+
 .hero-kicker {
-  margin: 0 0 0.75rem;
-  color: var(--ink-soft);
+  margin: 0 0 0.6rem;
+  color: var(--accent-strong);
   font-size: 0.85rem;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
@@ -125,12 +143,13 @@ img {
 .hero-status {
   margin-top: 1rem;
   display: inline-block;
-  padding: 0.35rem 0.75rem;
-  background: var(--accent-soft);
+  padding: 0.4rem 0.85rem;
+  background: linear-gradient(180deg, #fff 0%, #fff6e9 100%);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
   color: var(--accent-strong);
   border-radius: 999px;
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .hero-actions {
@@ -174,6 +193,7 @@ img {
   border-color: rgba(28, 27, 25, 0.28);
 }
 
+/* Sticky nav */
 .nav {
   position: sticky;
   top: 0;
@@ -214,6 +234,7 @@ img {
   color: var(--accent-strong);
 }
 
+/* Sections */
 .section {
   margin-bottom: 2.75rem;
   scroll-margin-top: calc(var(--nav-h) + 12px);
@@ -247,6 +268,7 @@ img {
   gap: 0.85rem;
 }
 
+/* Cards — only for interactive/info containers */
 .card {
   background: var(--bg-elevated);
   border: 1px solid var(--line);
@@ -345,6 +367,7 @@ img {
   gap: 0.5rem;
 }
 
+/* Day tabs + timeline */
 .day-tabs {
   display: flex;
   gap: 0.4rem;
@@ -495,11 +518,30 @@ img {
   letter-spacing: 0.04em;
 }
 
-.type-tag[data-type="交通"] { background: #eef2f5; }
-.type-tag[data-type="景點"] { background: #f3eee6; }
-.type-tag[data-type="用餐"] { background: #f6ebe8; color: var(--accent-strong); }
-.type-tag[data-type="住宿"] { background: #eef0ea; }
+.type-tag[data-type="交通"] { background: rgba(38, 72, 111, 0.12); color: var(--indigo); }
+.type-tag[data-type="景點"] { background: rgba(224, 69, 44, 0.12); color: var(--accent-strong); }
+.type-tag[data-type="用餐"] { background: rgba(207, 155, 63, 0.18); color: #8a641b; }
+.type-tag[data-type="住宿"] { background: rgba(111, 143, 78, 0.16); color: #4f6a34; }
 .type-tag[data-type="自由"] { background: var(--accent-soft); color: var(--accent-strong); }
+
+/* Day4 options */
+.free-options {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--line);
+}
+
+.free-options-title {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.free-options-sub {
+  margin: 0 0 0.85rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
 
 .option-grid {
   display: grid;
@@ -563,6 +605,7 @@ img {
   margin-top: 0.85rem;
 }
 
+/* Checklist / places / notes */
 .group-title {
   margin: 1.1rem 0 0.45rem;
   font-size: 0.8rem;
@@ -611,25 +654,158 @@ img {
   text-decoration: line-through;
 }
 
-.place-list .place-meta {
-  flex: 1;
-  min-width: 0;
+/* Expense tracker */
+.expense-form {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.1rem 1.15rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 1rem;
 }
 
-.place-list .place-name {
+.expense-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.exp-input {
+  flex: 0 0 auto;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  font-size: 0.95rem;
+  background: #fff;
+  color: var(--ink);
+}
+
+.exp-input.exp-grow {
+  flex: 1 1 auto;
+}
+
+.exp-input:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 1px;
+}
+
+.expense-error {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
   font-weight: 500;
 }
 
-.place-list .place-sub {
+.expense-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.total-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff 0%, #fff6e9 100%);
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, var(--line));
+}
+
+.total-label {
   color: var(--ink-soft);
   font-size: 0.82rem;
 }
 
-.place-toggle {
+.total-value {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--accent-strong);
+}
+
+.expense-empty {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.expense-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.expense-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.expense-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.expense-item-name {
+  font-weight: 500;
+}
+
+.expense-amount {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.expense-sub {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.cat-tag {
+  display: inline-block;
+  padding: 0.08rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  background: var(--chip-bg);
+  color: var(--ink-soft);
+}
+
+.cat-tag[data-cat="餐飲"] { background: rgba(207, 155, 63, 0.18); color: #8a641b; }
+.cat-tag[data-cat="交通"] { background: rgba(38, 72, 111, 0.12); color: var(--indigo); }
+.cat-tag[data-cat="購物"] { background: rgba(224, 69, 44, 0.12); color: var(--accent-strong); }
+.cat-tag[data-cat="住宿"] { background: rgba(111, 143, 78, 0.16); color: #4f6a34; }
+.cat-tag[data-cat="門票"] { background: rgba(38, 72, 111, 0.1); color: var(--indigo); }
+
+.expense-date {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.expense-del {
   border: 1px solid var(--line);
   background: transparent;
   border-radius: 999px;
-  padding: 0.3rem 0.7rem;
+  padding: 0.3rem 0.65rem;
   font: inherit;
   font-size: 0.8rem;
   color: var(--ink-soft);
@@ -637,9 +813,8 @@ img {
   white-space: nowrap;
 }
 
-.place-toggle.is-on {
-  background: var(--accent-soft);
-  border-color: transparent;
+.expense-del:hover {
+  border-color: var(--accent);
   color: var(--accent-strong);
 }
 
@@ -678,45 +853,99 @@ img {
 }
 
 @keyframes rise {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeSlide {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes pulseSoft {
-  0%, 100% { box-shadow: 0 0 0 3px var(--accent-soft); }
-  50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-soft) 40%, transparent); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent-soft) 40%, transparent);
+  }
 }
 
 @media (max-width: 560px) {
-  .page { width: min(100% - 1.5rem, var(--max)); }
-  .hero { padding-top: 2.5rem; }
-  .timeline-item { grid-template-columns: 5.2rem 1fr; }
-  .timeline-item::before { left: 5.2rem; }
-  .flight-city strong { font-size: 1.3rem; }
+  .page {
+    width: min(100% - 1.5rem, var(--max));
+  }
+
+  .hero {
+    padding-top: 2.5rem;
+  }
+
+  .timeline-item {
+    grid-template-columns: 5.2rem 1fr;
+  }
+
+  .timeline-item::before {
+    left: 5.2rem;
+  }
+
+  .flight-city strong {
+    font-size: 1.3rem;
+  }
 }
 
 @media print {
-  body { background: #fff; }
+  body {
+    background: #fff;
+  }
+
   body::before,
   .nav,
   .hero-actions,
   .day-tabs,
   .place-toggle,
   .option-card label,
-  .notes-hint { display: none !important; }
-  .page { width: 100%; max-width: none; padding: 0; }
-  .day-panel { display: block !important; break-inside: avoid; margin-bottom: 1.25rem; }
+  .notes-hint {
+    display: none !important;
+  }
+
+  .page {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+  }
+
+  .day-panel {
+    display: block !important;
+    break-inside: avoid;
+    margin-bottom: 1.25rem;
+  }
+
   .card,
   .check-list li,
   .place-list li,
-  .notes-area { box-shadow: none; break-inside: avoid; }
-  .notes-area { border: 1px solid #ccc; }
+  .notes-area {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+
+  .notes-area {
+    border: 1px solid #ccc;
+  }
 }
+
     </style>
   </head>
   <body>
@@ -740,7 +969,7 @@ img {
           <a href="#itinerary">行程</a>
           <a href="#itinerary" onclick="window.__tripSetDay&&window.__tripSetDay(4)">自由日</a>
           <a href="#transport">交通</a>
-          <a href="#places">收藏</a>
+          <a href="#expense">記帳</a>
           <a href="#checklist">清單</a>
           <a href="#notes">備忘</a>
         </div>
@@ -780,12 +1009,36 @@ img {
           <div class="stack" id="transport-root"></div>
         </section>
 
-        <section class="section" id="places">
+        <section class="section" id="expense">
           <div class="section-head">
-            <h2>餐廳／景點收藏</h2>
-            <p>點一下標記「想去」或「已去」</p>
+            <h2>個人記帳</h2>
+            <p>記錄這趟花費，資料存在你自己的裝置</p>
           </div>
-          <ul class="place-list" id="places-root"></ul>
+          <form class="expense-form" id="expense-form" novalidate>
+            <div class="expense-row">
+              <input type="date" id="exp-date" class="exp-input" aria-label="日期" required />
+              <input type="text" id="exp-item" class="exp-input exp-grow" placeholder="品項（例：一蘭拉麵）" aria-label="品項" required />
+            </div>
+            <div class="expense-row">
+              <select id="exp-cat" class="exp-input" aria-label="分類">
+                <option value="餐飲">餐飲</option>
+                <option value="交通">交通</option>
+                <option value="購物">購物</option>
+                <option value="住宿">住宿</option>
+                <option value="門票">門票</option>
+                <option value="其他">其他</option>
+              </select>
+              <select id="exp-cur" class="exp-input" aria-label="幣別">
+                <option value="JPY">¥ 日圓</option>
+                <option value="TWD">NT$ 台幣</option>
+              </select>
+              <input type="number" id="exp-amt" class="exp-input exp-grow" min="0" step="1" inputmode="decimal" placeholder="金額" aria-label="金額" required />
+            </div>
+            <p class="expense-error" id="exp-error" role="alert" hidden></p>
+            <button type="submit" class="btn btn-primary">新增一筆</button>
+          </form>
+          <div class="expense-totals" id="expense-totals"></div>
+          <ul class="expense-list" id="expense-list"></ul>
         </section>
 
         <section class="section" id="checklist">
@@ -912,10 +1165,30 @@ window.TRIP_DATA = {
       title: "抵達大阪・難波宵夜場",
       summary: "KIX 入境後直奔難波，道頓崛夜遊開場",
       slots: [
-        { time: "19:20", title: "抵達關西國際機場（KIX）", detail: "完成入境手續，準備搭乘南海電鐵。", type: "交通" },
-        { time: "20:00 – 20:50", title: "入境與南海電鐵 Rapi:t", detail: "直達「南海難波站」。", type: "交通" },
-        { time: "21:20", title: "WellStayNamba Check-in", detail: "計程車約 5 分鐘抵達，寄放行李。", type: "住宿" },
-        { time: "21:40 – 23:30", title: "道頓崛宵夜夜遊", detail: "難波／道頓崛周邊宵夜與夜景散步。", type: "景點" },
+        {
+          time: "19:20",
+          title: "抵達關西國際機場（KIX）",
+          detail: "完成入境手續，準備搭乘南海電鐵。",
+          type: "交通",
+        },
+        {
+          time: "20:00 – 20:50",
+          title: "入境與南海電鐵 Rapi:t",
+          detail: "直達「南海難波站」。",
+          type: "交通",
+        },
+        {
+          time: "21:20",
+          title: "WellStayNamba Check-in",
+          detail: "計程車約 5 分鐘抵達，寄放行李。",
+          type: "住宿",
+        },
+        {
+          time: "21:40 – 23:30",
+          title: "道頓崛宵夜夜遊",
+          detail: "難波／道頓崛周邊宵夜與夜景散步。",
+          type: "景點",
+        },
       ],
     },
     {
@@ -925,11 +1198,36 @@ window.TRIP_DATA = {
       title: "京都和服美照・清水寺滿山紅葉",
       summary: "和服、二三年坂、清水寺與祇園夜楓",
       slots: [
-        { time: "09:00 – 10:15", title: "大阪 Check-out → 京都", detail: "搭乘阪急京都線（梅田 ➔ 烏丸站）。", type: "交通" },
-        { time: "10:30", title: "WAYFARER Kyoto Shijo 寄行李", detail: "四條烏丸住宿先放行李再出發。", type: "住宿" },
-        { time: "11:00 – 14:00", title: "和服換裝與二三年坂", detail: "預約和服體驗，漫步三年坂、二年坂拍大片，沿路品嚐抹茶甜點。", type: "景點" },
-        { time: "14:00 – 16:30", title: "清水寺賞楓絕景", detail: "參觀清水寺，欣賞被滿山紅葉包圍的清水舞台。", type: "景點" },
-        { time: "17:00 – 20:00", title: "祇園夜楓與古都晚宴", detail: "漫步祇園花見小路與高台寺夜楓點燈。晚餐：鴨川周邊的豆豆腐京料理或壽喜燒。", type: "用餐" },
+        {
+          time: "09:00 – 10:15",
+          title: "大阪 Check-out → 京都",
+          detail: "搭乘阪急京都線（梅田 ➔ 烏丸站）。",
+          type: "交通",
+        },
+        {
+          time: "10:30",
+          title: "WAYFARER Kyoto Shijo 寄行李",
+          detail: "四條烏丸住宿先放行李再出發。",
+          type: "住宿",
+        },
+        {
+          time: "11:00 – 14:00",
+          title: "和服換裝與二三年坂",
+          detail: "預約和服體驗，漫步三年坂、二年坂拍大片，沿路品嚐抹茶甜點。",
+          type: "景點",
+        },
+        {
+          time: "14:00 – 16:30",
+          title: "清水寺賞楓絕景",
+          detail: "參觀清水寺，欣賞被滿山紅葉包圍的清水舞台。",
+          type: "景點",
+        },
+        {
+          time: "17:00 – 20:00",
+          title: "祇園夜楓與古都晚宴",
+          detail: "漫步祇園花見小路與高台寺夜楓點燈。晚餐：鴨川周邊的豆豆腐京料理或壽喜燒。",
+          type: "用餐",
+        },
       ],
     },
     {
@@ -939,9 +1237,25 @@ window.TRIP_DATA = {
       title: "海之京都・天橋立與伊根舟屋",
       summary: "一日包車／巴士暢遊天橋立與伊根",
       slots: [
-        { time: "07:30 – 18:30", title: "天橋立＋伊根舟屋一日遊", detail: "四人參加京都出發的包車／巴士，免去單程約 3 小時轉乘。伊根舟屋：觀光船海鷗餵食，造訪 INE CAFE（舟屋日和）。天橋立：纜車至傘松公園，海天倒置絕景。", type: "景點" },
-        { time: "19:00", title: "返回京都市區", detail: "回到住宿附近（四條烏丸／河原町）。", type: "交通" },
-        { time: "晚餐", title: "豬一拉麵或勝牛", detail: "Inoichi（豬一拉麵）或 Gyu-Katsu Kyoto Katsugyu（勝牛）。", type: "用餐" },
+        {
+          time: "07:30 – 18:30",
+          title: "天橋立＋伊根舟屋一日遊",
+          detail:
+            "四人參加京都出發的包車／巴士，免去單程約 3 小時轉乘。伊根舟屋：觀光船海鷗餵食，造訪 INE CAFE（舟屋日和）。天橋立：纜車至傘松公園，海天倒置絕景。",
+          type: "景點",
+        },
+        {
+          time: "19:00",
+          title: "返回京都市區",
+          detail: "回到住宿附近（四條烏丸／河原町）。",
+          type: "交通",
+        },
+        {
+          time: "晚餐",
+          title: "豬一拉麵或勝牛",
+          detail: "Inoichi（豬一拉麵）或 Gyu-Katsu Kyoto Katsugyu（勝牛）。",
+          type: "用餐",
+        },
       ],
     },
     {
@@ -952,8 +1266,18 @@ window.TRIP_DATA = {
       summary: "各自隨心探索，晚上全員集合吃居酒屋",
       isFreeDay: true,
       slots: [
-        { time: "全日", title: "自由選項 A–E", detail: "伏見奈良／嵐山／河原町爆買／勝尾寺＋神戶牛／自行安排。詳見下方自由日選項。", type: "自由" },
-        { time: "晚上", title: "全員集合・居酒屋晚餐", detail: "依大家一日遊結束時間再決定餐廳與集合時間。", type: "用餐" },
+        {
+          time: "全日",
+          title: "自由選項 A–E",
+          detail: "伏見奈良／嵐山／河原町爆買／勝尾寺＋神戶牛／自行安排。詳見下方自由日選項。",
+          type: "自由",
+        },
+        {
+          time: "晚上",
+          title: "全員集合・居酒屋晚餐",
+          detail: "依大家一日遊結束時間再決定餐廳與集合時間。",
+          type: "用餐",
+        },
       ],
     },
     {
@@ -963,10 +1287,30 @@ window.TRIP_DATA = {
       title: "回大阪・心齋橋購物與大浴場放鬆",
       summary: "血拼心齋橋、梅田，晚間泡湯桑拿",
       slots: [
-        { time: "09:30 – 10:30", title: "京都 Check-out → 大阪", detail: "阪急電車返回大阪，直奔 First Cabin Midosuji-Namba（地鐵難波站 13 號出口）寄放行李。", type: "交通" },
-        { time: "11:00 – 18:00", title: "大阪血拼爆買", detail: "心齋橋筋商店街（藥妝補貨）、PARCO／大丸百貨（潮流精品與動漫周邊）、梅田商圈。", type: "景點" },
-        { time: "18:30 – 21:00", title: "晚餐時間", detail: "大阪最後夜晚餐，地點可現場決定。", type: "用餐" },
-        { time: "21:30", title: "First Cabin 大浴場與桑拿", detail: "返回住宿，享受館內大浴場與 Sauna 泡湯放鬆。", type: "住宿" },
+        {
+          time: "09:30 – 10:30",
+          title: "京都 Check-out → 大阪",
+          detail: "阪急電車返回大阪，直奔 First Cabin Midosuji-Namba（地鐵難波站 13 號出口）寄放行李。",
+          type: "交通",
+        },
+        {
+          time: "11:00 – 18:00",
+          title: "大阪血拼爆買",
+          detail: "心齋橋筋商店街（藥妝補貨）、PARCO／大丸百貨（潮流精品與動漫周邊）、梅田商圈。",
+          type: "景點",
+        },
+        {
+          time: "18:30 – 21:00",
+          title: "晚餐時間",
+          detail: "大阪最後夜晚餐，地點可現場決定。",
+          type: "用餐",
+        },
+        {
+          time: "21:30",
+          title: "First Cabin 大浴場與桑拿",
+          detail: "返回住宿，享受館內大浴場與 Sauna 泡湯放鬆。",
+          type: "住宿",
+        },
       ],
     },
     {
@@ -976,36 +1320,72 @@ window.TRIP_DATA = {
       title: "黑門市場早午餐・滿載賦歸",
       summary: "黑門開吃後搭 Rapi:t 返台",
       slots: [
-        { time: "08:30 – 09:30", title: "Check-out 寄放行李", detail: "大行李寄放在 First Cabin 櫃檯。", type: "住宿" },
-        { time: "09:30 – 11:15", title: "黑門市場早午餐", detail: "步行約 8 分鐘：現烤日本大生蠔、生干貝、炙燒神戶牛肉串與鮮甜海膽。", type: "用餐" },
-        { time: "11:20", title: "返回飯店取行李", detail: "取行李後前往南海難波站。", type: "住宿" },
-        { time: "11:30 – 12:20", title: "南海特急 Rapi:t → KIX", detail: "約 38 分鐘直達關西機場。", type: "交通" },
-        { time: "12:20 – 14:50", title: "辦理登機與免稅補貨", detail: "安檢、管制區內免稅店最後補貨。", type: "交通" },
-        { time: "14:50 – 17:10", title: "飛返桃園機場", detail: "滿載賦歸！", type: "交通" },
+        {
+          time: "08:30 – 09:30",
+          title: "Check-out 寄放行李",
+          detail: "大行李寄放在 First Cabin 櫃檯。",
+          type: "住宿",
+        },
+        {
+          time: "09:30 – 11:15",
+          title: "黑門市場早午餐",
+          detail: "步行約 8 分鐘：現烤日本大生蠔、生干貝、炙燒神戶牛肉串與鮮甜海膽。",
+          type: "用餐",
+        },
+        {
+          time: "11:20",
+          title: "返回飯店取行李",
+          detail: "取行李後前往南海難波站。",
+          type: "住宿",
+        },
+        {
+          time: "11:30 – 12:20",
+          title: "南海特急 Rapi:t → KIX",
+          detail: "約 38 分鐘直達關西機場。",
+          type: "交通",
+        },
+        {
+          time: "12:20 – 14:50",
+          title: "辦理登機與免稅補貨",
+          detail: "安檢、管制區內免稅店最後補貨。",
+          type: "交通",
+        },
+        {
+          time: "14:50 – 17:10",
+          title: "飛返桃園機場",
+          detail: "滿載賦歸！",
+          type: "交通",
+        },
       ],
     },
   ],
 
   day4Options: [
-    { id: "A", title: "伏見稻荷＋奈良公園", detail: "伏見稻荷千本鳥居 ＋ 奈良公園餵鹿一日遊" },
-    { id: "B", title: "嵐山經典一日", detail: "嵐山渡月橋 ＋ 竹林小徑 ＋ % ARABICA 咖啡體驗" },
-    { id: "C", title: "河原町爆買", detail: "四條河原町 ＋ 錦市場 ＋ 高島屋＋爆買之旅" },
-    { id: "D", title: "勝尾寺＋嵐山＋神戶牛", detail: "勝尾寺達摩 ＋ 京都嵐山 ＋ 神戶牛一日遊" },
-    { id: "E", title: "完全自由", detail: "自行安排喜歡的任何行程" },
-  ],
-
-  places: [
-    { id: "dotonbori", name: "道頓崛", kind: "景點", day: 1 },
-    { id: "kiyomizu", name: "清水寺", kind: "景點", day: 2 },
-    { id: "sannenzaka", name: "二年坂・三年坂", kind: "景點", day: 2 },
-    { id: "gion", name: "祇園花見小路", kind: "景點", day: 2 },
-    { id: "kodaiji", name: "高台寺夜楓", kind: "景點", day: 2 },
-    { id: "ine", name: "伊根舟屋 / INE CAFE", kind: "景點", day: 3 },
-    { id: "amanohashidate", name: "天橋立・傘松公園", kind: "景點", day: 3 },
-    { id: "inoichi", name: "豬一拉麵 Inoichi", kind: "餐廳", day: 3 },
-    { id: "katsugyu", name: "勝牛 Gyu-Katsu", kind: "餐廳", day: 3 },
-    { id: "shinsaibashi", name: "心齋橋筋商店街", kind: "景點", day: 5 },
-    { id: "kuromon", name: "黑門市場", kind: "餐廳", day: 6 },
+    {
+      id: "A",
+      title: "伏見稻荷＋奈良公園",
+      detail: "伏見稻荷千本鳥居 ＋ 奈良公園餵鹿一日遊",
+    },
+    {
+      id: "B",
+      title: "嵐山經典一日",
+      detail: "嵐山渡月橋 ＋ 竹林小徑 ＋ % ARABICA 咖啡體驗",
+    },
+    {
+      id: "C",
+      title: "河原町爆買",
+      detail: "四條河原町 ＋ 錦市場 ＋ 高島屋＋爆買之旅",
+    },
+    {
+      id: "D",
+      title: "勝尾寺＋嵐山＋神戶牛",
+      detail: "勝尾寺達摩 ＋ 京都嵐山 ＋ 神戶牛一日遊",
+    },
+    {
+      id: "E",
+      title: "完全自由",
+      detail: "自行安排喜歡的任何行程",
+    },
   ],
 
   checklist: [
@@ -1023,6 +1403,7 @@ window.TRIP_DATA = {
     { id: "rapit", label: "南海 Rapi:t 票券或購票方式確認", group: "行程" },
   ],
 };
+
     </script>
     <script>
 (function () {
@@ -1037,8 +1418,13 @@ window.TRIP_DATA = {
   const STORAGE_KEYS = {
     checklist: "fk18-checklist-v1",
     day4: "fk18-day4-v1",
-    places: "fk18-places-v1",
+    expense: "fk18-expense-v1",
     notes: "fk18-notes-v1",
+  };
+
+  const CURRENCY = {
+    JPY: { symbol: "¥", fractionDigits: 0 },
+    TWD: { symbol: "NT$", fractionDigits: 0 },
   };
 
   const todayIso = formatLocalDate(new Date());
@@ -1291,6 +1677,7 @@ window.TRIP_DATA = {
     });
   }
 
+  // Expose for reliable tab switching (also used by inline handlers)
   window.__tripSetDay = setActiveDay;
 
   function renderDay4Options() {
@@ -1339,46 +1726,137 @@ window.TRIP_DATA = {
     });
   }
 
-  function renderPlaces() {
-    const state = loadJson(STORAGE_KEYS.places, {});
-    const root = document.getElementById("places-root");
+  function formatMoney(amount, currency) {
+    const cfg = CURRENCY[currency] || CURRENCY.JPY;
+    const safe = Number.isFinite(amount) ? amount : 0;
+    return `${cfg.symbol}${safe.toLocaleString("en-US", {
+      minimumFractionDigits: cfg.fractionDigits,
+      maximumFractionDigits: cfg.fractionDigits,
+    })}`;
+  }
 
-    root.innerHTML = DATA.places
-      .map((p) => {
-        const flag = state[p.id] || "";
-        const label =
-          flag === "done" ? "已去" : flag === "want" ? "想去" : "標記";
-        return `
-        <li>
-          <div class="place-meta">
-            <div class="place-name">${escapeHtml(p.name)}</div>
-            <div class="place-sub">${escapeHtml(p.kind)} · Day ${p.day}</div>
-          </div>
-          <button
-            type="button"
-            class="place-toggle${flag ? " is-on" : ""}"
-            data-place="${escapeHtml(p.id)}"
-            aria-pressed="${flag ? "true" : "false"}"
-          >${label}</button>
-        </li>
-      `;
-      })
-      .join("");
+  function loadExpenses() {
+    const list = loadJson(STORAGE_KEYS.expense, []);
+    return Array.isArray(list) ? list : [];
+  }
 
-    root.addEventListener("click", (e) => {
-      const btn = e.target.closest(".place-toggle");
-      if (!btn) return;
-      const id = btn.dataset.place;
-      const current = loadJson(STORAGE_KEYS.places, {});
-      const prev = current[id] || "";
-      const next = prev === "" ? "want" : prev === "want" ? "done" : "";
-      if (next) current[id] = next;
-      else delete current[id];
-      saveJson(STORAGE_KEYS.places, current);
-      btn.classList.toggle("is-on", Boolean(next));
-      btn.setAttribute("aria-pressed", next ? "true" : "false");
-      btn.textContent = next === "done" ? "已去" : next === "want" ? "想去" : "標記";
+  function renderExpense() {
+    const form = document.getElementById("expense-form");
+    const listEl = document.getElementById("expense-list");
+    const totalsEl = document.getElementById("expense-totals");
+    const errorEl = document.getElementById("exp-error");
+    const dateEl = document.getElementById("exp-date");
+    const itemEl = document.getElementById("exp-item");
+    const amtEl = document.getElementById("exp-amt");
+    const catEl = document.getElementById("exp-cat");
+    const curEl = document.getElementById("exp-cur");
+    if (!form || !listEl || !totalsEl) return;
+
+    if (dateEl && !dateEl.value) dateEl.value = todayIso;
+
+    function paint() {
+      const items = loadExpenses();
+
+      const totals = items.reduce((acc, it) => {
+        const cur = CURRENCY[it.currency] ? it.currency : "JPY";
+        acc[cur] = (acc[cur] || 0) + (Number.isFinite(it.amount) ? it.amount : 0);
+        return acc;
+      }, {});
+
+      totalsEl.innerHTML = Object.keys(CURRENCY)
+        .filter((cur) => totals[cur])
+        .map(
+          (cur) => `
+          <div class="total-chip">
+            <span class="total-label">合計</span>
+            <span class="total-value">${formatMoney(totals[cur], cur)}</span>
+          </div>`
+        )
+        .join("") || `<p class="expense-empty">尚未記錄任何花費。</p>`;
+
+      listEl.innerHTML = items
+        .slice()
+        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.ts - a.ts))
+        .map(
+          (it) => `
+          <li class="expense-item">
+            <div class="expense-meta">
+              <div class="expense-top">
+                <span class="expense-item-name">${escapeHtml(it.item)}</span>
+                <span class="expense-amount">${formatMoney(it.amount, it.currency)}</span>
+              </div>
+              <div class="expense-sub">
+                <span class="cat-tag" data-cat="${escapeHtml(it.category)}">${escapeHtml(
+                  it.category
+                )}</span>
+                <span class="expense-date">${escapeHtml(it.date)}</span>
+              </div>
+            </div>
+            <button type="button" class="expense-del" data-del="${escapeHtml(
+              it.id
+            )}" aria-label="刪除">刪除</button>
+          </li>`
+        )
+        .join("");
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const item = (itemEl.value || "").trim();
+      const rawAmt = (amtEl.value || "").trim();
+      const amount = Number(rawAmt);
+      const date = dateEl.value || todayIso;
+
+      if (!item) {
+        showError("請輸入品項名稱");
+        return;
+      }
+      if (rawAmt === "" || !Number.isFinite(amount)) {
+        showError("金額必須是數字");
+        return;
+      }
+      if (amount <= 0) {
+        showError("金額必須大於 0");
+        return;
+      }
+
+      hideError();
+      const items = loadExpenses();
+      items.push({
+        id: `e${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
+        ts: Date.now(),
+        date,
+        item,
+        amount: Math.round(amount * 100) / 100,
+        currency: CURRENCY[curEl.value] ? curEl.value : "JPY",
+        category: catEl.value || "其他",
+      });
+      saveJson(STORAGE_KEYS.expense, items);
+
+      itemEl.value = "";
+      amtEl.value = "";
+      itemEl.focus();
+      paint();
     });
+
+    listEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".expense-del");
+      if (!btn) return;
+      const id = btn.dataset.del;
+      const items = loadExpenses().filter((it) => it.id !== id);
+      saveJson(STORAGE_KEYS.expense, items);
+      paint();
+    });
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.hidden = false;
+    }
+    function hideError() {
+      errorEl.hidden = true;
+    }
+
+    paint();
   }
 
   function renderChecklist() {
@@ -1484,7 +1962,7 @@ window.TRIP_DATA = {
     renderDays();
     renderDay4Options();
     renderTransport();
-    renderPlaces();
+    renderExpense();
     renderChecklist();
     bindNotes();
     bindJumpToday();
@@ -1497,6 +1975,7 @@ window.TRIP_DATA = {
     init();
   }
 })();
+
     </script>
   </body>
 </html>

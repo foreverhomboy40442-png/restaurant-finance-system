@@ -34,7 +34,7 @@
           <a href="#itinerary">行程</a>
           <a href="#itinerary" onclick="window.__tripSetDay&&window.__tripSetDay(4)">自由日</a>
           <a href="#transport">交通</a>
-          <a href="#places">收藏</a>
+          <a href="#expense">記帳</a>
           <a href="#checklist">清單</a>
           <a href="#notes">備忘</a>
         </div>
@@ -74,12 +74,36 @@
           <div class="stack" id="transport-root"></div>
         </section>
 
-        <section class="section" id="places">
+        <section class="section" id="expense">
           <div class="section-head">
-            <h2>餐廳／景點收藏</h2>
-            <p>點一下標記「想去」或「已去」</p>
+            <h2>個人記帳</h2>
+            <p>記錄這趟花費，資料存在你自己的裝置</p>
           </div>
-          <ul class="place-list" id="places-root"></ul>
+          <form class="expense-form" id="expense-form" novalidate>
+            <div class="expense-row">
+              <input type="date" id="exp-date" class="exp-input" aria-label="日期" required />
+              <input type="text" id="exp-item" class="exp-input exp-grow" placeholder="品項（例：一蘭拉麵）" aria-label="品項" required />
+            </div>
+            <div class="expense-row">
+              <select id="exp-cat" class="exp-input" aria-label="分類">
+                <option value="餐飲">餐飲</option>
+                <option value="交通">交通</option>
+                <option value="購物">購物</option>
+                <option value="住宿">住宿</option>
+                <option value="門票">門票</option>
+                <option value="其他">其他</option>
+              </select>
+              <select id="exp-cur" class="exp-input" aria-label="幣別">
+                <option value="JPY">¥ 日圓</option>
+                <option value="TWD">NT$ 台幣</option>
+              </select>
+              <input type="number" id="exp-amt" class="exp-input exp-grow" min="0" step="1" inputmode="decimal" placeholder="金額" aria-label="金額" required />
+            </div>
+            <p class="expense-error" id="exp-error" role="alert" hidden></p>
+            <button type="submit" class="btn btn-primary">新增一筆</button>
+          </form>
+          <div class="expense-totals" id="expense-totals"></div>
+          <ul class="expense-list" id="expense-list"></ul>
         </section>
 
         <section class="section" id="checklist">

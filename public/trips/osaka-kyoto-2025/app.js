@@ -10,8 +10,13 @@
   const STORAGE_KEYS = {
     checklist: "fk18-checklist-v1",
     day4: "fk18-day4-v1",
-    places: "fk18-places-v1",
+    expense: "fk18-expense-v1",
     notes: "fk18-notes-v1",
+  };
+
+  const CURRENCY = {
+    JPY: { symbol: "¥", fractionDigits: 0 },
+    TWD: { symbol: "NT$", fractionDigits: 0 },
   };
 
   const todayIso = formatLocalDate(new Date());
@@ -313,46 +318,137 @@
     });
   }
 
-  function renderPlaces() {
-    const state = loadJson(STORAGE_KEYS.places, {});
-    const root = document.getElementById("places-root");
+  function formatMoney(amount, currency) {
+    const cfg = CURRENCY[currency] || CURRENCY.JPY;
+    const safe = Number.isFinite(amount) ? amount : 0;
+    return `${cfg.symbol}${safe.toLocaleString("en-US", {
+      minimumFractionDigits: cfg.fractionDigits,
+      maximumFractionDigits: cfg.fractionDigits,
+    })}`;
+  }
 
-    root.innerHTML = DATA.places
-      .map((p) => {
-        const flag = state[p.id] || "";
-        const label =
-          flag === "done" ? "已去" : flag === "want" ? "想去" : "標記";
-        return `
-        <li>
-          <div class="place-meta">
-            <div class="place-name">${escapeHtml(p.name)}</div>
-            <div class="place-sub">${escapeHtml(p.kind)} · Day ${p.day}</div>
-          </div>
-          <button
-            type="button"
-            class="place-toggle${flag ? " is-on" : ""}"
-            data-place="${escapeHtml(p.id)}"
-            aria-pressed="${flag ? "true" : "false"}"
-          >${label}</button>
-        </li>
-      `;
-      })
-      .join("");
+  function loadExpenses() {
+    const list = loadJson(STORAGE_KEYS.expense, []);
+    return Array.isArray(list) ? list : [];
+  }
 
-    root.addEventListener("click", (e) => {
-      const btn = e.target.closest(".place-toggle");
-      if (!btn) return;
-      const id = btn.dataset.place;
-      const current = loadJson(STORAGE_KEYS.places, {});
-      const prev = current[id] || "";
-      const next = prev === "" ? "want" : prev === "want" ? "done" : "";
-      if (next) current[id] = next;
-      else delete current[id];
-      saveJson(STORAGE_KEYS.places, current);
-      btn.classList.toggle("is-on", Boolean(next));
-      btn.setAttribute("aria-pressed", next ? "true" : "false");
-      btn.textContent = next === "done" ? "已去" : next === "want" ? "想去" : "標記";
+  function renderExpense() {
+    const form = document.getElementById("expense-form");
+    const listEl = document.getElementById("expense-list");
+    const totalsEl = document.getElementById("expense-totals");
+    const errorEl = document.getElementById("exp-error");
+    const dateEl = document.getElementById("exp-date");
+    const itemEl = document.getElementById("exp-item");
+    const amtEl = document.getElementById("exp-amt");
+    const catEl = document.getElementById("exp-cat");
+    const curEl = document.getElementById("exp-cur");
+    if (!form || !listEl || !totalsEl) return;
+
+    if (dateEl && !dateEl.value) dateEl.value = todayIso;
+
+    function paint() {
+      const items = loadExpenses();
+
+      const totals = items.reduce((acc, it) => {
+        const cur = CURRENCY[it.currency] ? it.currency : "JPY";
+        acc[cur] = (acc[cur] || 0) + (Number.isFinite(it.amount) ? it.amount : 0);
+        return acc;
+      }, {});
+
+      totalsEl.innerHTML = Object.keys(CURRENCY)
+        .filter((cur) => totals[cur])
+        .map(
+          (cur) => `
+          <div class="total-chip">
+            <span class="total-label">合計</span>
+            <span class="total-value">${formatMoney(totals[cur], cur)}</span>
+          </div>`
+        )
+        .join("") || `<p class="expense-empty">尚未記錄任何花費。</p>`;
+
+      listEl.innerHTML = items
+        .slice()
+        .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : b.ts - a.ts))
+        .map(
+          (it) => `
+          <li class="expense-item">
+            <div class="expense-meta">
+              <div class="expense-top">
+                <span class="expense-item-name">${escapeHtml(it.item)}</span>
+                <span class="expense-amount">${formatMoney(it.amount, it.currency)}</span>
+              </div>
+              <div class="expense-sub">
+                <span class="cat-tag" data-cat="${escapeHtml(it.category)}">${escapeHtml(
+                  it.category
+                )}</span>
+                <span class="expense-date">${escapeHtml(it.date)}</span>
+              </div>
+            </div>
+            <button type="button" class="expense-del" data-del="${escapeHtml(
+              it.id
+            )}" aria-label="刪除">刪除</button>
+          </li>`
+        )
+        .join("");
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const item = (itemEl.value || "").trim();
+      const rawAmt = (amtEl.value || "").trim();
+      const amount = Number(rawAmt);
+      const date = dateEl.value || todayIso;
+
+      if (!item) {
+        showError("請輸入品項名稱");
+        return;
+      }
+      if (rawAmt === "" || !Number.isFinite(amount)) {
+        showError("金額必須是數字");
+        return;
+      }
+      if (amount <= 0) {
+        showError("金額必須大於 0");
+        return;
+      }
+
+      hideError();
+      const items = loadExpenses();
+      items.push({
+        id: `e${Date.now()}${Math.random().toString(36).slice(2, 6)}`,
+        ts: Date.now(),
+        date,
+        item,
+        amount: Math.round(amount * 100) / 100,
+        currency: CURRENCY[curEl.value] ? curEl.value : "JPY",
+        category: catEl.value || "其他",
+      });
+      saveJson(STORAGE_KEYS.expense, items);
+
+      itemEl.value = "";
+      amtEl.value = "";
+      itemEl.focus();
+      paint();
     });
+
+    listEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".expense-del");
+      if (!btn) return;
+      const id = btn.dataset.del;
+      const items = loadExpenses().filter((it) => it.id !== id);
+      saveJson(STORAGE_KEYS.expense, items);
+      paint();
+    });
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.hidden = false;
+    }
+    function hideError() {
+      errorEl.hidden = true;
+    }
+
+    paint();
   }
 
   function renderChecklist() {
@@ -458,7 +554,7 @@
     renderDays();
     renderDay4Options();
     renderTransport();
-    renderPlaces();
+    renderExpense();
     renderChecklist();
     bindNotes();
     bindJumpToday();
