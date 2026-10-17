@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="description" content="大阪京都瘋女18｜2026/11/19–11/24 行程手冊" />
+    <title>大阪京都瘋女18｜行程手冊</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600&family=Shippori+Mincho:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero" id="top">
+        <p class="hero-kicker">Travel handbook</p>
+        <h1 id="trip-title">大阪京都瘋女18</h1>
+        <p class="hero-lead" id="trip-subtitle">秋日紅葉・海之京都・難波夜遊</p>
+        <div class="hero-meta" id="trip-meta"></div>
+        <div class="hero-status" id="trip-status" aria-live="polite"></div>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#flights">查看航班</a>
+          <button type="button" class="btn btn-ghost" id="jump-today">跳到今日行程</button>
+        </div>
+      </header>
+
+      <nav class="nav" aria-label="頁面導覽">
+        <div class="nav-track">
+          <a href="#flights">航班</a>
+          <a href="#hotels">住宿</a>
+          <a href="#board">留言</a>
+          <a href="#itinerary">行程</a>
+          <a href="#transport">交通</a>
+          <a href="#expense">記帳</a>
+          <a href="#checklist">清單</a>
+          <a href="#notes">備忘</a>
+        </div>
+      </nav>
+
+      <div class="shared-bar" id="shared-bar" hidden></div>
+
+      <main>
+        <section class="section" id="flights">
+          <div class="section-head">
+            <h2>航班資訊</h2>
+            <p>去程與回程時刻，方便對齊機場交通</p>
+          </div>
+          <div class="stack" id="flights-root"></div>
+        </section>
+
+        <section class="section" id="hotels">
+          <div class="section-head">
+            <h2>住宿資訊</h2>
+            <p>三晚不同據點，點連結可開 Google Maps</p>
+          </div>
+          <div class="stack" id="hotels-root"></div>
+        </section>
+
+        <section class="section" id="board">
+          <div class="section-head">
+            <h2>留言板</h2>
+            <p class="board-hint-personal">需用「共享連結」開啟，四人才能一起即時留言。</p>
+            <p class="board-hint-shared" hidden>大家即時交流，訊息會同步給所有人。</p>
+          </div>
+          <div class="board-wrap" hidden>
+            <ul class="board-list" id="board-list"></ul>
+            <form class="board-form" id="board-form">
+              <input
+                type="text"
+                id="board-input"
+                class="exp-input exp-grow"
+                placeholder="說點什麼…"
+                maxlength="2000"
+                autocomplete="off"
+              />
+              <button type="submit" class="btn btn-primary">送出</button>
+            </form>
+          </div>
+        </section>
+
+        <section class="section" id="itinerary">
+          <div class="section-head">
+            <h2>每日行程</h2>
+            <p>時間軸一覽；旅途中會自動標示今天。Day 4 為自由日，選項在該分頁內。</p>
+          </div>
+          <div class="day-tabs" id="day-tabs" role="tablist" aria-label="選擇日期"></div>
+          <div id="days-root"></div>
+        </section>
+
+        <section class="section" id="transport">
+          <div class="section-head">
+            <h2>交通速查</h2>
+            <p>這趟會反覆用到的動線，先記在這裡</p>
+          </div>
+          <div class="stack" id="transport-root"></div>
+        </section>
+
+        <section class="section" id="expense">
+          <div class="section-head">
+            <h2>個人記帳</h2>
+            <p>記錄這趟花費，資料存在你自己的裝置</p>
+          </div>
+          <form class="expense-form" id="expense-form" novalidate>
+            <div class="expense-row expense-row--main">
+              <input type="date" id="exp-date" class="exp-input" aria-label="日期" required />
+              <input type="text" id="exp-item" class="exp-input exp-grow" placeholder="品項（例：一蘭拉麵）" aria-label="品項" required />
+            </div>
+            <div class="expense-row expense-row--detail">
+              <select id="exp-cat" class="exp-input" aria-label="分類">
+                <option value="餐飲">餐飲</option>
+                <option value="交通">交通</option>
+                <option value="購物">購物</option>
+                <option value="住宿">住宿</option>
+                <option value="門票">門票</option>
+                <option value="其他">其他</option>
+              </select>
+              <select id="exp-cur" class="exp-input" aria-label="幣別">
+                <option value="JPY">¥ 日圓</option>
+                <option value="TWD">NT$ 台幣</option>
+              </select>
+              <input type="number" id="exp-amt" class="exp-input exp-grow" min="0" step="1" inputmode="decimal" placeholder="金額" aria-label="金額" required />
+            </div>
+            <p class="expense-error" id="exp-error" role="alert" hidden></p>
+            <button type="submit" class="btn btn-primary">新增一筆</button>
+          </form>
+          <div class="expense-totals" id="expense-totals"></div>
+          <ul class="expense-list" id="expense-list"></ul>
+        </section>
+
+        <section class="section" id="checklist">
+          <div class="section-head">
+            <h2>打包／證件清單</h2>
+            <p>勾選狀態會保存在本機瀏覽器</p>
+          </div>
+          <div id="checklist-root"></div>
+        </section>
+
+        <section class="section" id="notes">
+          <div class="section-head">
+            <h2>行前／行中備忘</h2>
+            <p>預約編號、集合地點、想吃名單……隨手記</p>
+          </div>
+          <textarea
+            class="notes-area"
+            id="notes-area"
+            placeholder="例如：和服店預約編號、Day3 集合地點、大家想吃的店……"
+          ></textarea>
+          <p class="notes-hint">內容自動儲存於本機（localStorage）。</p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        大阪京都瘋女18 · 2026/11/19–11/24 · 離線也可開啟本頁
+      </footer>
+    </div>
+
+    <script src="./data.js"></script>
+    <script src="./config-bootstrap.js"></script>
+    <script src="./app.js"></script>
+    <script src="./shared.js"></script>
+  </body>
+</html>
