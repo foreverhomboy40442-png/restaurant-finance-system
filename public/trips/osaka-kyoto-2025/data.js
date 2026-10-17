@@ -1,0 +1,348 @@
+window.TRIP_DATA = {
+  trip: {
+    title: "大阪京都瘋女18",
+    subtitle: "秋日紅葉・海之京都・難波夜遊",
+    startDate: "2025-11-19",
+    endDate: "2025-11-24",
+    timezone: "Asia/Tokyo",
+    region: "大阪・京都",
+  },
+
+  flights: [
+    {
+      id: "outbound",
+      direction: "去程",
+      date: "2025-11-19",
+      weekday: "三",
+      fromCode: "TPE",
+      fromName: "桃園",
+      toCode: "KIX",
+      toName: "關西",
+      dep: "15:40",
+      arr: "19:20",
+      note: "抵達後辦理入境，接南海電鐵 Rapi:t 直達難波",
+    },
+    {
+      id: "return",
+      direction: "回程",
+      date: "2025-11-24",
+      weekday: "一",
+      fromCode: "KIX",
+      fromName: "關西",
+      toCode: "TPE",
+      toName: "桃園",
+      dep: "14:50",
+      arr: "17:10",
+      note: "建議 12:20 前抵達機場，預留安檢與免稅補貨時間",
+    },
+  ],
+
+  hotels: [
+    {
+      id: "wellstay",
+      name: "WellStayNamba",
+      nightsLabel: "Day 1（11/19）",
+      nights: ["2025-11-19"],
+      area: "惠美須町 / 難波南",
+      mapsUrl: "https://maps.app.goo.gl/ayqNMurnCcQpqZLk6?g_st=ic",
+      tip: "抵達後約 21:20 入住，寄放行李後前往道頓崛宵夜",
+    },
+    {
+      id: "wayfarer",
+      name: "WAYFARER Kyoto Shijo",
+      nightsLabel: "Day 2–4（11/20–11/22）",
+      nights: ["2025-11-20", "2025-11-21", "2025-11-22"],
+      area: "四條烏丸 / 西洞院通",
+      mapsUrl: "https://maps.app.goo.gl/zS4TAYPMaEw8jpgY7?g_st=ic",
+      tip: "抵京都後先寄行李；四條烏丸交通便利，適合往返清水寺與河原町",
+    },
+    {
+      id: "firstcabin",
+      name: "First Cabin Midosuji-Namba",
+      nightsLabel: "Day 5（11/23）",
+      nights: ["2025-11-23"],
+      area: "御堂筋難波",
+      mapsUrl: "https://maps.app.goo.gl/LuxYdWRUKsmAx94f7?g_st=ic",
+      tip: "地鐵難波站 13 號出口；晚間可享館內大浴場與桑拿",
+    },
+  ],
+
+  transportTips: [
+    {
+      title: "南海特急 Rapi:t",
+      detail: "關西機場 ⇄ 南海難波站，約 38–50 分鐘；去程約 20:00–20:50 完成入境後搭乘，回程建議 11:30 自難波出發。",
+    },
+    {
+      title: "阪急京都線",
+      detail: "大阪梅田 ➔ 烏丸站；Day2 從大阪轉京都、Day5 回大阪皆可使用。烏丸站步行可至四條烏丸住宿。",
+    },
+    {
+      title: "First Cabin 入口",
+      detail: "地鐵難波站 13 號出口直奔 First Cabin Midosuji-Namba，適合寄放行李後心齋橋購物。",
+    },
+    {
+      title: "黑門市場 → 機場",
+      detail: "黑門市場步行約 8 分鐘回 First Cabin 取行李，再往南海難波站搭 Rapi:t 直達 KIX。",
+    },
+  ],
+
+  days: [
+    {
+      day: 1,
+      date: "2025-11-19",
+      weekday: "三",
+      title: "抵達大阪・難波宵夜場",
+      summary: "KIX 入境後直奔難波，道頓崛夜遊開場",
+      slots: [
+        {
+          time: "19:20",
+          title: "抵達關西國際機場（KIX）",
+          detail: "完成入境手續，準備搭乘南海電鐵。",
+          type: "交通",
+        },
+        {
+          time: "20:00 – 20:50",
+          title: "入境與南海電鐵 Rapi:t",
+          detail: "直達「南海難波站」。",
+          type: "交通",
+        },
+        {
+          time: "21:20",
+          title: "WellStayNamba Check-in",
+          detail: "計程車約 5 分鐘抵達，寄放行李。",
+          type: "住宿",
+        },
+        {
+          time: "21:40 – 23:30",
+          title: "道頓崛宵夜夜遊",
+          detail: "難波／道頓崛周邊宵夜與夜景散步。",
+          type: "景點",
+        },
+      ],
+    },
+    {
+      day: 2,
+      date: "2025-11-20",
+      weekday: "四",
+      title: "京都和服美照・清水寺滿山紅葉",
+      summary: "和服、二三年坂、清水寺與祇園夜楓",
+      slots: [
+        {
+          time: "09:00 – 10:15",
+          title: "大阪 Check-out → 京都",
+          detail: "搭乘阪急京都線（梅田 ➔ 烏丸站）。",
+          type: "交通",
+        },
+        {
+          time: "10:30",
+          title: "WAYFARER Kyoto Shijo 寄行李",
+          detail: "四條烏丸住宿先放行李再出發。",
+          type: "住宿",
+        },
+        {
+          time: "11:00 – 14:00",
+          title: "和服換裝與二三年坂",
+          detail: "預約和服體驗，漫步三年坂、二年坂拍大片，沿路品嚐抹茶甜點。",
+          type: "景點",
+        },
+        {
+          time: "14:00 – 16:30",
+          title: "清水寺賞楓絕景",
+          detail: "參觀清水寺，欣賞被滿山紅葉包圍的清水舞台。",
+          type: "景點",
+        },
+        {
+          time: "17:00 – 20:00",
+          title: "祇園夜楓與古都晚宴",
+          detail: "漫步祇園花見小路與高台寺夜楓點燈。晚餐：鴨川周邊的豆豆腐京料理或壽喜燒。",
+          type: "用餐",
+        },
+      ],
+    },
+    {
+      day: 3,
+      date: "2025-11-21",
+      weekday: "五",
+      title: "海之京都・天橋立與伊根舟屋",
+      summary: "一日包車／巴士暢遊天橋立與伊根",
+      slots: [
+        {
+          time: "07:30 – 18:30",
+          title: "天橋立＋伊根舟屋一日遊",
+          detail:
+            "四人參加京都出發的包車／巴士，免去單程約 3 小時轉乘。伊根舟屋：觀光船海鷗餵食，造訪 INE CAFE（舟屋日和）。天橋立：纜車至傘松公園，海天倒置絕景。",
+          type: "景點",
+        },
+        {
+          time: "19:00",
+          title: "返回京都市區",
+          detail: "回到住宿附近（四條烏丸／河原町）。",
+          type: "交通",
+        },
+        {
+          time: "晚餐",
+          title: "豬一拉麵或勝牛",
+          detail: "Inoichi（豬一拉麵）或 Gyu-Katsu Kyoto Katsugyu（勝牛）。",
+          type: "用餐",
+        },
+      ],
+    },
+    {
+      day: 4,
+      date: "2025-11-22",
+      weekday: "六",
+      title: "個人自由行動日",
+      summary: "各自隨心探索，晚上全員集合吃居酒屋",
+      isFreeDay: true,
+      slots: [
+        {
+          time: "全日",
+          title: "自由選項 A–E",
+          detail: "伏見奈良／嵐山／河原町爆買／勝尾寺＋神戶牛／自行安排。詳見下方自由日選項。",
+          type: "自由",
+        },
+        {
+          time: "晚上",
+          title: "全員集合・居酒屋晚餐",
+          detail: "依大家一日遊結束時間再決定餐廳與集合時間。",
+          type: "用餐",
+        },
+      ],
+    },
+    {
+      day: 5,
+      date: "2025-11-23",
+      weekday: "日",
+      title: "回大阪・心齋橋購物與大浴場放鬆",
+      summary: "血拼心齋橋、梅田，晚間泡湯桑拿",
+      slots: [
+        {
+          time: "09:30 – 10:30",
+          title: "京都 Check-out → 大阪",
+          detail: "阪急電車返回大阪，直奔 First Cabin Midosuji-Namba（地鐵難波站 13 號出口）寄放行李。",
+          type: "交通",
+        },
+        {
+          time: "11:00 – 18:00",
+          title: "大阪血拼爆買",
+          detail: "心齋橋筋商店街（藥妝補貨）、PARCO／大丸百貨（潮流精品與動漫周邊）、梅田商圈。",
+          type: "景點",
+        },
+        {
+          time: "18:30 – 21:00",
+          title: "晚餐時間",
+          detail: "大阪最後夜晚餐，地點可現場決定。",
+          type: "用餐",
+        },
+        {
+          time: "21:30",
+          title: "First Cabin 大浴場與桑拿",
+          detail: "返回住宿，享受館內大浴場與 Sauna 泡湯放鬆。",
+          type: "住宿",
+        },
+      ],
+    },
+    {
+      day: 6,
+      date: "2025-11-24",
+      weekday: "一",
+      title: "黑門市場早午餐・滿載賦歸",
+      summary: "黑門開吃後搭 Rapi:t 返台",
+      slots: [
+        {
+          time: "08:30 – 09:30",
+          title: "Check-out 寄放行李",
+          detail: "大行李寄放在 First Cabin 櫃檯。",
+          type: "住宿",
+        },
+        {
+          time: "09:30 – 11:15",
+          title: "黑門市場早午餐",
+          detail: "步行約 8 分鐘：現烤日本大生蠔、生干貝、炙燒神戶牛肉串與鮮甜海膽。",
+          type: "用餐",
+        },
+        {
+          time: "11:20",
+          title: "返回飯店取行李",
+          detail: "取行李後前往南海難波站。",
+          type: "住宿",
+        },
+        {
+          time: "11:30 – 12:20",
+          title: "南海特急 Rapi:t → KIX",
+          detail: "約 38 分鐘直達關西機場。",
+          type: "交通",
+        },
+        {
+          time: "12:20 – 14:50",
+          title: "辦理登機與免稅補貨",
+          detail: "安檢、管制區內免稅店最後補貨。",
+          type: "交通",
+        },
+        {
+          time: "14:50 – 17:10",
+          title: "飛返桃園機場",
+          detail: "滿載賦歸！",
+          type: "交通",
+        },
+      ],
+    },
+  ],
+
+  day4Options: [
+    {
+      id: "A",
+      title: "伏見稻荷＋奈良公園",
+      detail: "伏見稻荷千本鳥居 ＋ 奈良公園餵鹿一日遊",
+    },
+    {
+      id: "B",
+      title: "嵐山經典一日",
+      detail: "嵐山渡月橋 ＋ 竹林小徑 ＋ % ARABICA 咖啡體驗",
+    },
+    {
+      id: "C",
+      title: "河原町爆買",
+      detail: "四條河原町 ＋ 錦市場 ＋ 高島屋＋爆買之旅",
+    },
+    {
+      id: "D",
+      title: "勝尾寺＋嵐山＋神戶牛",
+      detail: "勝尾寺達摩 ＋ 京都嵐山 ＋ 神戶牛一日遊",
+    },
+    {
+      id: "E",
+      title: "完全自由",
+      detail: "自行安排喜歡的任何行程",
+    },
+  ],
+
+  places: [
+    { id: "dotonbori", name: "道頓崛", kind: "景點", day: 1 },
+    { id: "kiyomizu", name: "清水寺", kind: "景點", day: 2 },
+    { id: "sannenzaka", name: "二年坂・三年坂", kind: "景點", day: 2 },
+    { id: "gion", name: "祇園花見小路", kind: "景點", day: 2 },
+    { id: "kodaiji", name: "高台寺夜楓", kind: "景點", day: 2 },
+    { id: "ine", name: "伊根舟屋 / INE CAFE", kind: "景點", day: 3 },
+    { id: "amanohashidate", name: "天橋立・傘松公園", kind: "景點", day: 3 },
+    { id: "inoichi", name: "豬一拉麵 Inoichi", kind: "餐廳", day: 3 },
+    { id: "katsugyu", name: "勝牛 Gyu-Katsu", kind: "餐廳", day: 3 },
+    { id: "shinsaibashi", name: "心齋橋筋商店街", kind: "景點", day: 5 },
+    { id: "kuromon", name: "黑門市場", kind: "餐廳", day: 6 },
+  ],
+
+  checklist: [
+    { id: "passport", label: "護照（效期 6 個月以上）", group: "證件" },
+    { id: "ticket", label: "機票／登機證截圖", group: "證件" },
+    { id: "hotel", label: "飯店預約確認", group: "證件" },
+    { id: "cash", label: "日圓現金／信用卡", group: "金錢" },
+    { id: "ic", label: "交通 IC 卡（ICOCA／Suica）或手機支付", group: "金錢" },
+    { id: "adapter", label: "轉接插頭（日本多用兩腳）", group: "裝備" },
+    { id: "powerbank", label: "行動電源與充電線", group: "裝備" },
+    { id: "meds", label: "個人藥品／常備藥", group: "裝備" },
+    { id: "clothes", label: "秋裝層次＋舒適步行鞋", group: "裝備" },
+    { id: "kimono", label: "和服體驗預約確認（Day2）", group: "行程" },
+    { id: "day3tour", label: "天橋立／伊根一日遊預約確認（Day3）", group: "行程" },
+    { id: "rapit", label: "南海 Rapi:t 票券或購票方式確認", group: "行程" },
+  ],
+};
