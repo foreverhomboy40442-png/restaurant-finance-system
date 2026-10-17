@@ -3086,10 +3086,7 @@ window.TRIP_DATA = {
 
   function bodyMentions(body, name) {
     if (!name) return false;
-    const e = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\    <script src="./data.js"></script>
-    <script src="./config-bootstrap.js"></script>
-    <script src="./app.js"></script>
-    <script src="./shared.js"></script>");
+    const e = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp("@" + e + "(?![\\w\\u4e00-\\u9fff])", "i").test(body);
   }
 
@@ -3107,10 +3104,7 @@ window.TRIP_DATA = {
     const names = mentionTargets().map(esc).concat(MENTION_ALL);
     if (names.length) {
       const alt = names
-        .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\    <script src="./data.js"></script>
-    <script src="./config-bootstrap.js"></script>
-    <script src="./app.js"></script>
-    <script src="./shared.js"></script>"))
+        .map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
         .join("|");
       const re = new RegExp("@(" + alt + ")(?![\\w\\u4e00-\\u9fff])", "gi");
       s = s.replace(re, (full, name) => {

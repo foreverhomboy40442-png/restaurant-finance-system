@@ -19,21 +19,25 @@ const bootstrap = readFileSync(join(dir, "config-bootstrap.js"), "utf8");
 const app = readFileSync(join(dir, "app.js"), "utf8");
 const shared = readFileSync(join(dir, "shared.js"), "utf8");
 
+// NOTE: use replacement FUNCTIONS so that `$&`, `$\``, `$'`, `$1`, `$$` inside
+// the inlined CSS/JS are NOT interpreted as special replacement patterns.
 let out = html
   .replace(
     '<meta name="description" content="大阪京都瘋女18｜2026/11/19–11/24 行程手冊" />',
-    '<meta name="description" content="大阪京都瘋女18｜2026/11/19–11/24 行程手冊（單一檔案版）" />'
+    () =>
+      '<meta name="description" content="大阪京都瘋女18｜2026/11/19–11/24 行程手冊（單一檔案版）" />'
   )
   .replace(
     '    <link rel="stylesheet" href="./styles.css" />',
-    `    <style>\n${css}\n    </style>`
+    () => `    <style>\n${css}\n    </style>`
   )
   .replace(
     `    <script src="./data.js"></script>\n` +
       `    <script src="./config-bootstrap.js"></script>\n` +
       `    <script src="./app.js"></script>\n` +
       `    <script src="./shared.js"></script>`,
-    `    <script>\n${data}\n    </script>\n` +
+    () =>
+      `    <script>\n${data}\n    </script>\n` +
       `    <script>\n${bootstrap}\n    </script>\n` +
       `    <script>\n${app}\n    </script>\n` +
       `    <script>\n${shared}\n    </script>`
