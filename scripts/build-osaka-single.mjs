@@ -23,9 +23,9 @@ const shared = readFileSync(join(dir, "shared.js"), "utf8");
 // the inlined CSS/JS are NOT interpreted as special replacement patterns.
 let out = html
   .replace(
-    '<meta name="description" content="大阪京都瘋女18｜2026/11/19–11/24 行程手冊" />',
+    '<meta name="description" content="大阪京都露營瘋女18｜2026/11/19–11/24 行程手冊" />',
     () =>
-      '<meta name="description" content="大阪京都瘋女18｜2026/11/19–11/24 行程手冊（單一檔案版）" />'
+      '<meta name="description" content="大阪京都露營瘋女18｜2026/11/19–11/24 行程手冊（單一檔案版）" />'
   )
   .replace(
     '    <link rel="stylesheet" href="./styles.css" />',

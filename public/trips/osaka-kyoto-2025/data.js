@@ -1,6 +1,6 @@
 window.TRIP_DATA = {
   trip: {
-    title: "大阪京都瘋女18",
+    title: "大阪京都露營瘋女18",
     subtitle: "秋日紅葉・海之京都・難波夜遊",
     startDate: "2026-11-19",
     endDate: "2026-11-24",
